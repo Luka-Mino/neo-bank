@@ -1,20 +1,12 @@
-import { neon } from "@neondatabase/serverless";
-import { drizzle, NeonHttpDatabase } from "drizzle-orm/neon-http";
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 import * as schema from "./schema";
 
-let _db: NeonHttpDatabase<typeof schema> | null = null;
+const connectionString = process.env.DATABASE_URL!;
 
-export function getDb() {
-  if (!_db) {
-    const sql = neon(process.env.DATABASE_URL!);
-    _db = drizzle({ client: sql, schema });
-  }
-  return _db;
-}
-
-// For convenience - proxy that lazily initializes
-export const db = new Proxy({} as NeonHttpDatabase<typeof schema>, {
-  get(_target, prop) {
-    return (getDb() as any)[prop];
-  },
+// For serverless (Vercel), use connection pooling
+const client = postgres(connectionString, {
+  prepare: false, // Required for Supabase Transaction mode pooler
 });
+
+export const db = drizzle(client, { schema });
