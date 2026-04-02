@@ -19,24 +19,27 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
-  const { data: customer, isLoading: customerLoading } = useQuery({
+  const { data: customerRes, isLoading: customerLoading } = useQuery({
     queryKey: ["customer"],
     queryFn: () => fetch("/api/customers").then((r) => r.json()),
   });
 
-  const { data: txData, isLoading: txLoading } = useQuery({
+  const { data: txRes, isLoading: txLoading } = useQuery({
     queryKey: ["transactions"],
     queryFn: () => fetch("/api/transactions").then((r) => r.json()),
   });
 
-  const { data: balanceData, isLoading: balanceLoading } = useQuery({
+  const customer = customerRes?.data || customerRes;
+  const txData = txRes?.data || txRes;
+
+  const { data: balanceRes, isLoading: balanceLoading } = useQuery({
     queryKey: ["wallets", "balances"],
     queryFn: () => fetch("/api/wallets/balances").then((r) => r.json()),
     enabled: customer?.kycStatus === "active",
   });
 
   const kycActive = customer?.kycStatus === "active";
-  const totalBalance = balanceData?.data?.totalUsd || "0";
+  const totalBalance = balanceRes?.data?.totalUsd || "0";
 
   return (
     <div className="space-y-6">

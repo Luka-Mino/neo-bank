@@ -24,10 +24,11 @@ const txTypeIcons: Record<string, React.ReactNode> = {
 };
 
 export default function TransactionsPage() {
-  const { data, isLoading } = useQuery({
+  const { data: res, isLoading } = useQuery({
     queryKey: ["transactions"],
     queryFn: () => fetch("/api/transactions").then((r) => r.json()),
   });
+  const data = res?.data || res;
 
   return (
     <div className="space-y-6">

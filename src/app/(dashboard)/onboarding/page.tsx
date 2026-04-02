@@ -11,11 +11,12 @@ import { CheckCircle2, Clock, XCircle, ExternalLink, Shield } from "lucide-react
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { data: customer, isLoading, refetch } = useQuery({
+  const { data: customerRes, isLoading, refetch } = useQuery({
     queryKey: ["customer"],
     queryFn: () => fetch("/api/customers").then((r) => r.json()),
     refetchInterval: 10000,
   });
+  const customer = customerRes?.data || customerRes;
 
   useEffect(() => {
     if (customer?.kycStatus === "active") {

@@ -13,16 +13,18 @@ import { toast } from "sonner";
 export default function DepositPage() {
   const [copied, setCopied] = useState<string | null>(null);
 
-  const { data: customer } = useQuery({
+  const { data: customerRes } = useQuery({
     queryKey: ["customer"],
     queryFn: () => fetch("/api/customers").then((r) => r.json()),
   });
+  const customer = customerRes?.data || customerRes;
 
-  const { data: accounts, isLoading } = useQuery({
+  const { data: accountsRes, isLoading } = useQuery({
     queryKey: ["accounts", "onramp"],
     queryFn: () => fetch("/api/accounts?type=onramp").then((r) => r.json()),
     enabled: customer?.kycStatus === "active",
   });
+  const accounts = accountsRes?.data || accountsRes;
 
   const kycActive = customer?.kycStatus === "active";
 

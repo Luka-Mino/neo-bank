@@ -28,16 +28,18 @@ type WithdrawInput = z.infer<typeof withdrawSchema>;
 export default function WithdrawPage() {
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
 
-  const { data: customer } = useQuery({
+  const { data: customerRes } = useQuery({
     queryKey: ["customer"],
     queryFn: () => fetch("/api/customers").then((r) => r.json()),
   });
+  const customer = customerRes?.data || customerRes;
 
-  const { data: recipientData } = useQuery({
+  const { data: recipientRes } = useQuery({
     queryKey: ["recipients"],
     queryFn: () => fetch("/api/recipients").then((r) => r.json()),
     enabled: customer?.kycStatus === "active",
   });
+  const recipientData = recipientRes?.data || recipientRes;
 
   const kycActive = customer?.kycStatus === "active";
 

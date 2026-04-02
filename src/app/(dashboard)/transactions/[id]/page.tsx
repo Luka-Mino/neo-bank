@@ -15,10 +15,11 @@ import { cn } from "@/lib/utils";
 export default function TransactionDetailPage() {
   const { id } = useParams<{ id: string }>();
 
-  const { data: tx, isLoading } = useQuery({
+  const { data: txRes, isLoading } = useQuery({
     queryKey: ["transaction", id],
     queryFn: () => fetch(`/api/transactions/${id}`).then((r) => r.json()),
   });
+  const tx = txRes?.data || txRes;
 
   if (isLoading) {
     return (

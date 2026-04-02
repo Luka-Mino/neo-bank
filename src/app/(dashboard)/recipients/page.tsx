@@ -11,10 +11,11 @@ import { formatDate } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 
 export default function RecipientsPage() {
-  const { data, isLoading } = useQuery({
+  const { data: res, isLoading } = useQuery({
     queryKey: ["recipients"],
     queryFn: () => fetch("/api/recipients").then((r) => r.json()),
   });
+  const data = res?.data || res;
 
   return (
     <div className="space-y-6">
