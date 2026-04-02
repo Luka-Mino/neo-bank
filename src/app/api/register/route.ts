@@ -1,24 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
 import { eq } from "drizzle-orm";
+import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
-import { users, dakotaCustomers } from "@/lib/db/schema";
+import { users, dakotaCustomers, emailVerificationTokens } from "@/lib/db/schema";
 import { registerSchema } from "@/lib/validators/auth";
 import { createCustomer } from "@/lib/dakota/customers";
+import { sendVerificationEmail } from "@/lib/email";
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const parsed = registerSchema.safeParse(body);
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
-        { status: 400 }
-      );
-    }
-
-    const { fullName, email, password } = parsed.data;
+export const POST = apiHandler({
+  auth: false,
+  rateLimit: { limit: 5, window: "15m" },
+  schema: registerSchema,
+  handler: async ({ body }) => {
+    const { fullName, email, password } = body;
     const normalizedEmail = email.toLowerCase();
 
     // Check if user exists
@@ -29,10 +24,7 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (existing.length > 0) {
-      return NextResponse.json(
-        { error: "An account with this email already exists" },
-        { status: 409 }
-      );
+      return err("An account with this email already exists", 409);
     }
 
     // Create user
@@ -45,6 +37,15 @@ export async function POST(req: NextRequest) {
         fullName,
       })
       .returning({ id: users.id });
+
+    // Send verification email
+    const verifyToken = uuidv4();
+    await db.insert(emailVerificationTokens).values({
+      userId: user.id,
+      token: verifyToken,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+    await sendVerificationEmail(normalizedEmail, verifyToken);
 
     // Create Dakota customer
     try {
@@ -68,18 +69,8 @@ export async function POST(req: NextRequest) {
       });
     } catch (dakotaError) {
       console.error("Failed to create Dakota customer:", dakotaError);
-      // User is created but Dakota customer failed — they can retry from onboarding
     }
 
-    return NextResponse.json(
-      { message: "Account created successfully", userId: user.id },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Registration error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+    return ok({ message: "Account created successfully", userId: user.id }, 201);
+  },
+});

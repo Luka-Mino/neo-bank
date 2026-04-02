@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { eq, and, isNull, gt } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { apiHandler, ok, err } from "@/lib/api-handler";
+import { apiHandler, ok } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { users, passwordResetTokens } from "@/lib/db/schema";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 const schema = z.object({
   email: z.string().email(),
@@ -40,11 +41,8 @@ export const POST = apiHandler({
       expiresAt,
     });
 
-    // TODO: Send email via Resend with reset link
-    // For now, log the token in development
-    if (process.env.NODE_ENV === "development") {
-      console.log(`[DEV] Password reset link: /reset-password?token=${token}`);
-    }
+    // Send reset email
+    await sendPasswordResetEmail(email, token);
 
     return ok({ message: "If an account exists, a reset link has been sent." });
   },

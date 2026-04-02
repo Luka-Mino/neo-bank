@@ -1,47 +1,34 @@
-import { NextRequest, NextResponse } from "next/server";
 import { eq, desc } from "drizzle-orm";
-import { auth } from "@/lib/auth/config";
+import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { transactions, dakotaCustomers } from "@/lib/db/schema";
 import { createTransaction as createDakotaTransaction } from "@/lib/dakota/transactions";
+import { createTransactionSchema } from "@/lib/validators/transaction";
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const GET = apiHandler({
+  handler: async ({ user }) => {
+    const txs = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.userId, user.id))
+      .orderBy(desc(transactions.createdAt))
+      .limit(50);
 
-  const txs = await db
-    .select()
-    .from(transactions)
-    .where(eq(transactions.userId, session.user.id))
-    .orderBy(desc(transactions.createdAt))
-    .limit(50);
+    return ok({ data: txs });
+  },
+});
 
-  return NextResponse.json({ data: txs });
-}
-
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const body = await req.json();
-
-    // Get Dakota customer ID
+export const POST = apiHandler({
+  schema: createTransactionSchema,
+  handler: async ({ user, body }) => {
     const customer = await db
       .select()
       .from(dakotaCustomers)
-      .where(eq(dakotaCustomers.userId, session.user.id))
+      .where(eq(dakotaCustomers.userId, user.id))
       .limit(1);
 
     if (customer.length === 0 || customer[0].kycStatus !== "active") {
-      return NextResponse.json(
-        { error: "KYC verification required" },
-        { status: 403 }
-      );
+      return err("KYC verification required", 403);
     }
 
     const dakotaTx = await createDakotaTransaction({
@@ -56,13 +43,12 @@ export async function POST(req: NextRequest) {
       paymentReference: body.paymentReference,
     });
 
-    // Cache transaction locally
     const [tx] = await db
       .insert(transactions)
       .values({
-        userId: session.user.id,
+        userId: user.id,
         dakotaTxId: dakotaTx.id,
-        txType: body.txType || "send",
+        txType: body.txType,
         status: dakotaTx.status,
         sourceAsset: body.sourceAsset,
         destinationAsset: body.destinationAsset,
@@ -74,12 +60,6 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
-    return NextResponse.json(tx, { status: 201 });
-  } catch (error) {
-    console.error("Transaction creation error:", error);
-    return NextResponse.json(
-      { error: "Failed to create transaction" },
-      { status: 500 }
-    );
-  }
-}
+    return ok(tx, 201);
+  },
+});

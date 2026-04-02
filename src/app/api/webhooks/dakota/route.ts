@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { webhookEvents, dakotaCustomers, transactions } from "@/lib/db/schema";
+import {
+  webhookEvents,
+  dakotaCustomers,
+  transactions,
+  users,
+} from "@/lib/db/schema";
 import {
   verifyWebhookSignature,
   parseWebhookEvent,
 } from "@/lib/dakota/webhooks";
+import { logAudit } from "@/lib/audit";
+import { logStatusChange } from "@/lib/transaction-history";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,7 +27,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing headers" }, { status: 400 });
     }
 
-    // Verify signature
     const isValid = await verifyWebhookSignature(rawBody, signature, timestamp);
     if (!isValid) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
@@ -38,17 +45,14 @@ export async function POST(req: NextRequest) {
 
     const event = parseWebhookEvent(rawBody);
 
-    // Store event
     await db.insert(webhookEvents).values({
       dakotaEventId: eventId,
       eventType,
       payload: event,
     });
 
-    // Process event synchronously (for simplicity — can move to BullMQ later)
     await processEvent(eventType, event.data);
 
-    // Mark as processed
     await db
       .update(webhookEvents)
       .set({ processedAt: new Date() })
@@ -71,23 +75,89 @@ async function processEvent(eventType: string, data: Record<string, unknown>) {
           .update(dakotaCustomers)
           .set({ kycStatus: kybStatus, updatedAt: new Date() })
           .where(eq(dakotaCustomers.dakotaCustomerId, customerId));
+
+        // Find user for notification
+        const [customer] = await db
+          .select({ userId: dakotaCustomers.userId })
+          .from(dakotaCustomers)
+          .where(eq(dakotaCustomers.dakotaCustomerId, customerId))
+          .limit(1);
+
+        if (customer) {
+          await createNotification({
+            userId: customer.userId,
+            type: "kyc_update",
+            title: kybStatus === "active"
+              ? "Identity Verified"
+              : `KYC Status: ${kybStatus}`,
+            body: kybStatus === "active"
+              ? "Your identity has been verified. You can now deposit, withdraw, and send funds."
+              : `Your verification status has been updated to ${kybStatus}.`,
+            actionUrl: kybStatus === "active" ? "/dashboard" : "/onboarding",
+          });
+
+          await logAudit({
+            actorType: "system",
+            action: "kyc_status_updated",
+            resourceType: "customer",
+            resourceId: customerId,
+            metadata: { status: kybStatus },
+          });
+        }
       }
       break;
     }
+
     case "transaction.status.updated":
     case "transaction.one_off.updated":
     case "transaction.auto.updated": {
       const txId = data.id as string;
-      const status = data.status as string;
-      if (txId && status) {
-        await db
-          .update(transactions)
-          .set({
-            status,
-            metadata: data as Record<string, unknown>,
-            updatedAt: new Date(),
-          })
-          .where(eq(transactions.dakotaTxId, txId));
+      const newStatus = data.status as string;
+      if (txId && newStatus) {
+        // Get current status before updating
+        const [existingTx] = await db
+          .select({ id: transactions.id, status: transactions.status, userId: transactions.userId })
+          .from(transactions)
+          .where(eq(transactions.dakotaTxId, txId))
+          .limit(1);
+
+        if (existingTx) {
+          const oldStatus = existingTx.status;
+
+          await db
+            .update(transactions)
+            .set({
+              status: newStatus,
+              metadata: data,
+              updatedAt: new Date(),
+            })
+            .where(eq(transactions.dakotaTxId, txId));
+
+          // Log status transition
+          await logStatusChange({
+            transactionId: existingTx.id,
+            oldStatus,
+            newStatus,
+          });
+
+          // Notify user
+          await createNotification({
+            userId: existingTx.userId,
+            type: "transaction_update",
+            title: `Transaction ${newStatus}`,
+            body: `Your transaction status changed from ${oldStatus} to ${newStatus}.`,
+            actionUrl: `/transactions/${existingTx.id}`,
+          });
+
+          // Audit log
+          await logAudit({
+            actorType: "system",
+            action: "transaction_status_updated",
+            resourceType: "transaction",
+            resourceId: existingTx.id,
+            metadata: { oldStatus, newStatus, dakotaTxId: txId },
+          });
+        }
       }
       break;
     }

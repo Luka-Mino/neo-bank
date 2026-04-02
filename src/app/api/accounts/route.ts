@@ -1,50 +1,38 @@
-import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth/config";
+import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { dakotaAccounts, dakotaCustomers } from "@/lib/db/schema";
 import { createAccount as createDakotaAccount } from "@/lib/dakota/accounts";
+import { createAccountSchema } from "@/lib/validators/account";
 
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const GET = apiHandler({
+  handler: async ({ user, request }) => {
+    const type = request.nextUrl.searchParams.get("type");
 
-  const type = req.nextUrl.searchParams.get("type");
-  let query = db
-    .select()
-    .from(dakotaAccounts)
-    .where(eq(dakotaAccounts.userId, session.user.id));
+    const accounts = await db
+      .select()
+      .from(dakotaAccounts)
+      .where(eq(dakotaAccounts.userId, user.id));
 
-  const accounts = await query;
-  const filtered = type
-    ? accounts.filter((a) => a.accountType === type)
-    : accounts;
+    const filtered = type
+      ? accounts.filter((a) => a.accountType === type)
+      : accounts;
 
-  return NextResponse.json({ data: filtered });
-}
+    return ok({ data: filtered });
+  },
+});
 
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const body = await req.json();
-
+export const POST = apiHandler({
+  schema: createAccountSchema,
+  handler: async ({ user, body }) => {
     const customer = await db
       .select()
       .from(dakotaCustomers)
-      .where(eq(dakotaCustomers.userId, session.user.id))
+      .where(eq(dakotaCustomers.userId, user.id))
       .limit(1);
 
     if (customer.length === 0 || customer[0].kycStatus !== "active") {
-      return NextResponse.json(
-        { error: "KYC verification required" },
-        { status: 403 }
-      );
+      return err("KYC verification required", 403);
     }
 
     const dakotaAccount = await createDakotaAccount({
@@ -62,7 +50,7 @@ export async function POST(req: NextRequest) {
     const [account] = await db
       .insert(dakotaAccounts)
       .values({
-        userId: session.user.id,
+        userId: user.id,
         dakotaAccountId: dakotaAccount.id,
         accountType: body.accountType,
         sourceAsset: dakotaAccount.source_asset,
@@ -71,12 +59,6 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
-    return NextResponse.json(account, { status: 201 });
-  } catch (error) {
-    console.error("Account creation error:", error);
-    return NextResponse.json(
-      { error: "Failed to create account" },
-      { status: 500 }
-    );
-  }
-}
+    return ok(account, 201);
+  },
+});

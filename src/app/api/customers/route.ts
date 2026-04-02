@@ -1,24 +1,20 @@
-import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth/config";
+import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { dakotaCustomers } from "@/lib/db/schema";
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const GET = apiHandler({
+  handler: async ({ user }) => {
+    const customer = await db
+      .select()
+      .from(dakotaCustomers)
+      .where(eq(dakotaCustomers.userId, user.id))
+      .limit(1);
 
-  const customer = await db
-    .select()
-    .from(dakotaCustomers)
-    .where(eq(dakotaCustomers.userId, session.user.id))
-    .limit(1);
+    if (customer.length === 0) {
+      return err("No customer record found", 404);
+    }
 
-  if (customer.length === 0) {
-    return NextResponse.json({ error: "No customer record found" }, { status: 404 });
-  }
-
-  return NextResponse.json(customer[0]);
-}
+    return ok(customer[0]);
+  },
+});

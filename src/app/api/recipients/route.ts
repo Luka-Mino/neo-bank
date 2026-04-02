@@ -1,41 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth/config";
+import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { recipients, dakotaCustomers } from "@/lib/db/schema";
 import { createRecipient as createDakotaRecipient } from "@/lib/dakota/recipients";
+import { createRecipientSchema } from "@/lib/validators/recipient";
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const GET = apiHandler({
+  handler: async ({ user }) => {
+    const data = await db
+      .select()
+      .from(recipients)
+      .where(eq(recipients.userId, user.id));
 
-  const data = await db
-    .select()
-    .from(recipients)
-    .where(eq(recipients.userId, session.user.id));
+    return ok({ data });
+  },
+});
 
-  return NextResponse.json({ data });
-}
-
-export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  try {
-    const body = await req.json();
-
+export const POST = apiHandler({
+  schema: createRecipientSchema,
+  handler: async ({ user, body }) => {
     const customer = await db
       .select()
       .from(dakotaCustomers)
-      .where(eq(dakotaCustomers.userId, session.user.id))
+      .where(eq(dakotaCustomers.userId, user.id))
       .limit(1);
 
     if (customer.length === 0) {
-      return NextResponse.json({ error: "No customer record" }, { status: 404 });
+      return err("No customer record", 404);
     }
 
     const dakotaRecipient = await createDakotaRecipient({
@@ -47,18 +38,12 @@ export async function POST(req: NextRequest) {
     const [recipient] = await db
       .insert(recipients)
       .values({
-        userId: session.user.id,
+        userId: user.id,
         dakotaRecipientId: dakotaRecipient.id,
         name: body.name,
       })
       .returning();
 
-    return NextResponse.json(recipient, { status: 201 });
-  } catch (error) {
-    console.error("Recipient creation error:", error);
-    return NextResponse.json(
-      { error: "Failed to create recipient" },
-      { status: 500 }
-    );
-  }
-}
+    return ok(recipient, 201);
+  },
+});
