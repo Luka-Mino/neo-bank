@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
 
 // Protected pages that require auth
 const protectedPaths = [
@@ -25,12 +24,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check JWT token locally (no DB call — fast)
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET,
-  });
-  const isLoggedIn = !!token;
+  // Check for NextAuth session cookie
+  const sessionCookie =
+    req.cookies.get("authjs.session-token") ||
+    req.cookies.get("__Secure-authjs.session-token");
+  const isLoggedIn = !!sessionCookie;
 
   const isPublicAuthPage =
     pathname.startsWith("/login") || pathname.startsWith("/register");
