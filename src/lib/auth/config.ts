@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { users, dakotaCustomers } from "@/lib/db/schema";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   providers: [
     Credentials({
       credentials: {
@@ -18,22 +19,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = credentials.email as string;
         const password = credentials.password as string;
 
-        const user = await db
-          .select()
-          .from(users)
-          .where(eq(users.email, email.toLowerCase()))
-          .limit(1);
+        try {
+          const user = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, email.toLowerCase()))
+            .limit(1);
 
-        if (user.length === 0) return null;
+          if (user.length === 0) return null;
 
-        const isValid = await bcrypt.compare(password, user[0].passwordHash);
-        if (!isValid) return null;
+          const isValid = await bcrypt.compare(password, user[0].passwordHash);
+          if (!isValid) return null;
 
-        return {
-          id: user[0].id,
-          email: user[0].email,
-          name: user[0].fullName,
-        };
+          return {
+            id: user[0].id,
+            email: user[0].email,
+            name: user[0].fullName,
+          };
+        } catch (error) {
+          console.error("Auth error:", error);
+          return null;
+        }
       },
     }),
   ],
@@ -43,15 +49,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
       }
 
-      // Fetch KYC status on every token refresh
+      // Fetch KYC status — but don't break the session if DB query fails
       if (token.id) {
-        const customer = await db
-          .select({ kycStatus: dakotaCustomers.kycStatus })
-          .from(dakotaCustomers)
-          .where(eq(dakotaCustomers.userId, token.id as string))
-          .limit(1);
+        try {
+          const customer = await db
+            .select({ kycStatus: dakotaCustomers.kycStatus })
+            .from(dakotaCustomers)
+            .where(eq(dakotaCustomers.userId, token.id as string))
+            .limit(1);
 
-        token.kycStatus = customer[0]?.kycStatus ?? "none";
+          token.kycStatus = customer[0]?.kycStatus ?? "none";
+        } catch {
+          // DB query failed — keep existing kycStatus or default
+          token.kycStatus = token.kycStatus ?? "none";
+        }
       }
 
       return token;
