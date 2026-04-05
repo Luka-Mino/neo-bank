@@ -15,28 +15,14 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import {
-  LayoutDashboard,
-  ArrowDownToLine,
-  ArrowUpFromLine,
-  Send,
-  History,
-  Users,
-  Settings,
   Shield,
   Menu,
   LogOut,
   User,
+  ShieldCheck,
 } from "lucide-react";
-
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Deposit", href: "/deposit", icon: ArrowDownToLine },
-  { name: "Withdraw", href: "/withdraw", icon: ArrowUpFromLine },
-  { name: "Send", href: "/send", icon: Send },
-  { name: "Transactions", href: "/transactions", icon: History },
-  { name: "Recipients", href: "/recipients", icon: Users },
-  { name: "Settings", href: "/settings", icon: Settings },
-];
+import { NotificationDropdown } from "./notification-dropdown";
+import { navigationGroups } from "./sidebar";
 
 export function Header() {
   const { data: session } = useSession();
@@ -63,30 +49,50 @@ export function Header() {
               <span className="text-lg font-bold">NeoBank</span>
             </Link>
           </div>
-          <nav className="flex flex-col gap-1 p-4">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
-                </Link>
-              );
-            })}
+          <nav className="flex flex-1 flex-col gap-1 p-4">
+            {navigationGroups.map((group) => (
+              <div key={group.label} className="mb-2">
+                <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                  {group.label}
+                </p>
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
+          <div className="border-t p-4">
+            <div className="flex items-center gap-2 px-3 py-2">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-500" />
+              <div>
+                <p className="text-xs font-medium">Bank-grade security</p>
+                <p className="text-[10px] text-muted-foreground">Funds protected up to $250K</p>
+              </div>
+            </div>
+          </div>
         </SheetContent>
       </Sheet>
 
       <div className="hidden lg:block" />
+
+      <div className="flex items-center gap-2">
+      {/* Notifications */}
+      <NotificationDropdown />
 
       {/* User menu */}
       <DropdownMenu>
@@ -117,6 +123,7 @@ export function Header() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
     </header>
   );
 }

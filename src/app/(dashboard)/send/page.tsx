@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Send as SendIcon, Info, Loader2 } from "lucide-react";
+import { Send as SendIcon, Info, Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 const sendSchema = z.object({
@@ -219,6 +219,10 @@ export default function SendPage() {
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {step === "form" ? "Review" : "Confirm Send"}
                 </Button>
+              </div>
+              <div className="flex items-center justify-center gap-1.5 pt-2 text-xs text-muted-foreground">
+                <Lock className="h-3 w-3" />
+                Secure &amp; encrypted
               </div>
             </form>
           </CardContent>

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Copy, CheckCircle2, Building2, Info } from "lucide-react";
 import { toast } from "sonner";
+import { TrustBadge } from "@/components/shared/trust-badge";
 
 export default function DepositPage() {
   const [copied, setCopied] = useState<string | null>(null);
@@ -144,6 +145,8 @@ export default function DepositPage() {
               Deposits are automatically converted to USDC and credited to your wallet.
             </AlertDescription>
           </Alert>
+
+          <TrustBadge />
         </>
       )}
     </div>
