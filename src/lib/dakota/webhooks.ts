@@ -17,44 +17,74 @@ export async function verifyWebhookSignature(
   // Check replay window
   const now = Math.floor(Date.now() / 1000);
   const ts = parseInt(timestamp, 10);
-  if (Math.abs(now - ts) > REPLAY_WINDOW_SECONDS) {
+  if (!Number.isFinite(ts) || Math.abs(now - ts) > REPLAY_WINDOW_SECONDS) {
     return false;
   }
 
   const env = (process.env.DAKOTA_ENV || "sandbox") as keyof typeof WEBHOOK_PUBLIC_KEYS;
   const publicKeyHex = process.env.DAKOTA_WEBHOOK_PUBLIC_KEY || WEBHOOK_PUBLIC_KEYS[env];
 
-  // Construct signed payload
-  const signedPayload = `${timestamp}.${rawBody}`;
+  // Dakota signs timestamp + payload concatenated directly — NO separator.
+  const signedPayload = `${timestamp}${rawBody}`;
 
-  // Import Ed25519 public key
   const publicKeyBytes = Buffer.from(publicKeyHex, "hex");
   const signatureBytes = Buffer.from(signature, "base64");
 
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    publicKeyBytes,
-    { name: "Ed25519" },
-    false,
-    ["verify"]
-  );
+  try {
+    const cryptoKey = await crypto.subtle.importKey(
+      "raw",
+      publicKeyBytes,
+      { name: "Ed25519" },
+      false,
+      ["verify"]
+    );
 
-  const encoder = new TextEncoder();
-  return crypto.subtle.verify(
-    "Ed25519",
-    cryptoKey,
-    signatureBytes,
-    encoder.encode(signedPayload)
-  );
+    const encoder = new TextEncoder();
+    return await crypto.subtle.verify(
+      "Ed25519",
+      cryptoKey,
+      signatureBytes,
+      encoder.encode(signedPayload)
+    );
+  } catch {
+    return false;
+  }
 }
 
-export interface WebhookEvent {
-  event_id: string;
-  event_type: string;
-  data: Record<string, unknown>;
-  created_at: string;
+/**
+ * Dakota's webhook/event envelope (same shape as GET /events entries).
+ * The payload object lives at data.object; update events may carry a sparse
+ * data.previous_attributes.
+ */
+export interface DakotaEventEnvelope<T = Record<string, unknown>> {
+  id: string;
+  type: string;
+  created: number;
+  api_version?: string;
+  data: {
+    object: T;
+    previous_attributes?: Partial<T>;
+  };
 }
 
-export function parseWebhookEvent(rawBody: string): WebhookEvent {
-  return JSON.parse(rawBody);
+/**
+ * Parse a raw webhook body into the standard envelope. Tolerates the minimal
+ * legacy shape some docs examples show ({event, data: {...}}) by lifting the
+ * bare data object into data.object.
+ */
+export function parseEventEnvelope(rawBody: string): DakotaEventEnvelope {
+  const parsed = JSON.parse(rawBody) as Record<string, unknown>;
+  const data = parsed.data as Record<string, unknown> | undefined;
+
+  if (data && typeof data === "object" && !("object" in data)) {
+    return {
+      id: (parsed.id as string) ?? "",
+      type: (parsed.type as string) ?? (parsed.event as string) ?? "",
+      created: (parsed.created as number) ?? 0,
+      api_version: parsed.api_version as string | undefined,
+      data: { object: data },
+    };
+  }
+
+  return parsed as unknown as DakotaEventEnvelope;
 }

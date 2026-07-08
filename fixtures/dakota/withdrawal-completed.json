@@ -1,0 +1,28 @@
+{
+  "id": "2tQRvU7tHKLBcd3qXrPp4jYsKX4",
+  "type": "transaction.one_off.updated",
+  "created": 1737457800,
+  "api_version": "1.0.0",
+  "data": {
+    "object": {
+      "id": "2LfZn6LNoSvMGuSQ0pLLof1OneA",
+      "resource_type": "one_off",
+      "customer_id": "REPLACE_WITH_DAKOTA_CUSTOMER_ID",
+      "status": "completed",
+      "amount": "1.25",
+      "send_amount": "1.27",
+      "source_network_id": "base-sepolia",
+      "source_asset": "USDC",
+      "destination_id": "2LfYm5KMnRvLFtRP7nJJug4zBAN",
+      "destination_asset": "USD",
+      "destination_payment_rail": "ach",
+      "payment_reference": "MONETA TEST",
+      "created_at": 1737457700,
+      "updated_at": 1737457800,
+      "completed_at": 1737457800
+    },
+    "previous_attributes": {
+      "status": "processing"
+    }
+  }
+}

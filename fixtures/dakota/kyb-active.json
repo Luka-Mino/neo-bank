@@ -1,0 +1,12 @@
+{
+  "id": "2tQRvU7tHKLBcd3qXrPp4jYsKXm",
+  "type": "customer.kyb_status.updated",
+  "created": 1737457500,
+  "api_version": "1.0.0",
+  "data": {
+    "object": {
+      "id": "REPLACE_WITH_DAKOTA_CUSTOMER_ID",
+      "kyb_status": "active"
+    }
+  }
+}

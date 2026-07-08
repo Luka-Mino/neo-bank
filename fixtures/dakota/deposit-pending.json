@@ -1,0 +1,29 @@
+{
+  "id": "2tQRvU7tHKLBcd3qXrPp4jYsKX1",
+  "type": "transaction.auto.created",
+  "created": 1737457500,
+  "api_version": "1.0.0",
+  "data": {
+    "object": {
+      "id": "2tQRvvnYkN6edEJUTmF1LzTj2ug",
+      "auto_account_id": "REPLACE_WITH_DAKOTA_ACCOUNT_ID",
+      "destination_id": "2tQRvD3xFcJ7bKpW9qNsT4hZmYr",
+      "type": "onramp",
+      "status": "pending",
+      "created_at": 1737457500,
+      "updated_at": 1737457500,
+      "receipt": {
+        "input_currency": "USD",
+        "output_currency": "USDC",
+        "initial_amount": "1.50",
+        "subtotal_amount": "1.49",
+        "converted_amount": "1.49",
+        "outgoing_amount": "1.49",
+        "external_fee": "0.01",
+        "client_fee": "0.00",
+        "dakota_fee": "0.00",
+        "exchange_rate": "1.00"
+      }
+    }
+  }
+}

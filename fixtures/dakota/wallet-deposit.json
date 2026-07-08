@@ -1,0 +1,15 @@
+{
+  "id": "2tQRvU7tHKLBcd3qXrPp4jYsKX5",
+  "type": "wallet.deposit",
+  "created": 1737457900,
+  "api_version": "1.0.0",
+  "data": {
+    "object": {
+      "wallet_id": "REPLACE_WITH_DAKOTA_WALLET_ID",
+      "network_id": "base-sepolia",
+      "asset": "USDC",
+      "amount": "1.49",
+      "transaction_hash": "0xabc123def456abc123def456abc123def456abc123def456abc123def456abcd"
+    }
+  }
+}
