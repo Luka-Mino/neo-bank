@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   uuid,
@@ -6,6 +7,7 @@ import {
   numeric,
   jsonb,
   boolean,
+  smallint,
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
@@ -36,6 +38,11 @@ export const dakotaCustomers = pgTable(
     applicationUrl: text("application_url"),
     applicationExpiresAt: timestamp("application_expires_at", { withTimezone: true }),
     externalId: text("external_id"),
+    // Post-KYC provisioning state (see src/lib/dakota/provisioning.ts): the
+    // user's "self" recipient and its crypto destination pointing at their
+    // own wallet — the target for onramp deposits.
+    selfRecipientId: text("self_recipient_id"),
+    selfDestinationId: text("self_destination_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -82,8 +89,11 @@ export const walletBalances = pgTable(
   ]
 );
 
-export const dakotaAccounts = pgTable(
-  "dakota_accounts",
+// Renamed from dakota_accounts → dakota_rails. This table holds Dakota
+// on-ramp / off-ramp rail configuration (ACH/wire endpoint metadata) and
+// is unrelated to the user-facing `accounts` table below.
+export const dakotaRails = pgTable(
+  "dakota_rails",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id")
@@ -97,7 +107,66 @@ export const dakotaAccounts = pgTable(
     bankAccountInfo: jsonb("bank_account_info"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("idx_dakota_accounts_user").on(table.userId)]
+  (table) => [index("idx_dakota_rails_user").on(table.userId)]
+);
+
+// User-facing banking accounts. A user can have many — checking, savings,
+// goal-based buckets, etc. account_type is free-text so adding new types
+// later (joint, business, sub-account) is a code-only change.
+export const accounts = pgTable(
+  "accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    accountType: text("account_type").notNull(), // 'checking' | 'savings' | future
+    nickname: text("nickname"),
+    accountNumber: text("account_number").notNull().unique(),
+    currency: text("currency").notNull().default("USD"),
+    balance: numeric("balance", { precision: 30, scale: 18 }).notNull().default("0"),
+    status: text("status").notNull().default("active"), // 'active' | 'frozen' | 'closed'
+    isPrimary: boolean("is_primary").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_accounts_user").on(table.userId),
+    // Exactly one primary account per user (open accounts only). Allows a
+    // closed account to retain is_primary=false without conflict.
+    uniqueIndex("idx_accounts_one_primary_per_user")
+      .on(table.userId)
+      .where(sql`${table.isPrimary} = true AND ${table.status} <> 'closed'`),
+  ]
+);
+
+// Cards belong to ONE account at a time. RESTRICT on account delete
+// forces the operator to detach or close cards explicitly.
+export const cards = pgTable(
+  "cards",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "restrict" }),
+    cardType: text("card_type").notNull(), // 'debit' | 'credit' | 'virtual' | 'physical'
+    last4: text("last4").notNull(),
+    status: text("status").notNull().default("active"), // 'active' | 'frozen' | 'replaced' | 'canceled'
+    nickname: text("nickname"),
+    expMonth: smallint("exp_month"),
+    expYear: smallint("exp_year"),
+    network: text("network"), // 'visa' | 'mastercard'
+    panToken: text("pan_token"), // placeholder for issuer PAN reference
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_cards_user").on(table.userId),
+    index("idx_cards_account").on(table.accountId),
+  ]
 );
 
 export const transactions = pgTable(
@@ -107,6 +176,11 @@ export const transactions = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    // Which of the user's accounts this transaction debited/credited.
+    // Nullable during the backfill window; application requires it for new rows.
+    accountId: uuid("account_id").references(() => accounts.id, {
+      onDelete: "restrict",
+    }),
     dakotaTxId: text("dakota_tx_id").notNull().unique(),
     txType: text("tx_type").notNull(),
     status: text("status").notNull(),
@@ -125,6 +199,7 @@ export const transactions = pgTable(
   },
   (table) => [
     index("idx_transactions_user").on(table.userId),
+    index("idx_transactions_account").on(table.accountId),
     index("idx_transactions_status").on(table.status),
     index("idx_transactions_created").on(table.createdAt),
     index("idx_transactions_dakota_id").on(table.dakotaTxId),

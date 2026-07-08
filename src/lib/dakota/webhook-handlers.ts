@@ -54,54 +54,68 @@ async function onKybStatus(object: EventObject) {
   if (!customerId || !kybStatus) return;
 
   const [customer] = await db
-    .select({ userId: dakotaCustomers.userId })
+    .select({
+      userId: dakotaCustomers.userId,
+      kycStatus: dakotaCustomers.kycStatus,
+    })
     .from(dakotaCustomers)
     .where(eq(dakotaCustomers.dakotaCustomerId, customerId))
     .limit(1);
   if (!customer) return; // not a customer we know about
 
-  await db
-    .update(dakotaCustomers)
-    .set({ kycStatus: kybStatus, updatedAt: new Date() })
-    .where(eq(dakotaCustomers.dakotaCustomerId, customerId));
+  // Only notify on actual change — this handler re-runs on Dakota's retries
+  // (e.g. when provisioning below threw on a previous attempt).
+  const statusChanged = customer.kycStatus !== kybStatus;
 
-  if (kybStatus === "active") {
-    // TODO(PR 3): provisionCustomer(customer.userId) — wallet, self
-    // recipient/destination, onramp account.
-    await createNotification({
-      userId: customer.userId,
-      type: "kyc_update",
-      title: "Identity verified",
-      body: "Your identity has been verified. You can now deposit, withdraw, and send funds.",
-      actionUrl: "/dashboard",
-    });
-  } else if (reasonCode === "pending_proof_of_address") {
-    // Individual crossed the $3,000 / 7-day inbound threshold; deposits are
-    // held until a proof-of-address document is approved.
-    await createNotification({
-      userId: customer.userId,
-      type: "kyc_update",
-      title: "Additional verification needed",
-      body: "Please upload a proof of address to keep receiving deposits over the limit.",
-      actionUrl: "/onboarding",
-    });
-  } else {
-    await createNotification({
-      userId: customer.userId,
-      type: "kyc_update",
-      title: `Verification status: ${kybStatus}`,
-      body: `Your verification status has been updated to ${kybStatus}.`,
-      actionUrl: "/onboarding",
+  if (statusChanged) {
+    await db
+      .update(dakotaCustomers)
+      .set({ kycStatus: kybStatus, updatedAt: new Date() })
+      .where(eq(dakotaCustomers.dakotaCustomerId, customerId));
+
+    if (kybStatus === "active") {
+      await createNotification({
+        userId: customer.userId,
+        type: "kyc_update",
+        title: "Identity verified",
+        body: "Your identity has been verified. You can now deposit, withdraw, and send funds.",
+        actionUrl: "/dashboard",
+      });
+    } else if (reasonCode === "pending_proof_of_address") {
+      // Individual crossed the $3,000 / 7-day inbound threshold; deposits are
+      // held until a proof-of-address document is approved.
+      await createNotification({
+        userId: customer.userId,
+        type: "kyc_update",
+        title: "Additional verification needed",
+        body: "Please upload a proof of address to keep receiving deposits over the limit.",
+        actionUrl: "/onboarding",
+      });
+    } else {
+      await createNotification({
+        userId: customer.userId,
+        type: "kyc_update",
+        title: `Verification status: ${kybStatus}`,
+        body: `Your verification status has been updated to ${kybStatus}.`,
+        actionUrl: "/onboarding",
+      });
+    }
+
+    await logAudit({
+      actorType: "system",
+      action: "kyc_status_updated",
+      resourceType: "customer",
+      resourceId: customerId,
+      metadata: { status: kybStatus, reasonCode },
     });
   }
 
-  await logAudit({
-    actorType: "system",
-    action: "kyc_status_updated",
-    resourceType: "customer",
-    resourceId: customerId,
-    metadata: { status: kybStatus, reasonCode },
-  });
+  if (kybStatus === "active") {
+    // Idempotent — completed steps are skipped. A throw here fails the
+    // webhook (500) so Dakota's retries drive provisioning to completion.
+    const { provisionCustomer } = await import("./provisioning");
+    await provisionCustomer(customer.userId);
+  }
 }
 
 // ─── Deposits & other auto-account transactions ─────────────────────────────

@@ -54,7 +54,8 @@ interface DakotaDestination {
 }
 
 export async function createRecipient(
-  params: CreateRecipientParams
+  params: CreateRecipientParams,
+  opts?: { idempotencyKey?: string }
 ): Promise<DakotaRecipient> {
   const body: Record<string, unknown> = { name: params.name };
   if (params.address) {
@@ -71,7 +72,8 @@ export async function createRecipient(
 
   return dakota.post<DakotaRecipient>(
     `/customers/${params.customerId}/recipients`,
-    body
+    body,
+    opts
   );
 }
 
@@ -91,7 +93,8 @@ export async function listRecipients(
 }
 
 export async function createDestination(
-  params: CreateDestinationParams
+  params: CreateDestinationParams,
+  opts?: { idempotencyKey?: string }
 ): Promise<DakotaDestination> {
   const body: Record<string, unknown> = {
     destination_type: params.destinationType,
@@ -114,7 +117,8 @@ export async function createDestination(
 
   return dakota.post<DakotaDestination>(
     `/recipients/${params.recipientId}/destinations`,
-    body
+    body,
+    opts
   );
 }
 

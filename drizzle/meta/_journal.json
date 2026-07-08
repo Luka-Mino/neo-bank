@@ -8,6 +8,20 @@
       "when": 1775084700630,
       "tag": "0000_soft_morbius",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777497700000,
+      "tag": "0001_multi_account",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783551600000,
+      "tag": "0002_self_provisioning",
+      "breakpoints": true
     }
   ]
 }

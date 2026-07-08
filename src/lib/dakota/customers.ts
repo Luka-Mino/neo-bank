@@ -19,12 +19,19 @@ interface DakotaCustomer {
   updated_at: string;
 }
 
-export async function createCustomer(params: CreateCustomerParams): Promise<DakotaCustomer> {
-  return dakota.post<DakotaCustomer>("/customers", {
-    name: params.name,
-    customer_type: params.customerType,
-    external_id: params.externalId,
-  });
+export async function createCustomer(
+  params: CreateCustomerParams,
+  opts?: { idempotencyKey?: string }
+): Promise<DakotaCustomer> {
+  return dakota.post<DakotaCustomer>(
+    "/customers",
+    {
+      name: params.name,
+      customer_type: params.customerType,
+      external_id: params.externalId,
+    },
+    opts
+  );
 }
 
 export async function getCustomer(customerId: string): Promise<DakotaCustomer> {

@@ -3,9 +3,8 @@ import { v4 as uuidv4 } from "uuid";
 import { eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
-import { users, dakotaCustomers, emailVerificationTokens } from "@/lib/db/schema";
+import { users, emailVerificationTokens } from "@/lib/db/schema";
 import { registerSchema } from "@/lib/validators/auth";
-import { createCustomer } from "@/lib/dakota/customers";
 import { sendVerificationEmail } from "@/lib/email";
 
 export const POST = apiHandler({
@@ -47,29 +46,9 @@ export const POST = apiHandler({
     });
     await sendVerificationEmail(normalizedEmail, verifyToken);
 
-    // Create Dakota customer
-    try {
-      const dakotaCustomer = await createCustomer({
-        name: fullName,
-        customerType: "individual",
-        externalId: user.id,
-      });
-
-      await db.insert(dakotaCustomers).values({
-        userId: user.id,
-        dakotaCustomerId: dakotaCustomer.id,
-        customerType: "individual",
-        kycStatus: dakotaCustomer.kyb_status || "pending",
-        applicationId: dakotaCustomer.application_id,
-        applicationUrl: dakotaCustomer.application_url,
-        applicationExpiresAt: dakotaCustomer.application_expires_at
-          ? new Date(dakotaCustomer.application_expires_at)
-          : null,
-        externalId: user.id,
-      });
-    } catch (dakotaError) {
-      console.error("Failed to create Dakota customer:", dakotaError);
-    }
+    // The Dakota customer record is created at onboarding start
+    // (POST /api/customers) — retryable there, instead of fire-and-forget
+    // here where a Dakota outage would strand the user without one.
 
     return ok({ message: "Account created successfully", userId: user.id }, 201);
   },

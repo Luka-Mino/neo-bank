@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { wallets, dakotaCustomers } from "@/lib/db/schema";
+import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 
 export const GET = apiHandler({
   handler: async ({ user }) => {
@@ -24,7 +25,10 @@ export const POST = apiHandler({
       .where(eq(dakotaCustomers.userId, user.id))
       .limit(1);
 
-    if (!customer || customer.kycStatus !== "active") {
+    if (
+      !isKycBypassed() &&
+      (!customer || customer.kycStatus !== "active")
+    ) {
       return err("KYC verification required before creating a wallet", 403);
     }
 
@@ -39,36 +43,24 @@ export const POST = apiHandler({
       return ok({ data: existing[0], message: "Wallet already exists" });
     }
 
-    // Create wallet via Dakota
-    // NOTE: Wallet creation requires signer groups. For a custodial model,
-    // the platform manages signing keys. For now, we'll store wallet info
-    // when it comes back from Dakota.
-    // In sandbox, we can create a basic wallet.
+    // Wallet creation is one step of post-KYC provisioning — run the whole
+    // idempotent pipeline (wallet with platform signer group + policy, self
+    // recipient/destination, onramp account) so a wallet is never created
+    // send-disabled or without its deposit rail.
     try {
-      const { createWallet } = await import("@/lib/dakota/wallets");
-      // TODO: Set up proper signer groups for production
-      const dakotaWallet = await createWallet({
-        customerId: customer.dakotaCustomerId,
-        name: `${user.name || "User"}'s Wallet`,
-        family: "evm",
-        signerGroups: [], // Will need real signer groups in production
-      });
+      const { provisionCustomer } = await import("@/lib/dakota/provisioning");
+      await provisionCustomer(user.id);
 
       const [wallet] = await db
-        .insert(wallets)
-        .values({
-          userId: user.id,
-          dakotaWalletId: dakotaWallet.id,
-          family: dakotaWallet.family,
-          address: dakotaWallet.address,
-          name: dakotaWallet.name,
-        })
-        .returning();
+        .select()
+        .from(wallets)
+        .where(eq(wallets.userId, user.id))
+        .limit(1);
 
       return ok({ data: wallet }, 201);
     } catch (error) {
-      console.error("Wallet creation error:", error);
-      return err("Failed to create wallet. Please try again.", 500);
+      console.error("Wallet provisioning error:", error);
+      return err("Failed to set up wallet. Please try again.", 500);
     }
   },
 });

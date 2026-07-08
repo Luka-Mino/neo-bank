@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,16 @@ export default function OnboardingPage() {
   });
   const customer = customerRes?.data || customerRes;
 
+  // Registration no longer creates the Dakota customer — this page does, on
+  // first visit, so the creation is retryable (refresh retries it).
+  const creationAttempted = useRef(false);
+  const hasCustomer = Boolean(customer?.kycStatus);
+  useEffect(() => {
+    if (isLoading || hasCustomer || creationAttempted.current) return;
+    creationAttempted.current = true;
+    fetch("/api/customers", { method: "POST" }).then(() => refetch());
+  }, [isLoading, hasCustomer, refetch]);
+
   useEffect(() => {
     if (customer?.kycStatus === "active") {
       router.push("/dashboard");
@@ -26,28 +36,28 @@ export default function OnboardingPage() {
 
   const statusConfig: Record<string, { icon: React.ReactNode; color: string; text: string }> = {
     pending: {
-      icon: <Clock className="h-8 w-8 text-yellow-500" />,
-      color: "text-yellow-600 bg-yellow-50",
+      icon: <Clock className="h-8 w-8 text-amber-600" />,
+      color: "text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30",
       text: "Verification Pending",
     },
     active: {
-      icon: <CheckCircle2 className="h-8 w-8 text-green-500" />,
-      color: "text-green-600 bg-green-50",
+      icon: <CheckCircle2 className="h-8 w-8 text-primary" />,
+      color: "text-primary bg-primary/10",
       text: "Verified",
     },
     partner_review: {
-      icon: <Clock className="h-8 w-8 text-blue-500" />,
-      color: "text-blue-600 bg-blue-50",
+      icon: <Clock className="h-8 w-8 text-muted-foreground" />,
+      color: "text-muted-foreground bg-muted",
       text: "Under Review",
     },
     rejected: {
-      icon: <XCircle className="h-8 w-8 text-red-500" />,
-      color: "text-red-600 bg-red-50",
+      icon: <XCircle className="h-8 w-8 text-rose-600" />,
+      color: "text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/30",
       text: "Verification Failed",
     },
     frozen: {
-      icon: <XCircle className="h-8 w-8 text-red-500" />,
-      color: "text-red-600 bg-red-50",
+      icon: <XCircle className="h-8 w-8 text-rose-600" />,
+      color: "text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/30",
       text: "Account Frozen",
     },
   };

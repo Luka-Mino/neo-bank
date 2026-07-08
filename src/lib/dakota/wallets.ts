@@ -4,8 +4,10 @@ interface CreateWalletParams {
   customerId: string;
   name: string;
   family: "evm" | "solana";
+  // Both required by Dakota. A wallet with `policies: []` is deposit-only —
+  // every send is denied until a policy is attached (an endorsed request).
   signerGroups: string[];
-  policies?: string[];
+  policies: string[];
 }
 
 interface DakotaWallet {
@@ -24,14 +26,21 @@ interface WalletBalance {
   balance: string;
 }
 
-export async function createWallet(params: CreateWalletParams): Promise<DakotaWallet> {
-  return dakota.post<DakotaWallet>("/wallets", {
-    customer_id: params.customerId,
-    name: params.name,
-    family: params.family,
-    signer_groups: params.signerGroups,
-    policies: params.policies,
-  });
+export async function createWallet(
+  params: CreateWalletParams,
+  opts?: { idempotencyKey?: string }
+): Promise<DakotaWallet> {
+  return dakota.post<DakotaWallet>(
+    "/wallets",
+    {
+      customer_id: params.customerId,
+      name: params.name,
+      family: params.family,
+      signer_groups: params.signerGroups,
+      policies: params.policies,
+    },
+    opts
+  );
 }
 
 export async function getWalletBalances(
