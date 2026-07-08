@@ -59,12 +59,18 @@ export const dakota = {
     return handleResponse<T>(response);
   },
 
-  async post<T>(path: string, body?: unknown): Promise<T> {
+  async post<T>(
+    path: string,
+    body?: unknown,
+    opts?: { idempotencyKey?: string }
+  ): Promise<T> {
     const response = await fetch(`${getBaseUrl()}${path}`, {
       method: "POST",
       headers: {
         "x-api-key": getApiKey(),
-        "x-idempotency-key": uuidv4(),
+        // Deterministic keys let retries replay Dakota's cached response
+        // instead of creating duplicate resources.
+        "x-idempotency-key": opts?.idempotencyKey ?? uuidv4(),
         "Content-Type": "application/json",
       },
       body: body ? JSON.stringify(body) : undefined,

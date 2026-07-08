@@ -47,6 +47,17 @@
 - [ ] Redis caching layer
 - [ ] Database connection pooling for production
 
+## Dakota platform (ideas beyond the base integration — see DAKOTA-PLAN.md)
+- [ ] Passkey-endorsed transactions — register user passkeys as Dakota WEBAUTHN signers so users cryptographically approve their own sends (mixes with our platform ES256 signer in one signatures array)
+- [ ] Tiered wallet policies — amount_threshold rule requiring 2-of-N approval above e.g. $10k (fraud/ops control)
+- [ ] Swap accounts / one-off swaps (USDC↔USDT cross-chain) — Dakota supports both reusable and one-off
+- [ ] Custom in-app KYC UI replacing Dakota's hosted form (application endpoints + document upload + attestation sequencing)
+- [ ] Sumsub token import — onboard users already KYC'd elsewhere without re-verification (needs tri-party Sumsub agreement)
+- [ ] RD stablecoin support on Base (blocked: state-restricted in FL/GA/NY/TX/WA/LA)
+- [ ] Fedwire same-day withdrawals as a premium feature (one-off transfers support per-txn rail override)
+- [ ] Dakota MCP server in dev tooling (read-only sandbox inspection from Claude Code)
+- [ ] Adopt official @dakota-xyz/ts-sdk if our hand-rolled client drifts from their OpenAPI
+
 ## Compliance & Legal
 - [ ] Terms of service
 - [ ] Privacy policy

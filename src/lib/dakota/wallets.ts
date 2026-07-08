@@ -40,26 +40,5 @@ export async function getWalletBalances(
   return dakota.get<{ data: WalletBalance[] }>(`/wallets/${walletId}/balances`);
 }
 
-export async function sendFromWallet(
-  walletId: string,
-  params: {
-    amount: string;
-    asset: string;
-    networkId: string;
-    destinationAddress: string;
-  }
-): Promise<DakotaTransaction> {
-  return dakota.post<DakotaTransaction>(`/wallets/${walletId}/send`, {
-    amount: params.amount,
-    asset: params.asset,
-    network_id: params.networkId,
-    destination_address: params.destinationAddress,
-  });
-}
-
-interface DakotaTransaction {
-  id: string;
-  status: string;
-  amount: string;
-  created_at: string;
-}
+// Sending from a wallet requires a signed intent (endorsed request) —
+// see wallet-transactions.ts. Dakota has no unauthenticated send endpoint.
