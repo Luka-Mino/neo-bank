@@ -53,10 +53,16 @@ export const POST = apiHandler({
       networkId: body.networkId,
       assets: body.assets,
       abaRoutingNumber: body.abaRoutingNumber,
+      abaWireRoutingNumber: body.abaWireRoutingNumber,
       accountNumber: body.accountNumber,
       accountType: body.accountType,
+      accountHolderName: body.accountHolderName,
+      bankName: body.bankName,
+      accountHolderAddress: body.accountHolderAddress,
+      bankAddress: body.bankAddress,
       iban: body.iban,
       bic: body.bic,
+      capabilities: body.capabilities,
     });
 
     const [destination] = await db

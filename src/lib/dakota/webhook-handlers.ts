@@ -402,21 +402,73 @@ async function onOneOffTransaction(object: EventObject) {
     return;
   }
 
-  if (!isTransitionAllowed(row.status, newStatus)) return;
+  // Statuses after which the payout will definitively not (or no longer)
+  // reach the recipient — the hold placed at initiation must be released.
+  const REFUND_STATUSES = new Set([
+    "failed",
+    "cancelled",
+    "canceled",
+    "returned",
+    "reversed",
+    "rejected",
+    "invalid",
+    "timed_out",
+  ]);
 
-  // NOTE: balance holds/releases for withdrawals land with the two-leg
-  // orchestration (DAKOTA-PLAN.md phase 3) — this handler only tracks state.
-  await db
-    .update(transactions)
-    .set({ status: newStatus, metadata: object, updatedAt: new Date() })
-    .where(eq(transactions.id, row.id));
+  let refundedAmount: string | null = null;
+  let applied = false;
 
-  await logStatusChange({
-    transactionId: row.id,
-    oldStatus: row.status,
-    newStatus,
-    reason: (object.return_reason ?? object.failure_reason) as string | undefined,
+  await db.transaction(async (tx) => {
+    const [locked] = await tx
+      .select({
+        id: transactions.id,
+        status: transactions.status,
+        accountId: transactions.accountId,
+        metadata: transactions.metadata,
+      })
+      .from(transactions)
+      .where(eq(transactions.id, row.id))
+      .for("update");
+    if (!locked || !isTransitionAllowed(locked.status, newStatus)) return;
+    applied = true;
+
+    const meta = (locked.metadata ?? {}) as Record<string, unknown>;
+    // Spread order preserves our moneta_* bookkeeping flags: the incoming
+    // Dakota object never contains them, so they survive the merge.
+    let nextMeta: Record<string, unknown> = { ...meta, ...object };
+
+    // Refund exactly once: only if this row still holds a debit.
+    if (
+      REFUND_STATUSES.has(newStatus) &&
+      meta.moneta_debited === true &&
+      locked.accountId &&
+      isValidAmount(meta.moneta_debited_amount)
+    ) {
+      refundedAmount = meta.moneta_debited_amount as string;
+      await tx
+        .update(accounts)
+        .set({
+          balance: sql`${accounts.balance} + ${refundedAmount}::numeric`,
+          updatedAt: new Date(),
+        })
+        .where(eq(accounts.id, locked.accountId));
+      nextMeta = { ...nextMeta, moneta_debited: false };
+    }
+
+    await tx
+      .update(transactions)
+      .set({ status: newStatus, metadata: nextMeta, updatedAt: new Date() })
+      .where(eq(transactions.id, locked.id));
+
+    await logStatusChange({
+      transactionId: locked.id,
+      oldStatus: locked.status,
+      newStatus,
+      reason: (object.return_reason ?? object.failure_reason) as string | undefined,
+    });
   });
+
+  if (!applied) return;
 
   await createNotification({
     userId: row.userId,
@@ -425,7 +477,9 @@ async function onOneOffTransaction(object: EventObject) {
     body:
       newStatus === "completed"
         ? "Your transfer has been delivered."
-        : `Your transfer status changed from ${row.status} to ${newStatus}.`,
+        : refundedAmount
+          ? `Your transfer did not complete — ${refundedAmount} has been returned to your account.`
+          : `Your transfer status changed from ${row.status} to ${newStatus}.`,
     actionUrl: `/transactions/${row.id}`,
   });
 }

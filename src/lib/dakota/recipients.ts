@@ -23,6 +23,15 @@ interface DakotaRecipient {
   updated_at: string;
 }
 
+interface DestinationAddress {
+  street1: string;
+  street2?: string;
+  city: string;
+  region?: string;
+  postalCode?: string;
+  country: string;
+}
+
 interface CreateDestinationParams {
   recipientId: string;
   destinationType: "crypto" | "fiat_us" | "fiat_iban";
@@ -31,13 +40,31 @@ interface CreateDestinationParams {
   cryptoAddress?: string;
   networkId?: string;
   assets?: string[];
-  // US Bank
+  // US Bank — account_holder_name and bank_name are REQUIRED by Dakota
+  // (≤35 chars each); enforced upstream in createDestinationSchema.
   abaRoutingNumber?: string;
+  abaWireRoutingNumber?: string;
   accountNumber?: string;
   accountType?: "checking" | "savings";
-  // IBAN
+  accountHolderName?: string;
+  bankName?: string;
+  accountHolderAddress?: DestinationAddress;
+  bankAddress?: DestinationAddress;
+  // IBAN — additionally requires holder address, assets, capabilities.
   iban?: string;
   bic?: string;
+  capabilities?: string[];
+}
+
+function toDakotaAddress(address: DestinationAddress) {
+  return {
+    street1: address.street1,
+    street2: address.street2,
+    city: address.city,
+    region: address.region,
+    postal_code: address.postalCode,
+    country: address.country,
+  };
 }
 
 interface DakotaDestination {
@@ -107,12 +134,31 @@ export async function createDestination(
     body.assets = params.assets;
   } else if (params.destinationType === "fiat_us") {
     body.aba_routing_number = params.abaRoutingNumber;
+    body.aba_wire_routing_number = params.abaWireRoutingNumber;
     body.account_number = params.accountNumber;
     body.account_type = params.accountType;
-    body.assets = ["USD"];
+    body.account_holder_name = params.accountHolderName;
+    body.bank_name = params.bankName;
+    if (params.accountHolderAddress) {
+      body.account_holder_address = toDakotaAddress(params.accountHolderAddress);
+    }
+    if (params.bankAddress) {
+      body.bank_address = toDakotaAddress(params.bankAddress);
+    }
+    body.assets = params.assets ?? ["USD"];
   } else if (params.destinationType === "fiat_iban") {
     body.iban = params.iban;
     body.bic = params.bic;
+    body.account_holder_name = params.accountHolderName;
+    body.bank_name = params.bankName;
+    if (params.accountHolderAddress) {
+      body.account_holder_address = toDakotaAddress(params.accountHolderAddress);
+    }
+    if (params.bankAddress) {
+      body.bank_address = toDakotaAddress(params.bankAddress);
+    }
+    body.assets = params.assets;
+    body.capabilities = params.capabilities;
   }
 
   return dakota.post<DakotaDestination>(

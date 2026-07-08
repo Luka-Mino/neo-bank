@@ -44,19 +44,25 @@ interface DakotaTransaction {
 }
 
 export async function createTransaction(
-  params: CreateTransactionParams
+  params: CreateTransactionParams,
+  opts?: { idempotencyKey?: string }
 ): Promise<DakotaTransaction> {
-  return dakota.post<DakotaTransaction>("/transactions", {
-    amount: params.amount,
-    customer_id: params.customerId,
-    source_network_id: params.sourceNetworkId,
-    source_asset: params.sourceAsset,
-    destination_id: params.destinationId,
-    destination_asset: params.destinationAsset,
-    destination_network_id: params.destinationNetworkId,
-    destination_payment_rail: params.destinationPaymentRail,
-    payment_reference: params.paymentReference,
-  });
+  return dakota.post<DakotaTransaction>(
+    "/transactions",
+    {
+      transaction_type: "one_off",
+      amount: params.amount,
+      customer_id: params.customerId,
+      source_network_id: params.sourceNetworkId,
+      source_asset: params.sourceAsset,
+      destination_id: params.destinationId,
+      destination_asset: params.destinationAsset,
+      destination_network_id: params.destinationNetworkId,
+      destination_payment_rail: params.destinationPaymentRail,
+      payment_reference: params.paymentReference,
+    },
+    opts
+  );
 }
 
 export async function getTransaction(txId: string): Promise<DakotaTransaction> {
@@ -74,6 +80,7 @@ export async function listTransactions(params?: {
   return dakota.get("/transactions", queryParams);
 }
 
-export async function cancelTransaction(txId: string): Promise<DakotaTransaction> {
-  return dakota.post<DakotaTransaction>(`/transactions/${txId}/cancel`);
+// 204 on success; 400 when the transaction is no longer cancellable.
+export async function cancelTransaction(txId: string): Promise<void> {
+  await dakota.post<void>(`/transactions/${txId}/cancellations`);
 }

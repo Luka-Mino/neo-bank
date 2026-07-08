@@ -1,11 +1,11 @@
 import { and, eq } from "drizzle-orm";
-import { v5 as uuidv5 } from "uuid";
 import { db } from "@/lib/db";
 import { dakotaCustomers, dakotaRails, users, wallets } from "@/lib/db/schema";
 import { createWallet } from "./wallets";
 import { createDestination, createRecipient } from "./recipients";
 import { createAccount } from "./accounts";
 import { defaultNetworkId } from "./networks";
+import { deterministicIdempotencyKey } from "./idempotency";
 
 /**
  * Post-KYC provisioning: everything a newly-verified user needs before money
@@ -25,12 +25,8 @@ import { defaultNetworkId } from "./networks";
  * and POST /api/customers/provision (manual retry from the onboarding page).
  */
 
-// Fixed namespace for uuidv5 — never change this, or retried steps will stop
-// matching their original Dakota idempotency keys.
-const MONETA_IDEMPOTENCY_NAMESPACE = "8f3a9b21-64c7-45de-9d02-7c1e5a80b4f6";
-
 export function provisioningIdempotencyKey(userId: string, step: string): string {
-  return uuidv5(`${userId}:${step}`, MONETA_IDEMPOTENCY_NAMESPACE);
+  return deterministicIdempotencyKey(`${userId}:${step}`);
 }
 
 function requiredEnv(name: "DAKOTA_SIGNER_GROUP_ID" | "DAKOTA_POLICY_ID"): string {
