@@ -39,6 +39,30 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
+  --color-marble: #f6f6f6;
+  --color-turquoise: #4ac280;
+  --color-turquoise-50: #eaf8f0;
+  --color-turquoise-100: #c9ecd7;
+  --color-turquoise-600: #3fb073;
+  --color-turquoise-700: #2f8b58;
+  --color-deep-forest: #122e2e;
+  --color-forest: #122e2e;
+  --color-forest-700: #1f4040;
+  --color-forest-900: #0a1c1c;
+  --color-noir: #212020;
+
+  --color-cat-blue: #2f80ed;
+  --color-cat-orange: #ff9500;
+  --color-cat-red: #ff3b30;
+  --color-cat-purple: #8b5cf6;
+  --color-cat-cyan: #22d3ee;
+  --color-cat-emerald: #4ac280;
+
+  --radius-card: 18px;
+  --radius-xl2: 20px;
+  --shadow-card: 0 1px 0 rgba(18, 46, 46, 0.04), 0 4px 14px -8px rgba(18, 46, 46, 0.12);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -48,83 +72,229 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Moneta brand palette
+ * Marble       #F6F6F6  light surface
+ * Turquoise    #4AC280  primary brand
+ * Deep Forest  #122E2E  dark surface (brand)
+ * Noir         #212020  body text on light, deepest dark
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.45 0.15 168);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.55 0.15 168);
-  --chart-2: oklch(0.55 0.15 240);
-  --chart-3: oklch(0.55 0.15 300);
-  --chart-4: oklch(0.65 0.15 80);
-  --chart-5: oklch(0.55 0.15 20);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.45 0.15 168);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #f6f6f6;
+  --foreground: #122e2e;
+  --card: #ffffff;
+  --card-foreground: #122e2e;
+  --popover: #ffffff;
+  --popover-foreground: #122e2e;
+  --primary: #4ac280;
+  --primary-foreground: #122e2e;
+  --secondary: #ececec;
+  --secondary-foreground: #122e2e;
+  --muted: #eef0ef;
+  --muted-foreground: #5b6b6b;
+  --accent: #c9ecd7;
+  --accent-foreground: #122e2e;
+  --destructive: #e5484d;
+  --border: #e3e6e5;
+  --input: #e3e6e5;
+  --ring: #4ac280;
+  --chart-1: #4ac280;
+  --chart-2: #122e2e;
+  --chart-3: #6bd49e;
+  --chart-4: #1f4a4a;
+  --chart-5: #b8e5c9;
+  --radius: 0.875rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #122e2e;
+  --sidebar-primary: #4ac280;
+  --sidebar-primary-foreground: #122e2e;
+  --sidebar-accent: #c9ecd7;
+  --sidebar-accent-foreground: #122e2e;
+  --sidebar-border: #e3e6e5;
+  --sidebar-ring: #4ac280;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.75 0.15 168);
-  --primary-foreground: oklch(0.145 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.7 0.15 168);
-  --chart-2: oklch(0.7 0.15 240);
-  --chart-3: oklch(0.7 0.15 300);
-  --chart-4: oklch(0.75 0.15 80);
-  --chart-5: oklch(0.7 0.15 20);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.75 0.15 168);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Deep Forest as the canvas, Noir for cards — both from the Moneta guide */
+  --background: #0a1c1c;
+  --foreground: #f6f6f6;
+  --card: #122e2e;
+  --card-foreground: #f6f6f6;
+  --popover: #122e2e;
+  --popover-foreground: #f6f6f6;
+  --primary: #4ac280;
+  --primary-foreground: #0a1c1c;
+  --secondary: #1f4040;
+  --secondary-foreground: #f6f6f6;
+  --muted: #1a3535;
+  --muted-foreground: #9bb1b1;
+  --accent: #1f4040;
+  --accent-foreground: #4ac280;
+  --destructive: #ff4d4f;
+  --border: rgba(246, 246, 246, 0.08);
+  --input: rgba(246, 246, 246, 0.1);
+  --ring: #4ac280;
+  --chart-1: #4ac280;
+  --chart-2: #6bd49e;
+  --chart-3: #22d3ee;
+  --chart-4: #ff9500;
+  --chart-5: #8b5cf6;
+  --sidebar: #122e2e;
+  --sidebar-foreground: #f6f6f6;
+  --sidebar-primary: #4ac280;
+  --sidebar-primary-foreground: #0a1c1c;
+  --sidebar-accent: #1f4040;
+  --sidebar-accent-foreground: #4ac280;
+  --sidebar-border: rgba(246, 246, 246, 0.08);
+  --sidebar-ring: #4ac280;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
+  }
+  /* Brand-colored focus ring for keyboard users only. Click/tap focus
+   * stays unstyled so it doesn't bleed into custom controls (e.g. our
+   * card-control toggle, where universal :focus left a stray green
+   * outline on the off-state pill). Per-component focus styles still
+   * win when more specific. */
+  *:focus-visible {
+    @apply outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv11";
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .bg-deep-forest {
+    background-color: #122e2e;
+  }
+  .bg-noir {
+    background-color: #212020;
+  }
+  .bg-marble {
+    background-color: #f6f6f6;
+  }
+  .text-turquoise {
+    color: #4ac280;
+  }
+  .border-turquoise {
+    border-color: #4ac280;
+  }
+
+  /* Vertical strip accent used on list rows (Revolut pattern, Moneta colors) */
+  .strip-emerald {
+    box-shadow: inset 3px 0 0 0 #4ac280;
+  }
+  .strip-blue {
+    box-shadow: inset 3px 0 0 0 #2f80ed;
+  }
+  .strip-orange {
+    box-shadow: inset 3px 0 0 0 #ff9500;
+  }
+  .strip-red {
+    box-shadow: inset 3px 0 0 0 #ff3b30;
+  }
+  .strip-purple {
+    box-shadow: inset 3px 0 0 0 #8b5cf6;
+  }
+  .strip-cyan {
+    box-shadow: inset 3px 0 0 0 #22d3ee;
+  }
+
+  /* Hero gradients lifted from Moneta Deep Forest → Turquoise */
+  .bg-moneta-hero {
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(74, 194, 128, 0.35) 0%, transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(34, 211, 238, 0.18) 0%, transparent 50%),
+      linear-gradient(135deg, #0a1c1c 0%, #122e2e 60%, #1f4040 100%);
+  }
+
+  .bg-moneta-card {
+    background-image:
+      radial-gradient(circle at 100% 0%, rgba(74, 194, 128, 0.45) 0%, transparent 55%),
+      radial-gradient(circle at 0% 100%, rgba(18, 46, 46, 0.85) 0%, transparent 60%),
+      linear-gradient(135deg, #122e2e 0%, #0a1c1c 100%);
+  }
+
+  /* Marble surface for the savings/goal card variant. Uses only
+   * existing palette values: Marble (#f6f6f6), Secondary (#ececec),
+   * and Turquoise (rgba). No new color tokens. */
+  .bg-moneta-card-marble {
+    background-image:
+      radial-gradient(circle at 0% 100%, rgba(74, 194, 128, 0.20) 0%, transparent 55%),
+      radial-gradient(circle at 100% 0%, rgba(34, 211, 238, 0.10) 0%, transparent 50%),
+      linear-gradient(135deg, #f6f6f6 0%, #ececec 100%);
+  }
+
+  /* Claude Design tokens — match the Moneta Design System artifacts */
+  .moneta-hero-bg {
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(74, 194, 128, 0.35) 0%, transparent 55%),
+      radial-gradient(circle at 100% 100%, rgba(34, 211, 238, 0.18) 0%, transparent 50%),
+      linear-gradient(135deg, #0a1c1c 0%, #122e2e 60%, #1f4040 100%);
+  }
+  .moneta-hero-bg.with-halo::before {
+    content: "";
+    position: absolute;
+    inset: -10% -10% auto auto;
+    width: 60%;
+    aspect-ratio: 1;
+    background: radial-gradient(circle, rgba(74, 194, 128, 0.35) 0%, transparent 60%);
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .moneta-hero-bg.with-halo::after {
+    content: "";
+    position: absolute;
+    inset: auto auto -20% -10%;
+    width: 50%;
+    aspect-ratio: 1;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.20) 0%, transparent 60%);
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .nav-active {
+    background-color: #4ac280;
+    color: #0a1c1c;
+    box-shadow: 0 4px 18px -4px rgba(74, 194, 128, 0.55);
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .insights-dashed {
+    background-color: rgba(74, 194, 128, 0.04);
+    border: 1px dashed rgba(74, 194, 128, 0.30);
+  }
+
+  .tx-row:hover {
+    background-color: rgba(18, 46, 46, 0.025);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .rounded-card {
+    border-radius: var(--radius-card);
+  }
+  .rounded-xl2 {
+    border-radius: var(--radius-xl2);
   }
 }

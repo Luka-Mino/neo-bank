@@ -83,8 +83,8 @@ function ResetPasswordForm() {
       <CardContent className="p-6">
         {success ? (
           <div className="text-center space-y-4">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-green-500/10 border border-green-500/20">
-              <CheckCircle className="w-7 h-7 text-green-500" />
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 border border-primary/20">
+              <CheckCircle className="w-7 h-7 text-primary" />
             </div>
             <div>
               <p className="font-medium mb-1">Password updated!</p>

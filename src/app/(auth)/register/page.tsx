@@ -35,7 +35,11 @@ export default function RegisterPage() {
 
     if (!res.ok) {
       const body = await res.json();
-      setError(body.error || "Registration failed");
+      const msg =
+        typeof body.error === "string"
+          ? body.error
+          : body.error?.message || "Registration failed";
+      setError(msg);
       return;
     }
 
@@ -58,7 +62,7 @@ export default function RegisterPage() {
     <Card>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-        <CardDescription>Get started with your neobank account</CardDescription>
+        <CardDescription>It takes less than two minutes.</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
@@ -96,9 +100,12 @@ export default function RegisterPage() {
             <Input
               id="password"
               type="password"
-              placeholder="Min 8 chars, 1 uppercase, 1 number"
+              placeholder="Create a password"
               {...register("password")}
             />
+            <p className="text-xs text-muted-foreground">
+              At least 8 characters, one uppercase letter, and one number
+            </p>
             {errors.password && (
               <p className="text-sm text-destructive">{errors.password.message}</p>
             )}

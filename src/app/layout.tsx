@@ -15,8 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NeoBank — Modern Banking, Powered by Stablecoins",
-  description: "A consumer-facing neobank powered by Dakota stablecoin infrastructure",
+  title: "Moneta — Stablecoin Banking, Done Right",
+  description: "Moneta is a stablecoin neobank — send, receive, and hold across networks on regulated rails.",
+  icons: {
+    icon: "/images/brand/moneta-icon-turquoise.svg",
+  },
 };
 
 export default function RootLayout({

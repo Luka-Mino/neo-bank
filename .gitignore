@@ -39,6 +39,9 @@ yarn-error.log*
 # research/artifacts
 compass_artifact_*.md
 
+# raw brand source files (JPEG/PDF masters + third-party refs — app uses public/brand)
+/Moneta_Final_Logo_Files/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

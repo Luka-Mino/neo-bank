@@ -3,58 +3,97 @@ import {
   Globe,
   BadgeDollarSign,
   Coins,
+  Sparkles,
+  CreditCard,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 
 const features = [
   {
     icon: ArrowDownToLine,
-    title: "Instant Deposits",
-    description: "Fund your account instantly via ACH or wire transfer",
+    title: "Instant deposits",
+    description:
+      "ACH and wire deposits that hit your account the same day, auto-converted to USDC.",
+    accent: "#4ac280",
   },
   {
     icon: Globe,
-    title: "Global Transfers",
-    description: "Send money anywhere across multiple blockchain networks",
+    title: "Global transfers",
+    description:
+      "Send to anyone, anywhere — across six blockchain networks at on-chain speed.",
+    accent: "#22d3ee",
   },
   {
     icon: BadgeDollarSign,
-    title: "Zero Hidden Fees",
-    description: "No monthly fees, no minimum balances, no surprises",
+    title: "Zero hidden fees",
+    description: "No monthly fees. No minimums. No fine print.",
+    accent: "#ff9500",
   },
   {
     icon: Coins,
-    title: "Stablecoin-Powered",
-    description: "Your dollars are backed by regulated stablecoins",
+    title: "Dollar-backed digital",
+    description:
+      "Every dollar is backed 1:1 by regulated, audited stablecoins — held at FDIC partner banks.",
+    accent: "#8b5cf6",
+  },
+  {
+    icon: CreditCard,
+    title: "Real-time card controls",
+    description:
+      "Freeze, set limits, toggle channels — all instantly from the Moneta app.",
+    accent: "#2f80ed",
+  },
+  {
+    icon: Sparkles,
+    title: "AI spending insights",
+    description:
+      "Smart budgets, category breakdowns, and proactive nudges so your money compounds.",
+    accent: "#ff3b30",
   },
 ] as const;
 
 export function FeaturesGrid() {
   return (
-    <section id="features" className="py-12 sm:py-16">
+    <section id="features" className="bg-[#0a1c1c] py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto mb-12 max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Everything you need, nothing you don&apos;t
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#4ac280]">
+            Features
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white md:text-4xl">
+            Built for how money actually works
           </h2>
-          <p className="mt-4 text-muted-foreground">
-            Built from the ground up for the way money should work.
+          <p className="mt-4 text-white/60">
+            No legacy banking baggage. Just the tools you need to move, save,
+            and grow your money.
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
-            <Card key={feature.title} className="border-0 bg-muted/40">
-              <CardContent className="pt-2">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <feature.icon className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-base font-semibold">{feature.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {feature.description}
-                </p>
-              </CardContent>
-            </Card>
+            <div
+              key={feature.title}
+              className="group relative overflow-hidden rounded-2xl bg-white/[0.04] p-6 ring-1 ring-white/10 transition hover:bg-white/[0.06]"
+            >
+              <div
+                className="absolute inset-x-0 top-0 h-px"
+                style={{ backgroundColor: feature.accent, opacity: 0.6 }}
+              />
+              <div
+                className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl"
+                style={{
+                  backgroundColor: `${feature.accent}1f`,
+                  color: feature.accent,
+                }}
+              >
+                <feature.icon className="h-5 w-5" />
+              </div>
+              <h3 className="text-base font-semibold text-white">
+                {feature.title}
+              </h3>
+              <p className="mt-1.5 text-sm text-white/55">
+                {feature.description}
+              </p>
+            </div>
           ))}
         </div>
       </div>
