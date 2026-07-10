@@ -1,67 +1,75 @@
 # Moneta Roadmap
 
-> Updated 2026-07-08. The deep Dakota integration reference is
+> Updated 2026-07-10. The deep Dakota integration reference is
 > `DAKOTA-PLAN.md` (API sequences, gotchas, module designs). This file is the
 > working queue: what we're building, in what order, and what it's waiting on.
 > Parked ideas live in `BACKLOG.md`.
 
 ## Where we are
 
-Dakota infrastructure is built and pushed (commits `c88c185`, `6a6afe2`,
-`ffb5ed7`): signing core, webhook pipeline (verified against a local
-simulator), post-KYC provisioning, bootstrap script, 41 passing tests.
-Waiting on: Dakota sandbox credentials (email expected ~2026-07-09).
-Migration `0002` is written but **not applied** to the dev database yet.
+**All credential-free engineering is done** (through commit `54b745f`,
+75 passing tests): signing core, webhook pipeline, provisioning, bootstrap,
+two-leg withdrawals, client hardening (throttle/retry/Retry-After), events
+reconciliation (retry phase + cursor sweep, `npm run dakota:reconcile` or
+`POST /api/dakota/reconcile`), and money-flow UI wired to real shapes
+(LinkBankDialog → fiat_us destinations, fee-honest transfer-out, deposit
+provisioning state, PoA prompts, receipt breakdown). Security review: clean;
+hardening applied (timingSafeEqual cron auth, destination ownership check).
 
-## Workstream A — buildable RIGHT NOW (no credentials needed)
+**The pipeline is drill-verified** on a local Postgres 16 (see "Local dev
+DB" below): simulated deposit lifecycle credits exactly once, dedupes
+replays, survives duplicate deliveries, and claws back ACH returns exactly
+once — this drill caught and fixed a real pool self-deadlock in the webhook
+handlers (`logStatusChange` now takes the caller's tx).
 
-Ordered; each item is independently shippable.
+**Blocked on two things, both external:**
+1. **Dakota sandbox credentials** (email was expected ~2026-07-09 — chase it).
+   `DAKOTA_API_KEY` in `.env.local` is still a placeholder.
+2. **The Supabase dev database is unreachable** ("tenant not found" —
+   project likely paused or deleted; discovered 2026-07-10). Decide: restore
+   it in the Supabase dashboard, or stay on the local Postgres.
 
-1. **Withdrawal orchestration** — the last money-moving flow.
-   `POST /api/transactions` becomes: KYC gate → create Dakota one-off →
-   learn `send_amount` (includes fees) → atomically debit the source account
-   (optimistic lock, `WHERE balance >= send_amount`) → wallet-send exactly
-   `send_amount` to the one-off's deposit address (platform signer) → ledger
-   rows for both legs. Webhooks finalize; terminal failure or ACH return
-   refunds the hold exactly once (same `moneta_debited` metadata pattern as
-   deposit credits). Includes best-effort cancel of the one-off if the wallet
-   leg fails.
-2. **Destination client fixes** — Dakota *requires* `account_holder_name` and
-   `bank_name` on `fiat_us` destinations (≤35 chars each) and a fuller shape
-   for `fiat_iban` (holder name/address, bank name, `assets`, `capabilities`).
-   Our client and validators omit them → every real bank payout would 400.
-3. **Dakota client hardening** — retry on 429/5xx honoring `Retry-After`,
-   exponential backoff, and a light in-process throttle for the 60 req/min
-   key budget.
-4. **Events reconciliation poller** — cursor-based `GET /events` sweep (cron
-   or on-demand route) to catch webhooks Dakota gave up retrying (48h) and to
-   make local dev workable without a tunnel.
-5. **Frontend wiring to real shapes**
-   - Transfer-out: full bank form (routing, account, holder name, bank name,
-     address), fee-aware confirm (`send_amount` vs requested amount), live
-     status from the ledger.
-   - Deposit: render the `bank_account` object from provisioning; pending /
-     completed / returned states.
-   - Onboarding: "setting up your account" state while provisioning runs;
-     proof-of-address prompt (reason codes are already handled server-side).
-   - Transaction detail: receipt breakdown (fees, FX rate, statement
-     reference, IMAD/OMAD), returned/reversed explanations.
-6. **Legal/compliance pages** — ToS, privacy, "Moneta is not a bank"
-   disclosures. No credentials needed; launch-blocking eventually. (Lawzy
-   repo has reusable legal-page scaffolding.)
+## Local dev DB (since 2026-07-10)
+
+Supabase being dead, dev now runs on Homebrew PostgreSQL 16:
+- Data dir `~/.moneta-pgdata`, port `54321`, superuser `moneta`, db `moneta`.
+- Start after reboot:
+  `/opt/homebrew/opt/postgresql@16/bin/pg_ctl -D ~/.moneta-pgdata -o "-p 54321" -l ~/.moneta-pgdata/server.log start`
+- `.env.local` points `DATABASE_URL` here (old Supabase URL kept commented).
+- Migrations 0000–0004 applied. Drill seed user exists
+  (`drill@moneta.test`, account `2222…`, onramp rail `acct_drill_…`).
+- `DAKOTA_WEBHOOK_PUBLIC_KEY` is set to the **dev simulator key**; the real
+  sandbox key is commented above it — swap back for real Dakota webhooks.
+
+**Repeat the drill anytime** (dev server on :3001):
+fixtures in `fixtures/dakota/` with `REPLACE_WITH_DAKOTA_ACCOUNT_ID` swapped
+to the seeded rail id, then
+`npx tsx scripts/dakota-simulate-webhook.ts --file <fixture> --url http://localhost:3001/api/webhooks/dakota`
+(pending → completed → completed again → returned; balance should go
+0 → 1.49 → 1.49 → 0).
+
+## Workstream A — done (was: buildable right now)
+
+All six items shipped: withdrawal orchestration (`d31ac2c`), destination
+client fixes (`d31ac2c`), client hardening (`5d0e438`), events
+reconciliation (`a929e33`), frontend wiring (`536567d`), legal pages
+(`/terms`, `/privacy` — shipped with the design overhaul).
 
 ## Workstream B — the moment sandbox credentials arrive
 
 Exact sequence (≈30 minutes):
 1. Dashboard → create sandbox API key → `DAKOTA_API_KEY` in `.env.local`.
-2. Apply migration: `npx drizzle-kit migrate` (adds the two provisioning
-   columns from `0002`).
+2. DB: local Postgres already migrated through 0004. (If back on Supabase:
+   `npx drizzle-kit migrate`.)
 3. `npm run dakota:bootstrap` — first run mints the platform signer key
    (paste env line), second run registers signer/group/policy and prints
    `DAKOTA_SIGNER_GROUP_ID` / `DAKOTA_POLICY_ID`.
-4. `BYPASS_KYC=false`, `NEXT_PUBLIC_DEMO_MODE=false` for testing.
+4. Restore the real `DAKOTA_WEBHOOK_PUBLIC_KEY` (commented in `.env.local`),
+   `BYPASS_KYC=false`, `NEXT_PUBLIC_DEMO_MODE=false`.
 5. Webhooks: public tunnel (`cloudflared tunnel --url http://localhost:3001`)
-   + re-run bootstrap with `--url`, or lean on the reconciliation poller.
+   + re-run bootstrap with `--url`, or lean on `npm run dakota:reconcile`
+   (no tunnel needed — pulls GET /events; also verify the sweep's event
+   ordering assumption, see `orderingSuspect` in reconcile.ts).
 6. **End-to-end drill**: fresh signup → onboarding creates real customer →
    hosted KYC (sandbox auto-approves ~5s) → webhook provisions wallet + rails
    → deposit page shows real virtual account numbers →
