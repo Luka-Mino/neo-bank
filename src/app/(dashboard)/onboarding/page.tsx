@@ -28,11 +28,17 @@ export default function OnboardingPage() {
     fetch("/api/customers", { method: "POST" }).then(() => refetch());
   }, [isLoading, hasCustomer, refetch]);
 
+  // Proof-of-address holds arrive while status is (and stays) "active" —
+  // keep the user here to resolve it instead of bouncing to the dashboard.
+  const poaPending = customer?.kycReasonCode === "pending_proof_of_address";
+  const poaRejected = customer?.kycReasonCode === "proof_of_address_rejected";
+  const needsPoa = poaPending || poaRejected;
+
   useEffect(() => {
-    if (customer?.kycStatus === "active") {
+    if (customer?.kycStatus === "active" && !needsPoa) {
       router.push("/dashboard");
     }
-  }, [customer?.kycStatus, router]);
+  }, [customer?.kycStatus, needsPoa, router]);
 
   const statusConfig: Record<string, { icon: React.ReactNode; color: string; text: string }> = {
     pending: {
@@ -105,6 +111,32 @@ export default function OnboardingPage() {
               {status}
             </Badge>
           </div>
+
+          {needsPoa && (
+            <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                {poaRejected
+                  ? "Your proof of address was rejected"
+                  : "Proof of address needed"}
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-400">
+                {poaRejected
+                  ? "The document you uploaded couldn't be accepted. Please upload a different one — deposits over the limit stay on hold until it's approved."
+                  : "You've crossed the $3,000 / 7-day deposit limit. Upload a proof of address (utility bill, bank statement, or lease) to release held deposits."}
+              </p>
+              {customer?.applicationUrl && (
+                <a
+                  href={customer.applicationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-medium text-primary-foreground"
+                >
+                  Upload document
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+            </div>
+          )}
 
           {status === "pending" && customer?.applicationUrl && (
             <a

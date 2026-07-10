@@ -26,7 +26,8 @@ import {
 import { DakotaApiError } from "@/lib/dakota/client";
 import { sendWalletTransaction } from "@/lib/dakota/wallet-transactions";
 import { deterministicIdempotencyKey } from "@/lib/dakota/idempotency";
-import { isSupportedNetwork } from "@/lib/dakota/networks";
+import { defaultNetworkId, isSupportedNetwork } from "@/lib/dakota/networks";
+import { randomBytes } from "node:crypto";
 import { logStatusChange } from "@/lib/transaction-history";
 import { createTransactionSchema } from "@/lib/validators/transaction";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
@@ -102,9 +103,16 @@ export const POST = apiHandler({
       return err("Source account is not active", 409);
     }
 
-    if (!isSupportedNetwork(body.sourceNetworkId)) {
-      return err(`Unsupported source network: ${body.sourceNetworkId}`, 400);
+    const sourceNetworkId = body.sourceNetworkId ?? defaultNetworkId();
+    if (!isSupportedNetwork(sourceNetworkId)) {
+      return err(`Unsupported source network: ${sourceNetworkId}`, 400);
     }
+
+    // Statement reference the recipient's bank shows. ACH allows ≤18 chars,
+    // letters/digits/spaces only — "MONETA " + 8 base36 chars fits.
+    const paymentReference =
+      body.paymentReference ??
+      `MONETA ${randomBytes(6).readUIntBE(0, 6).toString(36).toUpperCase().padStart(8, "0").slice(-8)}`;
 
     const [wallet] = await db
       .select()
@@ -125,13 +133,13 @@ export const POST = apiHandler({
       {
         amount: body.amount,
         customerId: customer?.dakotaCustomerId ?? "",
-        sourceNetworkId: body.sourceNetworkId,
+        sourceNetworkId,
         sourceAsset: body.sourceAsset,
         destinationId: body.destinationId,
         destinationAsset: body.destinationAsset,
         destinationNetworkId: body.destinationNetworkId,
         destinationPaymentRail: body.destinationPaymentRail,
-        paymentReference: body.paymentReference,
+        paymentReference,
       }
     );
 
@@ -169,7 +177,7 @@ export const POST = apiHandler({
             destinationAsset: body.destinationAsset,
             sourceAmount: sendAmount,
             destinationAmount: body.amount,
-            sourceNetwork: body.sourceNetworkId,
+            sourceNetwork: sourceNetworkId,
             destinationNetwork: body.destinationNetworkId,
             destinationId: body.destinationId,
             metadata: {
@@ -207,7 +215,7 @@ export const POST = apiHandler({
         to: dakotaTx.crypto_address,
         amount: sendAmount,
         assetId: body.sourceAsset,
-        networkId: body.sourceNetworkId,
+        networkId: sourceNetworkId,
         idempotencyKey: deterministicIdempotencyKey(`wallet-send:${dakotaTx.id}`),
       });
 
@@ -223,7 +231,7 @@ export const POST = apiHandler({
           status: walletTx.status,
           sourceAsset: body.sourceAsset,
           sourceAmount: sendAmount,
-          sourceNetwork: body.sourceNetworkId,
+          sourceNetwork: sourceNetworkId,
           transactionHash: walletTx.transaction_hash,
           metadata: { one_off_id: dakotaTx.id, purpose: "withdrawal_funding" },
         })

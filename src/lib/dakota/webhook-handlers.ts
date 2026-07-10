@@ -57,6 +57,7 @@ async function onKybStatus(object: EventObject) {
     .select({
       userId: dakotaCustomers.userId,
       kycStatus: dakotaCustomers.kycStatus,
+      kycReasonCode: dakotaCustomers.kycReasonCode,
     })
     .from(dakotaCustomers)
     .where(eq(dakotaCustomers.dakotaCustomerId, customerId))
@@ -64,26 +65,28 @@ async function onKybStatus(object: EventObject) {
   if (!customer) return; // not a customer we know about
 
   // Only notify on actual change — this handler re-runs on Dakota's retries
-  // (e.g. when provisioning below threw on a previous attempt).
+  // (e.g. when provisioning below threw on a previous attempt). reason_code
+  // can change while status stays "active" (proof-of-address holds), so it
+  // counts as a change too. proof_of_address_approved clears the stored code.
+  const nextReasonCode =
+    reasonCode === "proof_of_address_approved" ? null : (reasonCode ?? null);
   const statusChanged = customer.kycStatus !== kybStatus;
+  const reasonChanged = (customer.kycReasonCode ?? null) !== nextReasonCode;
 
-  if (statusChanged) {
+  if (statusChanged || reasonChanged) {
     await db
       .update(dakotaCustomers)
-      .set({ kycStatus: kybStatus, updatedAt: new Date() })
+      .set({
+        kycStatus: kybStatus,
+        kycReasonCode: nextReasonCode,
+        updatedAt: new Date(),
+      })
       .where(eq(dakotaCustomers.dakotaCustomerId, customerId));
 
-    if (kybStatus === "active") {
-      await createNotification({
-        userId: customer.userId,
-        type: "kyc_update",
-        title: "Identity verified",
-        body: "Your identity has been verified. You can now deposit, withdraw, and send funds.",
-        actionUrl: "/dashboard",
-      });
-    } else if (reasonCode === "pending_proof_of_address") {
+    if (reasonCode === "pending_proof_of_address") {
       // Individual crossed the $3,000 / 7-day inbound threshold; deposits are
-      // held until a proof-of-address document is approved.
+      // held until a proof-of-address document is approved. Takes precedence:
+      // this can arrive while status is (and stays) "active".
       await createNotification({
         userId: customer.userId,
         type: "kyc_update",
@@ -91,7 +94,31 @@ async function onKybStatus(object: EventObject) {
         body: "Please upload a proof of address to keep receiving deposits over the limit.",
         actionUrl: "/onboarding",
       });
-    } else {
+    } else if (reasonCode === "proof_of_address_rejected") {
+      await createNotification({
+        userId: customer.userId,
+        type: "kyc_update",
+        title: "Proof of address rejected",
+        body: "The document you uploaded couldn't be accepted. Please upload a different proof of address.",
+        actionUrl: "/onboarding",
+      });
+    } else if (reasonCode === "proof_of_address_approved") {
+      await createNotification({
+        userId: customer.userId,
+        type: "kyc_update",
+        title: "Proof of address approved",
+        body: "Thanks — your held deposits will now be processed.",
+        actionUrl: "/dashboard",
+      });
+    } else if (kybStatus === "active" && statusChanged) {
+      await createNotification({
+        userId: customer.userId,
+        type: "kyc_update",
+        title: "Identity verified",
+        body: "Your identity has been verified. You can now deposit, withdraw, and send funds.",
+        actionUrl: "/dashboard",
+      });
+    } else if (statusChanged) {
       await createNotification({
         userId: customer.userId,
         type: "kyc_update",

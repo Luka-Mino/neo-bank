@@ -1,0 +1,1 @@
+ALTER TABLE "dakota_customers" ADD COLUMN "kyc_reason_code" text;

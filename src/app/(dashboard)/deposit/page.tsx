@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   Building2,
   Info,
+  Loader2,
   Zap,
   Clock,
   ShieldCheck,
@@ -54,13 +55,35 @@ export default function DepositPage() {
     ? DEMO_CUSTOMER
     : customerRes?.data || customerRes;
 
-  const { data: accountsRes, isLoading } = useQuery({
+  const { data: accountsRes, isLoading, refetch } = useQuery({
     queryKey: ["accounts", "onramp"],
     queryFn: () => fetch("/api/rails?type=onramp").then((r) => r.json()),
     enabled: !DEMO_MODE && customer?.kycStatus === "active",
+    // Post-KYC provisioning creates the rail asynchronously (webhook-driven);
+    // poll until the virtual account details exist, then stop.
+    refetchInterval: (query) =>
+      query.state.data?.data?.data?.[0]?.bankAccountInfo ? false : 5000,
   });
   const accounts = accountsRes?.data || accountsRes;
   const kycActive = customer?.kycStatus === "active";
+  const [retrying, setRetrying] = useState(false);
+
+  async function retryProvisioning() {
+    setRetrying(true);
+    try {
+      const res = await fetch("/api/customers/provision", { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error?.message || "Setup retry failed");
+      }
+      await refetch();
+      toast.success("Account setup re-run");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Setup retry failed");
+    } finally {
+      setRetrying(false);
+    }
+  }
 
   function copyToClipboard(text: string, label: string) {
     navigator.clipboard.writeText(text);
@@ -89,6 +112,34 @@ export default function DepositPage() {
           <Info className="h-4 w-4" />
           <AlertDescription>
             Complete KYC verification before making deposits.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {kycActive && customer?.kycReasonCode === "pending_proof_of_address" && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <span className="font-medium">Deposits on hold.</span> You&apos;ve
+            crossed the $3,000 / 7-day deposit limit — upload a proof of
+            address to release held deposits.{" "}
+            {customer?.applicationUrl ? (
+              <a
+                href={customer.applicationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium underline underline-offset-2"
+              >
+                Finish verification
+              </a>
+            ) : (
+              <a
+                href="/onboarding"
+                className="font-medium underline underline-offset-2"
+              >
+                Finish verification
+              </a>
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -210,18 +261,22 @@ export default function DepositPage() {
                 </div>
               ) : (
                 <div className="py-6 text-center text-sm text-muted-foreground">
-                  <p>No deposit account set up yet.</p>
+                  <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary" />
+                  <p className="mt-3 font-medium text-foreground">
+                    Setting up your deposit account
+                  </p>
+                  <p className="mt-1">
+                    We&apos;re creating your personal account and routing
+                    numbers — this usually takes under a minute.
+                  </p>
                   <Button
+                    variant="outline"
                     className="mt-4"
-                    onClick={() => {
-                      fetch("/api/rails", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ accountType: "onramp" }),
-                      }).then(() => window.location.reload());
-                    }}
+                    disabled={retrying}
+                    onClick={retryProvisioning}
                   >
-                    Set up deposit account
+                    {retrying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Retry setup
                   </Button>
                 </div>
               )}

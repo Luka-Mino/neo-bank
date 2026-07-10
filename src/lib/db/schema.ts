@@ -34,6 +34,10 @@ export const dakotaCustomers = pgTable(
     dakotaCustomerId: text("dakota_customer_id").notNull().unique(),
     customerType: text("customer_type").notNull().default("individual"),
     kycStatus: text("kyc_status").notNull().default("pending"),
+    // Latest reason_code from customer.kyb_status.* webhooks — e.g.
+    // "pending_proof_of_address" when the $3k/7-day inbound ceiling holds
+    // deposits until a PoA document is approved. Cleared when resolved.
+    kycReasonCode: text("kyc_reason_code"),
     applicationId: text("application_id"),
     applicationUrl: text("application_url"),
     applicationExpiresAt: timestamp("application_expires_at", { withTimezone: true }),

@@ -29,6 +29,13 @@
       "when": 1783712261715,
       "tag": "0003_reconcile_cursor",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783713040866,
+      "tag": "0004_kyc_reason_code",
+      "breakpoints": true
     }
   ]
 }

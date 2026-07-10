@@ -8,9 +8,37 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils/format";
-import { ArrowLeft, ExternalLink, Check, Clock, Loader2, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Check,
+  Clock,
+  Info,
+  Loader2,
+  XCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Dakota puts money detail inside metadata.receipt (there is no top-level
+// amount on webhook payloads): input/output amounts, FX rate, fee lines,
+// and for wires the Fedwire IMAD/OMAD trace numbers.
+interface DakotaReceipt {
+  initial_amount?: string;
+  input_currency?: string;
+  outgoing_amount?: string;
+  output_currency?: string;
+  exchange_rate?: string;
+  dakota_fee?: string;
+  client_fee?: string;
+  developer_fee?: string;
+  gas_fee?: string;
+  imad?: string;
+  omad?: string;
+}
+
+const RETURN_STATUSES = new Set(["returned", "reversed", "pending_return"]);
 
 export default function TransactionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +69,20 @@ export default function TransactionDetailPage() {
     );
   }
 
+  const meta = (tx.metadata ?? {}) as Record<string, unknown>;
+  const receipt = (meta.receipt ?? {}) as DakotaReceipt;
+  const hasReceipt = Object.keys(receipt).length > 0;
+  const paymentReference = meta.payment_reference as string | undefined;
+  const returnCode = meta.return_code as string | undefined;
+  const returnReason = (meta.return_reason ?? meta.failure_reason) as
+    | string
+    | undefined;
+  const feeLines = [
+    { label: "Transfer fee", value: receipt.dakota_fee },
+    { label: "Platform fee", value: receipt.client_fee ?? receipt.developer_fee },
+    { label: "Network fee", value: receipt.gas_fee },
+  ].filter((f) => f.value && parseFloat(f.value) > 0);
+
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div className="flex items-center gap-3">
@@ -57,6 +99,28 @@ export default function TransactionDetailPage() {
           <p className="text-sm text-muted-foreground">{tx.dakotaTxId}</p>
         </div>
       </div>
+
+      {RETURN_STATUSES.has(tx.status) && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            {tx.txType === "deposit" || tx.txType === "onramp" ? (
+              <>
+                This deposit was returned by the sending bank
+                {returnCode ? ` (code ${returnCode})` : ""} and has been
+                removed from your balance.
+              </>
+            ) : (
+              <>
+                This transfer did not complete
+                {returnCode ? ` (code ${returnCode})` : ""} — the amount has
+                been returned to your account.
+              </>
+            )}
+            {returnReason ? ` Reason: ${returnReason}.` : ""}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Status Timeline */}
       <Card>
@@ -168,6 +232,75 @@ export default function TransactionDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {(hasReceipt || paymentReference) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Receipt</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {receipt.initial_amount && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Sent</span>
+                <span className="text-sm font-medium tabular-nums">
+                  {formatCurrency(receipt.initial_amount)}{" "}
+                  {receipt.input_currency}
+                </span>
+              </div>
+            )}
+            {feeLines.map((f) => (
+              <div key={f.label} className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{f.label}</span>
+                <span className="text-sm tabular-nums">
+                  {formatCurrency(f.value!)}
+                </span>
+              </div>
+            ))}
+            {receipt.exchange_rate && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Exchange rate
+                </span>
+                <span className="text-sm tabular-nums">
+                  {receipt.exchange_rate}
+                </span>
+              </div>
+            )}
+            {receipt.outgoing_amount && (
+              <>
+                <Separator />
+                <div className="flex items-center justify-between font-medium">
+                  <span className="text-sm">Received</span>
+                  <span className="text-sm tabular-nums">
+                    {formatCurrency(receipt.outgoing_amount)}{" "}
+                    {receipt.output_currency}
+                  </span>
+                </div>
+              </>
+            )}
+            {paymentReference && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Statement reference
+                </span>
+                <span className="font-mono text-xs">{paymentReference}</span>
+              </div>
+            )}
+            {receipt.imad && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">IMAD</span>
+                <span className="font-mono text-xs">{receipt.imad}</span>
+              </div>
+            )}
+            {receipt.omad && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">OMAD</span>
+                <span className="font-mono text-xs">{receipt.omad}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

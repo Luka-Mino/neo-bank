@@ -1,12 +1,19 @@
 "use client";
 
+// Withdraw to bank (offramp). Server flow is two-leg (see
+// /api/transactions POST): the exact total debited — send_amount, which
+// includes Dakota's fees — is only known once the transfer is created, so
+// the confirm step shows the requested amount and the success screen shows
+// the real total from the API response.
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,16 +32,18 @@ import {
   Zap,
   Clock,
   ArrowRight,
+  Landmark,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils/format";
 import { DEMO_MODE, DEMO_CUSTOMER, DEMO_LINKED_BANKS } from "@/lib/demo-data";
-import { Landmark, Plus } from "lucide-react";
 import {
   SourceAccountPicker,
   useDefaultSourceAccount,
 } from "@/components/account/source-account-picker";
+import { LinkBankDialog } from "@/components/account/link-bank-dialog";
 
 const transferSchema = z.object({
   amount: z
@@ -51,10 +60,26 @@ const transferSchema = z.object({
 
 type TransferInput = z.infer<typeof transferSchema>;
 
+interface BankDestination {
+  dakotaDestinationId: string;
+  bankName: string;
+  accountType: string;
+  last4: string;
+}
+
+interface WithdrawalResult {
+  transactionId: string | null;
+  requested: number;
+  sendAmount: string;
+  warning?: string;
+}
+
 const presetAmounts = [100, 500, 1000, 5000];
 
 export default function TransferOutPage() {
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
+  const [linkBankOpen, setLinkBankOpen] = useState(false);
+  const [result, setResult] = useState<WithdrawalResult | null>(null);
 
   const { data: customerRes } = useQuery({
     queryKey: ["customer"],
@@ -65,19 +90,36 @@ export default function TransferOutPage() {
     ? DEMO_CUSTOMER
     : customerRes?.data || customerRes;
 
-  // Withdraw destinations are the user's *own* external bank accounts (linked
-  // via Dakota recipients with type=bank_account), not P2P contacts. P2P is on /send.
-  const { data: linkedRes } = useQuery({
-    queryKey: ["linked-banks"],
-    queryFn: () =>
-      fetch("/api/recipients?type=bank_account").then((r) => r.json()),
-    enabled: !DEMO_MODE && customer?.kycStatus === "active",
-  });
-  const linkedBanks = DEMO_MODE
-    ? DEMO_LINKED_BANKS
-    : linkedRes?.data?.data || linkedRes?.data || [];
-
   const kycActive = customer?.kycStatus === "active";
+
+  // Withdrawal targets are the user's own linked US bank accounts —
+  // fiat_us destinations under their recipients. P2P is on /send.
+  const { data: destinationsRes } = useQuery({
+    queryKey: ["destinations", "fiat_us"],
+    queryFn: () =>
+      fetch("/api/destinations?type=fiat_us").then((r) => r.json()),
+    enabled: !DEMO_MODE && kycActive,
+  });
+
+  const linkedBanks: BankDestination[] = DEMO_MODE
+    ? DEMO_LINKED_BANKS.map((b) => ({
+        dakotaDestinationId: b.dakotaRecipientId,
+        bankName: b.bankName,
+        accountType: b.accountType,
+        last4: b.last4,
+      }))
+    : (destinationsRes?.data?.data ?? []).map(
+        (d: {
+          dakotaDestinationId: string;
+          label: string | null;
+          details: { bankName?: string; accountType?: string; last4?: string };
+        }) => ({
+          dakotaDestinationId: d.dakotaDestinationId,
+          bankName: d.details?.bankName ?? d.label ?? "Bank account",
+          accountType: d.details?.accountType ?? "",
+          last4: d.details?.last4 ?? "····",
+        })
+      );
 
   const {
     register,
@@ -101,12 +143,28 @@ export default function TransferOutPage() {
 
   const amount = watch("amount");
   const rail = watch("rail");
+  const destinationId = watch("destinationId");
   const numAmount = parseFloat(amount || "0") || 0;
-  const fee = rail === "fedwire" ? 15 : 0;
+  const selectedBank = linkedBanks.find(
+    (b) => b.dakotaDestinationId === destinationId
+  );
 
   async function onSubmit(data: TransferInput) {
     if (step === "form") {
       setStep("confirm");
+      return;
+    }
+
+    if (DEMO_MODE) {
+      // Simulate the fee-inclusive debit the real API reports.
+      const requested = parseFloat(data.amount);
+      const fee = data.rail === "fedwire" ? 15 : 0.5;
+      setResult({
+        transactionId: null,
+        requested,
+        sendAmount: (requested + fee).toFixed(2),
+      });
+      setStep("success");
       return;
     }
 
@@ -116,18 +174,17 @@ export default function TransferOutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: data.amount,
+          accountId: data.sourceAccountId,
           destinationId: data.destinationId,
-          sourceAccountId: data.sourceAccountId,
           sourceAsset: "USDC",
           destinationAsset: "USD",
-          sourceNetworkId: "ethereum-mainnet",
           destinationPaymentRail: data.rail,
           txType: "offramp",
         }),
       });
 
+      const body = await res.json();
       if (!res.ok) {
-        const body = await res.json();
         const msg =
           typeof body.error === "string"
             ? body.error
@@ -135,12 +192,23 @@ export default function TransferOutPage() {
         throw new Error(msg);
       }
 
+      const payload = body.data ?? body;
+      setResult({
+        transactionId: payload.transaction?.id ?? null,
+        requested: parseFloat(data.amount),
+        sendAmount: payload.sendAmount ?? data.amount,
+        warning: payload.warning,
+      });
       setStep("success");
-      toast.success("Transfer initiated successfully");
+      toast.success("Transfer initiated");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Transfer failed");
     }
   }
+
+  const feesPaid = result
+    ? Math.max(0, parseFloat(result.sendAmount) - result.requested)
+    : 0;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -162,7 +230,7 @@ export default function TransferOutPage() {
         </Alert>
       )}
 
-      {kycActive && step === "success" && (
+      {kycActive && step === "success" && result && (
         <Card>
           <CardContent className="py-10 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -170,11 +238,57 @@ export default function TransferOutPage() {
             </div>
             <h2 className="mt-4 text-lg font-semibold">Transfer initiated</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Your funds are on their way. Check Transactions for status.
+              {formatCurrency(result.requested)} is on its way
+              {selectedBank
+                ? ` to ${selectedBank.bankName} ··${selectedBank.last4}`
+                : " to your bank"}
+              .
             </p>
-            <Button className="mt-6" onClick={() => setStep("form")}>
-              Make another transfer
-            </Button>
+
+            <div className="mx-auto mt-6 max-w-xs space-y-1.5 rounded-xl bg-muted/40 p-4 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">You receive</span>
+                <span className="font-medium tabular-nums">
+                  {formatCurrency(result.requested)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Transfer fees</span>
+                <span className="tabular-nums">{formatCurrency(feesPaid)}</span>
+              </div>
+              <div className="flex justify-between border-t border-border pt-1.5 font-medium">
+                <span>Total debited</span>
+                <span className="tabular-nums">
+                  {formatCurrency(parseFloat(result.sendAmount))}
+                </span>
+              </div>
+            </div>
+
+            {result.warning && (
+              <Alert className="mt-4 text-left">
+                <Info className="h-4 w-4" />
+                <AlertDescription>{result.warning}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="mt-6 flex justify-center gap-3">
+              {result.transactionId && (
+                <Link
+                  href={`/transactions/${result.transactionId}`}
+                  className={cn(buttonVariants({ variant: "outline" }))}
+                >
+                  View status
+                </Link>
+              )}
+              <Button
+                onClick={() => {
+                  setStep("form");
+                  setResult(null);
+                }}
+              >
+                Make another transfer
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -245,6 +359,7 @@ export default function TransferOutPage() {
                   <Label>To your bank account</Label>
                   <button
                     type="button"
+                    onClick={() => setLinkBankOpen(true)}
                     className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                   >
                     <Plus className="h-3 w-3" />
@@ -252,14 +367,19 @@ export default function TransferOutPage() {
                   </button>
                 </div>
                 {linkedBanks.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setLinkBankOpen(true)}
+                    className="w-full rounded-xl border border-dashed border-border bg-muted/30 p-4 text-center transition hover:border-primary/40"
+                  >
                     <Landmark className="mx-auto h-5 w-5 text-muted-foreground" />
                     <p className="mt-2 text-sm text-muted-foreground">
                       No bank accounts linked yet. Link one to withdraw.
                     </p>
-                  </div>
+                  </button>
                 ) : (
                   <Select
+                    value={destinationId || undefined}
                     disabled={step === "confirm"}
                     onValueChange={(v) =>
                       setValue("destinationId", (v as string) ?? "", {
@@ -271,8 +391,11 @@ export default function TransferOutPage() {
                       <SelectValue placeholder="Select bank account" />
                     </SelectTrigger>
                     <SelectContent>
-                      {linkedBanks.map((b: typeof DEMO_LINKED_BANKS[number]) => (
-                        <SelectItem key={b.id} value={b.dakotaRecipientId}>
+                      {linkedBanks.map((b) => (
+                        <SelectItem
+                          key={b.dakotaDestinationId}
+                          value={b.dakotaDestinationId}
+                        >
                           <span className="flex items-center gap-2">
                             <Landmark className="h-3.5 w-3.5 text-muted-foreground" />
                             {b.bankName} {b.accountType} ··{b.last4}
@@ -289,7 +412,10 @@ export default function TransferOutPage() {
                 )}
                 <p className="text-xs text-muted-foreground">
                   Sending to someone else? Use{" "}
-                  <a href="/send" className="font-medium text-foreground underline-offset-2 hover:underline">
+                  <a
+                    href="/send"
+                    className="font-medium text-foreground underline-offset-2 hover:underline"
+                  >
                     Send
                   </a>{" "}
                   for P2P transfers.
@@ -303,14 +429,14 @@ export default function TransferOutPage() {
                     {
                       key: "ach" as const,
                       title: "ACH",
-                      desc: "1–3 business days · Free",
+                      desc: "1–3 business days",
                       icon: Clock,
                       strip: "strip-blue",
                     },
                     {
                       key: "fedwire" as const,
                       title: "Wire",
-                      desc: "Same day · $15 fee",
+                      desc: "Same day",
                       icon: Zap,
                       strip: "strip-emerald",
                     },
@@ -342,18 +468,31 @@ export default function TransferOutPage() {
                 </div>
               </div>
 
-              {numAmount > 0 && (
-                <div className="rounded-xl bg-primary/5 p-3 text-xs">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Fee</span>
-                    <span className="tabular-nums">{formatCurrency(fee)}</span>
-                  </div>
-                  <div className="mt-1 flex justify-between font-medium">
-                    <span>You receive</span>
-                    <span className="tabular-nums">
-                      {formatCurrency(Math.max(0, numAmount - fee))}
+              {step === "confirm" && (
+                <div className="rounded-xl bg-primary/5 p-4 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">To</span>
+                    <span className="font-medium">
+                      {selectedBank
+                        ? `${selectedBank.bankName} ··${selectedBank.last4}`
+                        : "Your bank"}
                     </span>
                   </div>
+                  <div className="mt-1 flex justify-between">
+                    <span className="text-muted-foreground">You receive</span>
+                    <span className="font-medium tabular-nums">
+                      {formatCurrency(numAmount)}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex justify-between">
+                    <span className="text-muted-foreground">Method</span>
+                    <span className="font-medium uppercase">{rail}</span>
+                  </div>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Transfer fees are calculated when the transfer is created
+                    and added to the amount debited from your account. The
+                    exact total is shown on your receipt.
+                  </p>
                 </div>
               )}
 
@@ -396,6 +535,14 @@ export default function TransferOutPage() {
           </CardContent>
         </Card>
       )}
+
+      <LinkBankDialog
+        open={linkBankOpen}
+        onOpenChange={setLinkBankOpen}
+        onLinked={(id) =>
+          setValue("destinationId", id, { shouldValidate: true })
+        }
+      />
     </div>
   );
 }

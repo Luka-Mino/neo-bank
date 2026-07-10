@@ -9,7 +9,8 @@ export const createTransactionSchema = z
       .string()
       .min(1, "Amount is required")
       .refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0, "Amount must be positive"),
-    sourceNetworkId: z.string().min(1, "Source network is required"),
+    // Omitted → server uses DAKOTA_NETWORK_ID; clients shouldn't pick chains.
+    sourceNetworkId: z.string().min(1).optional(),
     sourceAsset: z.string().min(1, "Source asset is required"),
     destinationId: z.string().min(1, "Destination is required"),
     destinationAsset: z.string().min(1, "Destination asset is required"),
