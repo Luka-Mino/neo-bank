@@ -159,7 +159,7 @@ export default function TransferInternalPage() {
     return (
       <div className="mx-auto max-w-xl space-y-6">
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-          Move funds
+          Between accounts
         </h1>
         <Card>
           <CardContent className="py-10 text-center">
@@ -182,7 +182,7 @@ export default function TransferInternalPage() {
       <div className="mx-auto max-w-xl space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-            Move funds
+            Between accounts
           </h1>
           <p className="text-muted-foreground">
             Between your own accounts — instant and free
@@ -205,7 +205,7 @@ export default function TransferInternalPage() {
     <div className="mx-auto max-w-xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-          Move funds
+          Between accounts
         </h1>
         <p className="text-muted-foreground">
           Between your own accounts — instant and free

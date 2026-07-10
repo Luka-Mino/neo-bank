@@ -268,16 +268,15 @@ export default function SendPage() {
                     </button>
                   );
                 })}
-                <button
-                  type="button"
+                <a
+                  href="/recipients/new"
                   className="flex shrink-0 flex-col items-center gap-1.5"
-                  onClick={() => toast.info("Recipient creation coming soon")}
                 >
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full border border-dashed border-border bg-muted/30 text-muted-foreground">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full border border-dashed border-border bg-muted/30 text-muted-foreground transition hover:border-primary/50 hover:text-primary">
                     <Plus className="h-4 w-4" />
                   </span>
                   <p className="text-[11px] text-muted-foreground">New</p>
-                </button>
+                </a>
               </div>
             </div>
 

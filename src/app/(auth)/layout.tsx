@@ -26,8 +26,8 @@ export default function AuthLayout({
             Money that moves at internet speed.
           </h2>
           <p className="text-sm text-white/70">
-            Hold, send, and spend dollar-backed digital cash across six
-            networks — protected by FDIC pass-through partner banks.
+            Hold, send, and spend dollar-backed digital cash that settles
+            on-chain in seconds — protected by FDIC pass-through partner banks.
           </p>
         </div>
 
