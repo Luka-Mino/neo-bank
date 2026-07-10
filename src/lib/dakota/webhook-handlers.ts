@@ -169,6 +169,10 @@ async function onAutoTransaction(object: EventObject) {
 
   const txType = ledgerTxType(dakotaType);
 
+  // Notifications are queued inside the transaction but sent only after it
+  // commits — a rollback must not produce a "deposit completed" message.
+  let pendingNotification: Parameters<typeof createNotification>[0] | null = null;
+
   await db.transaction(async (tx) => {
     let [row] = await tx
       .select({
@@ -230,11 +234,10 @@ async function onAutoTransaction(object: EventObject) {
 
       if (inserted) {
         row = inserted;
-        await logStatusChange({
-          transactionId: row.id,
-          oldStatus: null,
-          newStatus,
-        });
+        await logStatusChange(
+          { transactionId: row.id, oldStatus: null, newStatus },
+          tx
+        );
         // Row was born in newStatus; fall through so a birth directly into
         // "completed" still credits below.
       } else {
@@ -272,12 +275,17 @@ async function onAutoTransaction(object: EventObject) {
           updatedAt: new Date(),
         })
         .where(eq(transactions.id, row.id));
-      await logStatusChange({
-        transactionId: row.id,
-        oldStatus: row.status,
-        newStatus,
-        reason: (object.return_reason ?? object.failure_reason) as string | undefined,
-      });
+      await logStatusChange(
+        {
+          transactionId: row.id,
+          oldStatus: row.status,
+          newStatus,
+          reason: (object.return_reason ?? object.failure_reason) as
+            | string
+            | undefined,
+        },
+        tx
+      );
     }
 
     // Credit exactly once: only deposits, only on entering completed, only
@@ -334,13 +342,13 @@ async function onAutoTransaction(object: EventObject) {
         })
         .where(eq(transactions.id, row.id));
 
-      await createNotification({
+      pendingNotification = {
         userId: row.userId,
         type: "transaction_update",
         title: "Deposit completed",
         body: `$${amount} has been added to your account.`,
         actionUrl: `/transactions/${row.id}`,
-      });
+      };
     }
 
     // Clawback exactly once: ACH return/reversal after we credited.
@@ -360,7 +368,7 @@ async function onAutoTransaction(object: EventObject) {
           .set({ metadata: { ...meta, ...object, moneta_credited: false } })
           .where(eq(transactions.id, row.id));
 
-        await createNotification({
+        pendingNotification = {
           userId: row.userId,
           type: "transaction_update",
           title: "Deposit returned",
@@ -368,10 +376,14 @@ async function onAutoTransaction(object: EventObject) {
             (object.return_code as string) ?? "no code"
           }) and has been removed from your balance.`,
           actionUrl: `/transactions/${row.id}`,
-        });
+        };
       }
     }
   });
+
+  if (pendingNotification) {
+    await createNotification(pendingNotification);
+  }
 
   await logAudit({
     actorType: "system",
@@ -487,12 +499,17 @@ async function onOneOffTransaction(object: EventObject) {
       .set({ status: newStatus, metadata: nextMeta, updatedAt: new Date() })
       .where(eq(transactions.id, locked.id));
 
-    await logStatusChange({
-      transactionId: locked.id,
-      oldStatus: locked.status,
-      newStatus,
-      reason: (object.return_reason ?? object.failure_reason) as string | undefined,
-    });
+    await logStatusChange(
+      {
+        transactionId: locked.id,
+        oldStatus: locked.status,
+        newStatus,
+        reason: (object.return_reason ?? object.failure_reason) as
+          | string
+          | undefined,
+      },
+      tx
+    );
   });
 
   if (!applied) return;

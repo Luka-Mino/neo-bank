@@ -15,6 +15,8 @@ import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import {
   accounts,
+  destinations,
+  recipients,
   transactions,
   dakotaCustomers,
   wallets,
@@ -106,6 +108,23 @@ export const POST = apiHandler({
     const sourceNetworkId = body.sourceNetworkId ?? defaultNetworkId();
     if (!isSupportedNetwork(sourceNetworkId)) {
       return err(`Unsupported source network: ${sourceNetworkId}`, 400);
+    }
+
+    // The destination must be one of the caller's own — Dakota would accept
+    // any destination under our client key, so ownership is enforced here.
+    const [ownedDestination] = await db
+      .select({ id: destinations.id })
+      .from(destinations)
+      .innerJoin(recipients, eq(destinations.recipientId, recipients.id))
+      .where(
+        and(
+          eq(destinations.dakotaDestinationId, body.destinationId),
+          eq(recipients.userId, user.id)
+        )
+      )
+      .limit(1);
+    if (!ownedDestination) {
+      return err("Destination not found", 404);
     }
 
     // Statement reference the recipient's bank shows. ACH allows ≤18 chars,

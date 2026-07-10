@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { reconcileEvents } from "@/lib/dakota/reconcile";
 
@@ -10,7 +11,9 @@ import { reconcileEvents } from "@/lib/dakota/reconcile";
 function isAuthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
   if (secret) {
-    return req.headers.get("authorization") === `Bearer ${secret}`;
+    const given = Buffer.from(req.headers.get("authorization") ?? "");
+    const expected = Buffer.from(`Bearer ${secret}`);
+    return given.length === expected.length && timingSafeEqual(given, expected);
   }
   return process.env.NODE_ENV !== "production";
 }
