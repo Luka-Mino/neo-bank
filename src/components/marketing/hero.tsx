@@ -75,8 +75,9 @@ export function Hero({ isAuthenticated }: HeroProps) {
             </h1>
 
             <p className="mx-auto mt-5 max-w-2xl text-lg text-white/65 md:text-xl lg:mx-0">
-              Hold, send, and spend dollar-backed digital cash across six
-              networks — with the protection of regulated banking partners.
+              Hold, send, and spend dollar-backed digital cash that settles
+              on-chain in seconds — with the protection of regulated banking
+              partners.
             </p>
 
             <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
@@ -116,7 +117,7 @@ export function Hero({ isAuthenticated }: HeroProps) {
               <span className="hidden h-1 w-1 rounded-full bg-white/30 sm:block" />
               <span>SOC 2 Type II</span>
               <span className="hidden h-1 w-1 rounded-full bg-white/30 sm:block" />
-              <span>Six on-chain networks</span>
+              <span>Settles on-chain in seconds</span>
             </div>
           </div>
 

@@ -37,9 +37,9 @@ const navigationGroups = [
     label: "Money",
     items: [
       { name: "Deposit", href: "/deposit", icon: ArrowDownToLine },
-      { name: "Transfer Out", href: "/transfer-out", icon: ArrowUpFromLine },
-      { name: "Move funds", href: "/transfer-internal", icon: ArrowLeftRight },
       { name: "Send", href: "/send", icon: Send },
+      { name: "Withdraw", href: "/transfer-out", icon: ArrowUpFromLine },
+      { name: "Between accounts", href: "/transfer-internal", icon: ArrowLeftRight },
     ],
   },
   {

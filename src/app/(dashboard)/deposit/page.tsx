@@ -30,14 +30,12 @@ const rails = [
     speed: "Same day",
     note: "Best for >$10k",
     icon: Zap,
-    strip: "strip-emerald",
   },
   {
     name: "ACH transfer",
     speed: "1–3 business days",
     note: "Free, no limits",
     icon: Clock,
-    strip: "strip-blue",
   },
 ];
 
@@ -176,7 +174,7 @@ export default function DepositPage() {
           {/* Rails */}
           <div className="grid gap-3 sm:grid-cols-2">
             {rails.map((r) => (
-              <Card key={r.name} className={cn(r.strip)}>
+              <Card key={r.name}>
                 <CardContent className="flex items-center gap-4">
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <r.icon className="h-5 w-5" />

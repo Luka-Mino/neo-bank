@@ -19,7 +19,7 @@ const features = [
     icon: Globe,
     title: "Global transfers",
     description:
-      "Send to anyone, anywhere — across six blockchain networks at on-chain speed.",
+      "Send to anyone, anywhere — dollars that settle on-chain in seconds, not days.",
     accent: "#22d3ee",
   },
   {

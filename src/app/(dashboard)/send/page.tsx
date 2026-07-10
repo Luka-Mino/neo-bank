@@ -25,7 +25,6 @@ import {
   Lock,
   ArrowRight,
   Plus,
-  Network,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -46,8 +45,6 @@ const sendSchema = z.object({
     ),
   recipientId: z.string().min(1, "Select a recipient"),
   sourceAccountId: z.string().min(1, "Select a source account"),
-  asset: z.string(),
-  network: z.string(),
 });
 
 type SendInput = z.infer<typeof sendSchema>;
@@ -102,8 +99,6 @@ export default function SendPage() {
       amount: "",
       recipientId: "",
       sourceAccountId: "",
-      asset: "USDC",
-      network: "ethereum-mainnet",
     },
   });
 
@@ -118,7 +113,6 @@ export default function SendPage() {
     [recipients, recipientId]
   );
   const numAmount = parseFloat(amount || "0") || 0;
-  const networkFee = numAmount > 0 ? Math.max(0.5, numAmount * 0.001) : 0;
 
   async function onSubmit(data: SendInput) {
     if (step === "form") {
@@ -127,17 +121,17 @@ export default function SendPage() {
     }
 
     try {
+      // Asset and network are platform decisions (USDC on Base) — the
+      // server resolves the network from DAKOTA_NETWORK_ID.
       const res = await fetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: data.amount,
           destinationId: data.recipientId,
-          sourceAccountId: data.sourceAccountId,
-          sourceAsset: data.asset,
-          destinationAsset: data.asset,
-          sourceNetworkId: data.network,
-          destinationNetworkId: data.network,
+          accountId: data.sourceAccountId,
+          sourceAsset: "USDC",
+          destinationAsset: "USDC",
           txType: "send",
         }),
       });
@@ -198,24 +192,36 @@ export default function SendPage() {
       {kycActive && step !== "success" && (
         <Card>
           <CardContent className="space-y-5">
-            {/* Tabs */}
+            {/* Destination type — Bank hands off to /transfer-out */}
             <div className="flex gap-1 rounded-full bg-muted p-1">
-              {tabs.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setTab(t)}
-                  disabled={t !== "P2P"}
-                  className={cn(
-                    "flex-1 rounded-full px-3 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
-                    tab === t
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setTab("P2P")}
+                className={cn(
+                  "flex-1 rounded-full px-3 py-2 text-sm font-semibold transition",
+                  tab === "P2P"
+                    ? "bg-forest text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                To a person
+              </button>
+              <a
+                href="/transfer-out"
+                className="flex flex-1 items-center justify-center rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
+              >
+                To a bank
+              </a>
+              <button
+                type="button"
+                disabled
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-muted-foreground/50"
+              >
+                To crypto
+                <span className="rounded-full bg-background px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ring-1 ring-border">
+                  Soon
+                </span>
+              </button>
             </div>
 
             {/* Recent recipients */}
@@ -344,7 +350,7 @@ export default function SendPage() {
                     })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select recipient" />
                   </SelectTrigger>
                   <SelectContent>
@@ -362,67 +368,17 @@ export default function SendPage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Asset</Label>
-                  <Select
-                    disabled={step === "confirm"}
-                    defaultValue="USDC"
-                    onValueChange={(v) =>
-                      setValue("asset", (v as string) ?? "USDC")
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USDC">USDC</SelectItem>
-                      <SelectItem value="USDT">USDT</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Network</Label>
-                  <Select
-                    disabled={step === "confirm"}
-                    defaultValue="ethereum-mainnet"
-                    onValueChange={(v) =>
-                      setValue("network", (v as string) ?? "ethereum-mainnet")
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ethereum-mainnet">Ethereum</SelectItem>
-                      <SelectItem value="polygon-mainnet">Polygon</SelectItem>
-                      <SelectItem value="arbitrum-mainnet">Arbitrum</SelectItem>
-                      <SelectItem value="base-mainnet">Base</SelectItem>
-                      <SelectItem value="optimism-mainnet">Optimism</SelectItem>
-                      <SelectItem value="solana-mainnet">Solana</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Fee preview */}
               {numAmount > 0 && (
-                <div className="rounded-xl bg-primary/5 p-3 text-xs">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Network className="h-3.5 w-3.5" />
-                      Network fee
+                <div className="flex items-center justify-between rounded-xl bg-primary/5 px-4 py-3 text-sm">
+                  <span className="text-muted-foreground">
+                    Recipient receives
+                  </span>
+                  <span className="font-semibold tabular-nums">
+                    {formatCurrency(numAmount)}{" "}
+                    <span className="font-normal text-muted-foreground">
+                      USDC
                     </span>
-                    <span className="tabular-nums">
-                      {formatCurrency(networkFee)}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex justify-between font-medium">
-                    <span>Total to recipient</span>
-                    <span className="tabular-nums">
-                      {formatCurrency(Math.max(0, numAmount - networkFee))}
-                    </span>
-                  </div>
+                  </span>
                 </div>
               )}
 
@@ -443,8 +399,7 @@ export default function SendPage() {
                         {selectedRecipient.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {watch("network").replace("-mainnet", "")} ·{" "}
-                        {watch("asset")}
+                        USDC · arrives in seconds
                       </p>
                     </div>
                   </div>
@@ -456,6 +411,7 @@ export default function SendPage() {
                   <Button
                     type="button"
                     variant="outline"
+                    size="xl"
                     className="flex-1"
                     onClick={() => setStep("form")}
                   >
@@ -464,7 +420,7 @@ export default function SendPage() {
                 )}
                 <Button
                   type="submit"
-                  size="lg"
+                  size="xl"
                   className="flex-1"
                   disabled={isSubmitting}
                 >

@@ -387,7 +387,7 @@ export default function TransferOutPage() {
                       })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select bank account" />
                     </SelectTrigger>
                     <SelectContent>
@@ -431,40 +431,47 @@ export default function TransferOutPage() {
                       title: "ACH",
                       desc: "1–3 business days",
                       icon: Clock,
-                      strip: "strip-blue",
                     },
                     {
                       key: "fedwire" as const,
                       title: "Wire",
                       desc: "Same day",
                       icon: Zap,
-                      strip: "strip-emerald",
                     },
-                  ].map((opt) => (
-                    <button
-                      type="button"
-                      key={opt.key}
-                      disabled={step === "confirm"}
-                      onClick={() => setValue("rail", opt.key)}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl bg-card px-3 py-3 text-left ring-1 transition disabled:opacity-50",
-                        opt.strip,
-                        rail === opt.key
-                          ? "ring-primary"
-                          : "ring-border hover:ring-primary/40"
-                      )}
-                    >
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                        <opt.icon className="h-4 w-4" />
-                      </span>
-                      <div>
-                        <p className="text-sm font-medium">{opt.title}</p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {opt.desc}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+                  ].map((opt) => {
+                    const selected = rail === opt.key;
+                    return (
+                      <button
+                        type="button"
+                        key={opt.key}
+                        disabled={step === "confirm"}
+                        onClick={() => setValue("rail", opt.key)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-xl px-4 py-3.5 text-left transition disabled:opacity-50",
+                          selected
+                            ? "bg-primary/10 ring-2 ring-primary"
+                            : "bg-card ring-1 ring-border hover:ring-primary/40"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "flex h-9 w-9 items-center justify-center rounded-full transition",
+                            selected
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          <opt.icon className="h-4 w-4" />
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold">{opt.title}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {opt.desc}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -501,6 +508,7 @@ export default function TransferOutPage() {
                   <Button
                     type="button"
                     variant="outline"
+                    size="xl"
                     className="flex-1"
                     onClick={() => setStep("form")}
                   >
@@ -509,7 +517,7 @@ export default function TransferOutPage() {
                 )}
                 <Button
                   type="submit"
-                  size="lg"
+                  size="xl"
                   className="flex-1"
                   disabled={isSubmitting}
                 >
