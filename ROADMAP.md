@@ -127,14 +127,18 @@ passkey-endorsed transactions, external crypto sends, multi-currency.
 
 1. **Dakota sandbox credentials** — email was expected ~2026-07-09; chase
    sales if it hasn't landed. Gates M2 (and everything after).
-2. **Supabase decision** — the old dev project is unreachable ("tenant not
-   found"). Restore it in the dashboard, or we stay on local Postgres for
-   dev and provision a fresh hosted DB at M3.
+2. ~~Supabase decision~~ **RESOLVED 2026-07-10**: the "neo bank" project
+   was paused, not deleted — resumed via the dashboard (Pro org; compute
+   bills while running). Migrated to 0004, drizzle bookkeeping seeded,
+   data intact (2 users). It's the hosted-DB candidate for M3; dev stays
+   on local Postgres (drill seed lives there). Note: resumed compute
+   accrues usage — pause it again from the dashboard if it'll sit unused
+   for long.
 3. **(M3, later)** production hosting + domain choice.
 
 ## Local dev DB (since 2026-07-10)
 
-Dev runs on Homebrew PostgreSQL 16 (Supabase project is dead):
+Dev runs on Homebrew PostgreSQL 16 (Supabase kept for staging/M3):
 - Data dir `~/.moneta-pgdata`, port `54321`, superuser `moneta`, db `moneta`.
 - Start after reboot:
   `/opt/homebrew/opt/postgresql@16/bin/pg_ctl -D ~/.moneta-pgdata -o "-p 54321" -l ~/.moneta-pgdata/server.log start`
