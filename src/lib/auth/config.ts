@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users, dakotaCustomers } from "@/lib/db/schema";
+import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -51,17 +52,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // Fetch KYC status — but don't break the session if DB query fails
       if (token.id) {
-        try {
-          const customer = await db
-            .select({ kycStatus: dakotaCustomers.kycStatus })
-            .from(dakotaCustomers)
-            .where(eq(dakotaCustomers.userId, token.id as string))
-            .limit(1);
+        if (isKycBypassed()) {
+          token.kycStatus = "active";
+        } else {
+          try {
+            const customer = await db
+              .select({ kycStatus: dakotaCustomers.kycStatus })
+              .from(dakotaCustomers)
+              .where(eq(dakotaCustomers.userId, token.id as string))
+              .limit(1);
 
-          token.kycStatus = customer[0]?.kycStatus ?? "none";
-        } catch {
-          // DB query failed — keep existing kycStatus or default
-          token.kycStatus = token.kycStatus ?? "none";
+            token.kycStatus = customer[0]?.kycStatus ?? "none";
+          } catch {
+            // DB query failed — keep existing kycStatus or default
+            token.kycStatus = token.kycStatus ?? "none";
+          }
         }
       }
 

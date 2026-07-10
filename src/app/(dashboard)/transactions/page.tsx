@@ -14,15 +14,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils/format";
+import { formatCurrency, getStatusColor } from "@/lib/utils/format";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -33,47 +25,173 @@ import {
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DEMO_MODE, DEMO_TRANSACTIONS } from "@/lib/demo-data";
+import { useSelectedAccount } from "@/components/account/use-accounts";
 
-const txTypeIcons: Record<string, React.ReactNode> = {
-  onramp: <ArrowDownToLine className="h-4 w-4 text-emerald-500" />,
-  offramp: <ArrowUpFromLine className="h-4 w-4 text-red-500" />,
-  send: <Send className="h-4 w-4 text-blue-500" />,
-  swap: <ArrowLeftRight className="h-4 w-4 text-purple-500" />,
+const txMeta: Record<
+  string,
+  { label: string; icon: React.ComponentType<{ className?: string }>; strip: string }
+> = {
+  onramp: { label: "Deposit", icon: ArrowDownToLine, strip: "strip-emerald" },
+  offramp: { label: "Withdrawal", icon: ArrowUpFromLine, strip: "strip-blue" },
+  send: { label: "Sent", icon: Send, strip: "strip-purple" },
+  swap: { label: "Swap", icon: ArrowLeftRight, strip: "strip-orange" },
+  internal_in: { label: "Move in", icon: ArrowLeftRight, strip: "strip-emerald" },
+  internal_out: { label: "Move out", icon: ArrowLeftRight, strip: "strip-purple" },
 };
+
+function relTime(iso: string): string {
+  const d = new Date(iso);
+  const diff = Date.now() - d.getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days < 1) return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function dayLabel(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date(Date.now() - 86400000);
+  if (d.toDateString() === today.toDateString()) return "Today";
+  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+  return d.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const {
+    account: scopedAccount,
+    mode,
+    openAccounts,
+  } = useSelectedAccount();
+  const isAggregate = mode === "all";
+
   const { data: res, isLoading } = useQuery({
     queryKey: ["transactions"],
     queryFn: () => fetch("/api/transactions").then((r) => r.json()),
+    enabled: !DEMO_MODE,
   });
-  const data = res?.data || res;
+  const data = DEMO_MODE ? { data: DEMO_TRANSACTIONS } : res?.data || res;
   const transactions = data?.data || [];
+
+  const accountLabel = (id: string | undefined): string | null => {
+    if (!id) return null;
+    const a = openAccounts.find((x) => x.id === id);
+    return a?.nickname || a?.accountType || null;
+  };
 
   const filtered = useMemo(() => {
     return transactions.filter((tx: any) => {
+      // Scope to selected account when one is chosen.
+      if (!isAggregate && tx.accountId !== scopedAccount?.id) return false;
       if (typeFilter !== "all" && tx.txType !== typeFilter) return false;
       if (statusFilter !== "all" && tx.status !== statusFilter) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        const matchesType = tx.txType?.toLowerCase().includes(q);
-        const matchesAsset = tx.sourceAsset?.toLowerCase().includes(q);
-        const matchesAmount = tx.sourceAmount?.includes(q);
-        const matchesId = tx.id?.toLowerCase().includes(q);
-        if (!matchesType && !matchesAsset && !matchesAmount && !matchesId) return false;
+        const matches =
+          tx.txType?.toLowerCase().includes(q) ||
+          tx.sourceAsset?.toLowerCase().includes(q) ||
+          tx.sourceAmount?.includes(q) ||
+          tx.id?.toLowerCase().includes(q) ||
+          accountLabel(tx.accountId)?.toLowerCase().includes(q);
+        if (!matches) return false;
       }
       return true;
     });
-  }, [transactions, typeFilter, statusFilter, searchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    transactions,
+    typeFilter,
+    statusFilter,
+    searchQuery,
+    isAggregate,
+    scopedAccount?.id,
+    openAccounts,
+  ]);
+
+  // Group by day
+  const grouped = useMemo(() => {
+    const map = new Map<string, any[]>();
+    for (const tx of filtered) {
+      const key = dayLabel(tx.createdAt);
+      const arr = map.get(key) ?? [];
+      arr.push(tx);
+      map.set(key, arr);
+    }
+    return Array.from(map.entries());
+  }, [filtered]);
+
+  const incomingTypes = new Set(["onramp", "internal_in"]);
+  const totalIn = filtered
+    .filter(
+      (t: any) => incomingTypes.has(t.txType) && t.status === "completed"
+    )
+    .reduce((s: number, t: any) => s + parseFloat(t.sourceAmount || "0"), 0);
+  const totalOut = filtered
+    .filter(
+      (t: any) => !incomingTypes.has(t.txType) && t.status === "completed"
+    )
+    .reduce((s: number, t: any) => s + parseFloat(t.sourceAmount || "0"), 0);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Transactions</h1>
-        <p className="text-muted-foreground">Your complete transaction history</p>
+        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+          Transactions
+        </h1>
+        <p className="text-muted-foreground">
+          {isAggregate
+            ? "Real-time activity across all your accounts"
+            : `Activity in ${scopedAccount?.nickname || scopedAccount?.accountType || "your account"}`}
+        </p>
+      </div>
+
+      {/* Stat strip */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card>
+          <CardContent>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              Total in
+            </p>
+            <p className="mt-1 text-xl font-semibold text-primary">
+              +{formatCurrency(totalIn)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              Total out
+            </p>
+            <p className="mt-1 text-xl font-semibold">
+              −{formatCurrency(totalOut)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              Net
+            </p>
+            <p
+              className={cn(
+                "mt-1 text-xl font-semibold",
+                totalIn - totalOut >= 0 ? "text-primary" : "text-destructive"
+              )}
+            >
+              {totalIn - totalOut >= 0 ? "+" : "−"}
+              {formatCurrency(Math.abs(totalIn - totalOut))}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
@@ -88,19 +206,22 @@ export default function TransactionsPage() {
           />
         </div>
         <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v ?? "all")}>
-          <SelectTrigger className="w-full sm:w-40">
+          <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="All Types" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
             <SelectItem value="onramp">Deposits</SelectItem>
             <SelectItem value="offramp">Withdrawals</SelectItem>
-            <SelectItem value="send">Transfers</SelectItem>
+            <SelectItem value="send">Sent</SelectItem>
             <SelectItem value="swap">Swaps</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
-          <SelectTrigger className="w-full sm:w-40">
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => setStatusFilter(v ?? "all")}
+        >
+          <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -114,86 +235,120 @@ export default function TransactionsPage() {
         </Select>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="space-y-3 p-6">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
+      {/* Feed */}
+      {isLoading ? (
+        <Card>
+          <CardContent className="space-y-3 py-2">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full" />
+            ))}
+          </CardContent>
+        </Card>
+      ) : filtered.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+              <Inbox className="h-6 w-6 text-muted-foreground" />
             </div>
-          ) : filtered.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Asset</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((tx: any) => (
-                  <TableRow key={tx.id} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell>
-                      <Link
-                        href={`/transactions/${tx.id}`}
-                        className="flex items-center gap-2"
-                      >
-                        {txTypeIcons[tx.txType] || txTypeIcons.send}
-                        <span className="capitalize">{tx.txType}</span>
-                      </Link>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {tx.sourceAmount ? formatCurrency(tx.sourceAmount) : "—"}
-                    </TableCell>
-                    <TableCell>{tx.sourceAsset || "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={getStatusColor(tx.status)}>
-                        {tx.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(tx.createdAt)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                <Inbox className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">
-                  {transactions.length > 0
-                    ? "No matching transactions"
-                    : "No transactions yet"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {transactions.length > 0
-                    ? "Try adjusting your filters"
-                    : "Your transaction history will appear here"}
-                </p>
-              </div>
-              {transactions.length > 0 && (typeFilter !== "all" || statusFilter !== "all" || searchQuery) && (
-                <button
-                  onClick={() => {
-                    setTypeFilter("all");
-                    setStatusFilter("all");
-                    setSearchQuery("");
-                  }}
-                  className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                >
-                  Clear filters
-                </button>
-              )}
+            <div>
+              <p className="text-sm font-medium">
+                {transactions.length > 0
+                  ? "No matching transactions"
+                  : "No transactions yet"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {transactions.length > 0
+                  ? "Try adjusting your filters"
+                  : "Your transaction history will appear here"}
+              </p>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            {transactions.length > 0 && (
+              <button
+                onClick={() => {
+                  setTypeFilter("all");
+                  setStatusFilter("all");
+                  setSearchQuery("");
+                }}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" })
+                )}
+              >
+                Clear filters
+              </button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-5">
+          {grouped.map(([day, rows]) => (
+            <div key={day}>
+              <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {day}
+              </p>
+              <Card>
+                <CardContent className="px-0">
+                  <div className="divide-y divide-border">
+                    {rows.map((tx) => {
+                      const meta = txMeta[tx.txType] ?? txMeta.send;
+                      const Icon = meta.icon;
+                      const incoming = incomingTypes.has(tx.txType);
+                      return (
+                        <Link
+                          key={tx.id}
+                          href={`/transactions/${tx.id}`}
+                          className={cn(
+                            "flex items-center gap-4 px-4 py-3 transition hover:bg-muted/40",
+                            meta.strip
+                          )}
+                        >
+                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate text-sm font-medium">
+                                {meta.label}
+                              </p>
+                              {isAggregate && accountLabel(tx.accountId) && (
+                                <span className="inline-flex shrink-0 items-center rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[10px] font-medium text-foreground/70">
+                                  {accountLabel(tx.accountId)}
+                                </span>
+                              )}
+                              <Badge
+                                variant="secondary"
+                                className={cn(
+                                  "h-5 px-2 text-[10px]",
+                                  getStatusColor(tx.status)
+                                )}
+                              >
+                                {tx.status}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {relTime(tx.createdAt)} · {tx.sourceAsset || "—"}
+                            </p>
+                          </div>
+                          <p
+                            className={cn(
+                              "text-sm font-semibold tabular-nums",
+                              incoming ? "text-primary" : "text-foreground"
+                            )}
+                          >
+                            {incoming ? "+" : "−"}
+                            {tx.sourceAmount
+                              ? formatCurrency(tx.sourceAmount)
+                              : "—"}
+                          </p>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

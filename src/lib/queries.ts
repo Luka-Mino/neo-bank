@@ -27,6 +27,31 @@ export const queryKeys = {
     me: ["customer", "me"] as const,
   },
 
+  // User-facing banking accounts (checking, savings, ...)
+  accounts: {
+    all: ["accounts"] as const,
+    list: ["accounts", "list"] as const,
+    balances: ["accounts", "balances"] as const,
+    detail: (id: string) => ["accounts", "detail", id] as const,
+    transactions: (id: string) => ["accounts", "transactions", id] as const,
+  },
+
+  // Issued cards belonging to the user
+  cards: {
+    all: ["cards"] as const,
+    list: ["cards", "list"] as const,
+    detail: (id: string) => ["cards", "detail", id] as const,
+  },
+
+  // Dakota on-ramp / off-ramp rail config (NOT user-facing accounts)
+  rails: {
+    all: ["rails"] as const,
+    byType: (type: string) => ["rails", "type", type] as const,
+  },
+
+  // Custodial Dakota wallet (one per user). Kept for the existing dashboard
+  // query during the migration window; the dashboard reads accounts/balances
+  // for new code.
   wallets: {
     all: ["wallets"] as const,
     balances: ["wallets", "balances"] as const,
@@ -35,14 +60,9 @@ export const queryKeys = {
 
   transactions: {
     all: ["transactions"] as const,
-    list: (params?: { status?: string; type?: string }) =>
+    list: (params?: { accountId?: string; status?: string; type?: string }) =>
       ["transactions", "list", params ?? {}] as const,
     detail: (id: string) => ["transactions", "detail", id] as const,
-  },
-
-  accounts: {
-    all: ["accounts"] as const,
-    byType: (type: string) => ["accounts", "type", type] as const,
   },
 
   recipients: {

@@ -4,8 +4,11 @@ import { NextRequest, NextResponse } from "next/server";
 const protectedPaths = [
   "/dashboard",
   "/deposit",
-  "/withdraw",
+  "/transfer-out",
   "/send",
+  "/loans",
+  "/card",
+  "/insights",
   "/transactions",
   "/recipients",
   "/settings",
@@ -13,6 +16,11 @@ const protectedPaths = [
 ];
 
 export async function middleware(req: NextRequest) {
+  // Demo mode: skip all auth redirects
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
+    return NextResponse.next();
+  }
+
   const pathname = req.nextUrl.pathname;
 
   // Skip static assets and API routes

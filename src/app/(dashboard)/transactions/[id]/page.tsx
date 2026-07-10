@@ -79,14 +79,14 @@ export default function TransactionDetailPage() {
                       className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-full border-2 transition-colors",
                         isFailed && i === 2
-                          ? "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/30"
+                          ? "border-rose-200 bg-rose-50 dark:border-rose-800 dark:bg-rose-900/30"
                           : isActive
                             ? "border-primary bg-primary text-primary-foreground"
                             : "border-muted-foreground/30"
                       )}
                     >
                       {isFailed && i === 2 ? (
-                        <XCircle className="h-4 w-4 text-red-500" />
+                        <XCircle className="h-4 w-4 text-rose-600" />
                       ) : isActive && !isCurrent ? (
                         <Check className="h-4 w-4" />
                       ) : isCurrent ? (

@@ -1,58 +1,124 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Send as SendIcon, Info, Loader2, Lock } from "lucide-react";
+import {
+  Send as SendIcon,
+  Info,
+  Loader2,
+  Lock,
+  ArrowRight,
+  Plus,
+  Network,
+} from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils/format";
+import { DEMO_MODE, DEMO_CUSTOMER, DEMO_RECIPIENTS } from "@/lib/demo-data";
+import {
+  SourceAccountPicker,
+  useDefaultSourceAccount,
+} from "@/components/account/source-account-picker";
 
 const sendSchema = z.object({
-  amount: z.string().min(1, "Amount is required").refine(
-    (v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0,
-    "Amount must be a positive number"
-  ),
+  amount: z
+    .string()
+    .min(1, "Amount is required")
+    .refine(
+      (v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0,
+      "Amount must be a positive number"
+    ),
   recipientId: z.string().min(1, "Select a recipient"),
+  sourceAccountId: z.string().min(1, "Select a source account"),
   asset: z.string(),
   network: z.string(),
 });
 
 type SendInput = z.infer<typeof sendSchema>;
 
+const tabs = ["P2P", "Bank", "Crypto"] as const;
+
+const presetAmounts = [25, 50, 100, 250];
+
+function initialsOf(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export default function SendPage() {
+  const [tab, setTab] = useState<(typeof tabs)[number]>("P2P");
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
 
   const { data: customerRes } = useQuery({
     queryKey: ["customer"],
     queryFn: () => fetch("/api/customers").then((r) => r.json()),
+    enabled: !DEMO_MODE,
   });
-  const customer = customerRes?.data || customerRes;
+  const customer = DEMO_MODE
+    ? DEMO_CUSTOMER
+    : customerRes?.data || customerRes;
 
   const { data: recipientRes } = useQuery({
     queryKey: ["recipients"],
     queryFn: () => fetch("/api/recipients").then((r) => r.json()),
-    enabled: customer?.kycStatus === "active",
+    enabled: !DEMO_MODE && customer?.kycStatus === "active",
   });
-  const recipientData = recipientRes?.data || recipientRes;
+  const recipientData = DEMO_MODE
+    ? { data: DEMO_RECIPIENTS }
+    : recipientRes?.data || recipientRes;
 
+  const recipients: any[] = recipientData?.data || [];
   const kycActive = customer?.kycStatus === "active";
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<SendInput>({
     resolver: zodResolver(sendSchema),
-    defaultValues: { asset: "USDC", network: "ethereum-mainnet" },
+    defaultValues: {
+      amount: "",
+      recipientId: "",
+      sourceAccountId: "",
+      asset: "USDC",
+      network: "ethereum-mainnet",
+    },
   });
+
+  const amount = watch("amount");
+  const recipientId = watch("recipientId");
+  const sourceAccountId = watch("sourceAccountId");
+  useDefaultSourceAccount(sourceAccountId, (id) =>
+    setValue("sourceAccountId", id, { shouldValidate: true })
+  );
+  const selectedRecipient = useMemo(
+    () => recipients.find((r) => r.dakotaRecipientId === recipientId),
+    [recipients, recipientId]
+  );
+  const numAmount = parseFloat(amount || "0") || 0;
+  const networkFee = numAmount > 0 ? Math.max(0.5, numAmount * 0.001) : 0;
 
   async function onSubmit(data: SendInput) {
     if (step === "form") {
@@ -67,6 +133,7 @@ export default function SendPage() {
         body: JSON.stringify({
           amount: data.amount,
           destinationId: data.recipientId,
+          sourceAccountId: data.sourceAccountId,
           sourceAsset: data.asset,
           destinationAsset: data.asset,
           sourceNetworkId: data.network,
@@ -77,7 +144,11 @@ export default function SendPage() {
 
       if (!res.ok) {
         const body = await res.json();
-        throw new Error(body.error || "Send failed");
+        const msg =
+          typeof body.error === "string"
+            ? body.error
+            : body.error?.message || "Send failed";
+        throw new Error(msg);
       }
 
       setStep("success");
@@ -88,10 +159,14 @@ export default function SendPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Send</h1>
-        <p className="text-muted-foreground">Transfer funds to a recipient</p>
+        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+          Send money
+        </h1>
+        <p className="text-muted-foreground">
+          P2P payments, bank transfers, and on-chain settlement
+        </p>
       </div>
 
       {!kycActive && (
@@ -105,14 +180,16 @@ export default function SendPage() {
 
       {kycActive && step === "success" && (
         <Card>
-          <CardContent className="py-8 text-center">
-            <SendIcon className="mx-auto h-12 w-12 text-green-500" />
-            <h2 className="mt-4 text-lg font-semibold">Transfer Initiated</h2>
+          <CardContent className="py-10 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <SendIcon className="h-6 w-6" />
+            </div>
+            <h2 className="mt-4 text-lg font-semibold">Transfer initiated</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Your transfer is being processed. Track it on the Transactions page.
             </p>
             <Button className="mt-6" onClick={() => setStep("form")}>
-              Send More
+              Send more
             </Button>
           </CardContent>
         </Card>
@@ -120,25 +197,158 @@ export default function SendPage() {
 
       {kycActive && step !== "success" && (
         <Card>
-          <CardHeader>
-            <CardTitle>Send Funds</CardTitle>
-            <CardDescription>
-              {step === "confirm" ? "Review and confirm" : "Choose recipient and amount"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-5">
+            {/* Tabs */}
+            <div className="flex gap-1 rounded-full bg-muted p-1">
+              {tabs.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTab(t)}
+                  disabled={t !== "P2P"}
+                  className={cn(
+                    "flex-1 rounded-full px-3 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
+                    tab === t
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            {/* Recent recipients */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Recent
+              </p>
+              <div className="mt-3 flex items-center gap-3 overflow-x-auto pb-1">
+                {recipients.slice(0, 5).map((r) => {
+                  const active = r.dakotaRecipientId === recipientId;
+                  return (
+                    <button
+                      type="button"
+                      key={r.id}
+                      onClick={() =>
+                        setValue("recipientId", r.dakotaRecipientId, {
+                          shouldValidate: true,
+                        })
+                      }
+                      className="flex shrink-0 flex-col items-center gap-1.5 text-center"
+                    >
+                      <Avatar
+                        className={cn(
+                          "h-12 w-12 ring-2 transition",
+                          active
+                            ? "ring-primary"
+                            : "ring-transparent group-hover:ring-border"
+                        )}
+                      >
+                        <AvatarFallback
+                          className={cn(
+                            "text-xs font-semibold",
+                            active
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-foreground"
+                          )}
+                        >
+                          {initialsOf(r.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <p className="max-w-[64px] truncate text-[11px] text-muted-foreground">
+                        {r.name.split(" ")[0]}
+                      </p>
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  className="flex shrink-0 flex-col items-center gap-1.5"
+                  onClick={() => toast.info("Recipient creation coming soon")}
+                >
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full border border-dashed border-border bg-muted/30 text-muted-foreground">
+                    <Plus className="h-4 w-4" />
+                  </span>
+                  <p className="text-[11px] text-muted-foreground">New</p>
+                </button>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {/* Big amount input */}
+              <div className="rounded-2xl bg-muted/50 p-5">
+                <Label
+                  htmlFor="amount"
+                  className="text-[11px] uppercase tracking-wider text-muted-foreground"
+                >
+                  Amount
+                </Label>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-3xl font-semibold text-muted-foreground">
+                    $
+                  </span>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    disabled={step === "confirm"}
+                    {...register("amount")}
+                    className="h-auto border-none bg-transparent p-0 text-3xl font-semibold tabular-nums shadow-none focus-visible:ring-0 md:text-4xl"
+                  />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    USDC
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {presetAmounts.map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() =>
+                        setValue("amount", a.toString(), {
+                          shouldValidate: true,
+                        })
+                      }
+                      disabled={step === "confirm"}
+                      className="rounded-full bg-background px-3 py-1 text-xs font-medium text-foreground ring-1 ring-border transition hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+                    >
+                      {formatCurrency(a)}
+                    </button>
+                  ))}
+                </div>
+                {errors.amount && (
+                  <p className="mt-2 text-xs text-destructive">
+                    {errors.amount.message}
+                  </p>
+                )}
+              </div>
+
+              <SourceAccountPicker
+                value={sourceAccountId}
+                onChange={(id) =>
+                  setValue("sourceAccountId", id, { shouldValidate: true })
+                }
+                disabled={step === "confirm"}
+              />
+
               <div className="space-y-2">
                 <Label>Recipient</Label>
                 <Select
                   disabled={step === "confirm"}
-                  onValueChange={(v) => setValue("recipientId", v as string)}
+                  value={recipientId}
+                  onValueChange={(v) =>
+                    setValue("recipientId", (v as string) ?? "", {
+                      shouldValidate: true,
+                    })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select recipient" />
                   </SelectTrigger>
                   <SelectContent>
-                    {recipientData?.data?.map((r: any) => (
+                    {recipients.map((r) => (
                       <SelectItem key={r.id} value={r.dakotaRecipientId}>
                         {r.name}
                       </SelectItem>
@@ -146,32 +356,21 @@ export default function SendPage() {
                   </SelectContent>
                 </Select>
                 {errors.recipientId && (
-                  <p className="text-sm text-destructive">{errors.recipientId.message}</p>
+                  <p className="text-xs text-destructive">
+                    {errors.recipientId.message}
+                  </p>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  disabled={step === "confirm"}
-                  {...register("amount")}
-                />
-                {errors.amount && (
-                  <p className="text-sm text-destructive">{errors.amount.message}</p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Asset</Label>
                   <Select
                     disabled={step === "confirm"}
                     defaultValue="USDC"
-                    onValueChange={(v) => setValue("asset", v as string)}
+                    onValueChange={(v) =>
+                      setValue("asset", (v as string) ?? "USDC")
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -187,7 +386,9 @@ export default function SendPage() {
                   <Select
                     disabled={step === "confirm"}
                     defaultValue="ethereum-mainnet"
-                    onValueChange={(v) => setValue("network", v as string)}
+                    onValueChange={(v) =>
+                      setValue("network", (v as string) ?? "ethereum-mainnet")
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -204,6 +405,52 @@ export default function SendPage() {
                 </div>
               </div>
 
+              {/* Fee preview */}
+              {numAmount > 0 && (
+                <div className="rounded-xl bg-primary/5 p-3 text-xs">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Network className="h-3.5 w-3.5" />
+                      Network fee
+                    </span>
+                    <span className="tabular-nums">
+                      {formatCurrency(networkFee)}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex justify-between font-medium">
+                    <span>Total to recipient</span>
+                    <span className="tabular-nums">
+                      {formatCurrency(Math.max(0, numAmount - networkFee))}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Confirm summary */}
+              {step === "confirm" && selectedRecipient && (
+                <div className="rounded-xl border border-border p-4">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Sending to
+                  </p>
+                  <div className="mt-2 flex items-center gap-3">
+                    <Avatar>
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {initialsOf(selectedRecipient.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {selectedRecipient.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {watch("network").replace("-mainnet", "")} ·{" "}
+                        {watch("asset")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-3 pt-2">
                 {step === "confirm" && (
                   <Button
@@ -215,14 +462,31 @@ export default function SendPage() {
                     Back
                   </Button>
                 )}
-                <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {step === "form" ? "Review" : "Confirm Send"}
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="flex-1"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {step === "form" ? (
+                    <>
+                      Review send
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      Send {amount ? formatCurrency(amount) : ""}
+                    </>
+                  )}
                 </Button>
               </div>
-              <div className="flex items-center justify-center gap-1.5 pt-2 text-xs text-muted-foreground">
+
+              <div className="flex items-center justify-center gap-1.5 pt-1 text-xs text-muted-foreground">
                 <Lock className="h-3 w-3" />
-                Secure &amp; encrypted
+                Secure &amp; encrypted · settles on-chain
               </div>
             </form>
           </CardContent>

@@ -369,6 +369,14 @@ Everything else layers on top.
 Everything in this section is buildable and testable **today**, before Dakota
 credentials arrive. Shipped as three PRs, in this order.
 
+> **Status (2026-07-08): all three PRs shipped** — `c88c185` (signing core),
+> `6a6afe2` (webhook pipeline), `ffb5ed7` (bootstrap + provisioning).
+> 41 tests green. Remaining before first sandbox run: real `DAKOTA_API_KEY`
+> in `.env.local`, apply migration 0002 (`npx drizzle-kit migrate`), run
+> `npm run dakota:bootstrap` (twice: once to mint the signer key, once to
+> register), add its output env lines, flip `BYPASS_KYC=false` +
+> `NEXT_PUBLIC_DEMO_MODE=false` for testing.
+
 ### PR 1 — Signing core (gap #1)
 
 **New dev dependencies**: `vitest` (first test framework in the repo; script

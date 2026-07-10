@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { User, Lock, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { DEMO_MODE, DEMO_SESSION } from "@/lib/demo-data";
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: realSession } = useSession();
+  const session = DEMO_MODE ? DEMO_SESSION : realSession;
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -105,8 +107,11 @@ export default function SettingsPage() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Min 8 chars, 1 uppercase, 1 number"
+                placeholder="Enter new password"
               />
+              <p className="text-xs text-muted-foreground">
+                At least 8 characters, one uppercase letter, and one number
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm New Password</Label>
@@ -125,7 +130,7 @@ export default function SettingsPage() {
             )}
             {success && (
               <Alert>
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-4 w-4 text-primary" />
                 <AlertDescription className="text-green-700">
                   Password updated successfully!
                 </AlertDescription>

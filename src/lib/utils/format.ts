@@ -34,16 +34,16 @@ export function shortenAddress(address: string, chars = 6): string {
 export function getStatusColor(status: string): string {
   switch (status) {
     case "completed":
-      return "text-green-600 bg-green-50";
+      return "text-primary bg-primary/10";
     case "pending":
     case "processing":
     case "in_progress":
-      return "text-yellow-600 bg-yellow-50";
+      return "text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30";
     case "failed":
     case "rejected":
     case "canceled":
-      return "text-red-600 bg-red-50";
+      return "text-rose-700 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/30";
     default:
-      return "text-gray-600 bg-gray-50";
+      return "text-muted-foreground bg-muted";
   }
 }
