@@ -254,6 +254,15 @@ export const webhookEvents = pgTable(
   ]
 );
 
+// ─── Dakota Sync State ──────────────────────────────────────────────────────
+// Small KV for reconciliation cursors (e.g. the GET /events high-water mark).
+
+export const dakotaSyncState = pgTable("dakota_sync_state", {
+  key: text("key").primaryKey(),
+  value: text("value"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ─── Password Reset Tokens ──────────────────────────────────────────────────
 
 export const passwordResetTokens = pgTable("password_reset_tokens", {

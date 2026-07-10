@@ -15,6 +15,8 @@ export const env = createEnv({
     DAKOTA_SIGNER_GROUP_ID: z.string().length(27).optional(),
     DAKOTA_POLICY_ID: z.string().length(27).optional(),
     DAKOTA_NETWORK_ID: z.enum(["base-mainnet", "base-sepolia"]).optional(),
+    // Bearer token for the reconcile cron route; mandatory in production.
+    CRON_SECRET: z.string().min(16).optional(),
     REDIS_URL: z.string().optional(),
     RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
@@ -32,6 +34,7 @@ export const env = createEnv({
     DAKOTA_SIGNER_GROUP_ID: process.env.DAKOTA_SIGNER_GROUP_ID,
     DAKOTA_POLICY_ID: process.env.DAKOTA_POLICY_ID,
     DAKOTA_NETWORK_ID: process.env.DAKOTA_NETWORK_ID,
+    CRON_SECRET: process.env.CRON_SECRET,
     REDIS_URL: process.env.REDIS_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
