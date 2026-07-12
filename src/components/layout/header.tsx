@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +31,8 @@ export function Header() {
   const { data: realSession } = useSession();
   const session = DEMO_MODE ? DEMO_SESSION : realSession;
   const pathname = usePathname();
+  const router = useRouter();
+  const [searchValue, setSearchValue] = useState("");
   const initials = session?.user?.name
     ?.split(" ")
     .map((n) => n[0])
@@ -98,17 +101,30 @@ export function Header() {
         <Logo variant="full" tone="turquoise" size={22} />
       </Link>
 
-      {/* Search input — desktop */}
-      <label className="relative hidden max-w-[460px] flex-1 lg:block">
+      {/* Search — submits to the transactions feed's q filter */}
+      <form
+        className="relative hidden max-w-[460px] flex-1 lg:block"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (searchValue.trim()) {
+            router.push(
+              `/transactions?q=${encodeURIComponent(searchValue.trim())}`
+            );
+          }
+        }}
+      >
         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground/40">
           <Search className="h-4 w-4" />
         </span>
         <input
-          type="text"
-          placeholder="Search transactions, recipients…"
+          type="search"
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          placeholder="Search transactions…"
+          aria-label="Search transactions"
           className="h-10 w-full rounded-full border border-foreground/[0.08] bg-white pl-10 pr-4 text-[14px] placeholder:text-foreground/40 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-turquoise"
         />
-      </label>
+      </form>
 
       <div className="hidden lg:block" />
 

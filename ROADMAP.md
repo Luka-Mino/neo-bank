@@ -50,7 +50,7 @@ dead controls, zero console errors — verified by screenshot in the browser.
 | Accounts | ✅ |
 | Recipients | ✅ (hydration bug fixed) |
 | Auth (login/register/reset) | ✅ acceptable (copy fixed) |
-| Settings | 🔲 thin — needs KYC status card, notification prefs stub, better layout |
+| Settings | ✅ rebuilt — profile edit, verification card, 2FA enrollment, email prefs, password |
 | /recipients/new | 🔲 functional but plain — bring up to form standard |
 | Onboarding | 🔲 unreviewed in browser (KYC bypass hides it) — review with bypass off |
 | Mobile pass | 🔲 every screen at 390px — sidebar drawer, tables, hero cards |
@@ -58,6 +58,29 @@ dead controls, zero console errors — verified by screenshot in the browser.
 **Done when:** every row is ✅; `npm test` + `npm run build` green; a full
 click-through at 1440px and 390px produces zero console errors and zero
 dead buttons.
+
+## M1.5 — Feature build-out  ← ACTIVE alongside M1 (no external dependencies)
+
+Bank-grade features buildable today. Each row: how it gets built and how we
+know it's done.
+
+| # | Feature | How | Done when |
+|---|---|---|---|
+| 1 | CI pipeline ✅ | GitHub Actions: typecheck + vitest + next build on every push/PR | A breaking push shows a red ✗ on GitHub |
+| 2 | 2FA (TOTP) ✅ drill-verified | `otpauth` lib; AES-encrypted secret on users row (key derived from AUTH_SECRET); setup/verify/disable APIs; login requires code when enabled; Settings section with QR enrollment | Enroll with a real authenticator app → logout → login demands the code; wrong code rejected; disable requires a valid code |
+| 3 | Email notifications ✅ (dry-run until RESEND_API_KEY) | `src/lib/email.ts` (Resend REST, no-op without RESEND_API_KEY); wired into createNotification, gated by per-user prefs | With a key set, a simulated deposit sends a real email; without one, dev log shows the rendered payload |
+| 4 | Notification preferences ✅ | `user_preferences` table + GET/PATCH API + Settings toggles | Toggle off → simulated deposit sends no email; setting survives reload |
+| 5 | Profile editing ✅ | PATCH /api/users/profile (name); Settings form | Rename → header/sidebar reflect it after refresh |
+| 6 | Statements export ✅ | GET /api/transactions/export → CSV (account + date-range filters); Export button on Transactions | Downloaded CSV opens in Numbers/Excel with correct rows + running balance |
+| 7 | Working search ✅ | Header search submits to /transactions?q=; server-side ilike filter on type/asset/reference + amount match | Typing "coffee" or "5000" and hitting Enter shows only matching rows |
+| 8 | Real insights categories | `transactions.category` column; merchant-keyword mapper at write time + manual override PATCH; stats API aggregates real sums | Insights bars equal the sum of actual ledger rows per category; recategorizing one tx updates the chart |
+| 9 | Savings goals | `accounts.goal_amount` + progress on Accounts page + set-goal dialog | Set $5k goal on Savings → progress bar shows balance/goal correctly |
+| 10 | Recurring internal transfers | `recurring_transfers` table + schedule UI on Between accounts + executor route on the CRON_SECRET pattern (manual trigger in dev) | A weekly rule fires when the executor runs its due-date sweep, exactly once per period |
+| 11 | Staging deploy | Vercel project against restored Supabase, demo mode ON, BYPASS_KYC off — needs YOUR Vercel login | The app is clickable at a public URL on your phone |
+| 12 | Error monitoring | @sentry/nextjs once a DSN exists (your account) | A thrown test error appears in Sentry |
+
+Items 2–7 first (this session), then 8–10; 11–12 need accounts only you
+can create.
 
 ## M2 — Sandbox proof  ⛔ blocked on Dakota credentials (user action)
 

@@ -1,10 +1,21 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users, dakotaCustomers } from "@/lib/db/schema";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
+import { decryptSecret, verifyTotpCode } from "@/lib/auth/totp";
+
+// Password was right but the account has 2FA — the login page shows the
+// code field and resubmits. Distinct from a bad password on purpose only
+// AFTER password verification, so it leaks nothing to guessers.
+class TwoFactorRequired extends CredentialsSignin {
+  code = "2fa_required";
+}
+class InvalidTwoFactorCode extends CredentialsSignin {
+  code = "2fa_invalid";
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -13,6 +24,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        totp: { label: "2FA code", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
@@ -20,27 +32,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = credentials.email as string;
         const password = credentials.password as string;
 
+        let row;
         try {
-          const user = await db
+          const found = await db
             .select()
             .from(users)
             .where(eq(users.email, email.toLowerCase()))
             .limit(1);
-
-          if (user.length === 0) return null;
-
-          const isValid = await bcrypt.compare(password, user[0].passwordHash);
-          if (!isValid) return null;
-
-          return {
-            id: user[0].id,
-            email: user[0].email,
-            name: user[0].fullName,
-          };
+          row = found[0];
         } catch (error) {
           console.error("Auth error:", error);
           return null;
         }
+
+        if (!row) return null;
+
+        const isValid = await bcrypt.compare(password, row.passwordHash);
+        if (!isValid) return null;
+
+        if (row.totpEnabledAt && row.totpSecret) {
+          const code = (credentials.totp as string | undefined)?.trim();
+          if (!code) throw new TwoFactorRequired();
+          if (!verifyTotpCode(decryptSecret(row.totpSecret), code)) {
+            throw new InvalidTwoFactorCode();
+          }
+        }
+
+        return {
+          id: row.id,
+          email: row.email,
+          name: row.fullName,
+        };
       },
     }),
   ],

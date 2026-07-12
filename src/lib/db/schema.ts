@@ -19,7 +19,23 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   fullName: text("full_name").notNull(),
   phone: text("phone"),
+  // TOTP 2FA. Secret is AES-256-GCM encrypted with a key derived from
+  // AUTH_SECRET (see src/lib/auth/totp.ts). Enabled only once the user has
+  // proven a valid code (totp_enabled_at set).
+  totpSecret: text("totp_secret"),
+  totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Per-user notification settings. Row created lazily on first read.
+export const userPreferences = pgTable("user_preferences", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  emailTransactions: boolean("email_transactions").notNull().default(true),
+  emailSecurity: boolean("email_security").notNull().default(true),
+  emailProduct: boolean("email_product").notNull().default(false),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -131,6 +147,8 @@ export const accounts = pgTable(
     balance: numeric("balance", { precision: 30, scale: 18 }).notNull().default("0"),
     status: text("status").notNull().default("active"), // 'active' | 'frozen' | 'closed'
     isPrimary: boolean("is_primary").notNull().default(false),
+    // Savings goal — display-only target for progress UI; null = no goal.
+    goalAmount: numeric("goal_amount", { precision: 30, scale: 18 }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -197,6 +215,9 @@ export const transactions = pgTable(
     recipientId: text("recipient_id"),
     destinationId: text("destination_id"),
     transactionHash: text("transaction_hash"),
+    // Spending category: auto-assigned by the merchant mapper, user can
+    // override (manual overrides win — see /api/transactions/[id] PATCH).
+    category: text("category"),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -255,6 +276,39 @@ export const webhookEvents = pgTable(
   },
   (table) => [
     index("idx_webhook_events_type").on(table.eventType),
+  ]
+);
+
+// ─── Recurring Transfers ────────────────────────────────────────────────────
+// Standing internal (book-entry) transfers. Executed by the recurring sweep
+// (see /api/transfers/recurring/run) which advances next_run_at atomically —
+// a rule fires at most once per period even if two sweeps race.
+
+export const recurringTransfers = pgTable(
+  "recurring_transfers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    fromAccountId: uuid("from_account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    toAccountId: uuid("to_account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    amount: numeric("amount", { precision: 30, scale: 18 }).notNull(),
+    note: text("note"),
+    frequency: text("frequency").notNull(), // 'weekly' | 'biweekly' | 'monthly'
+    nextRunAt: timestamp("next_run_at", { withTimezone: true }).notNull(),
+    lastRunAt: timestamp("last_run_at", { withTimezone: true }),
+    status: text("status").notNull().default("active"), // 'active' | 'paused' | 'cancelled'
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_recurring_user").on(table.userId),
+    index("idx_recurring_due").on(table.status, table.nextRunAt),
   ]
 );
 

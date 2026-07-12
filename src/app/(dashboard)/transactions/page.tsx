@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,6 +67,13 @@ export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Header search lands here as ?q= — keep the local filter in sync.
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get("q") ?? "";
+  useEffect(() => {
+    if (urlQuery) setSearchQuery(urlQuery);
+  }, [urlQuery]);
 
   const {
     account: scopedAccount,
@@ -143,15 +151,29 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-          Transactions
-        </h1>
-        <p className="text-muted-foreground">
-          {isAggregate
-            ? "Real-time activity across all your accounts"
-            : `Activity in ${scopedAccount?.nickname || scopedAccount?.accountType || "your account"}`}
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+            Transactions
+          </h1>
+          <p className="text-muted-foreground">
+            {isAggregate
+              ? "Real-time activity across all your accounts"
+              : `Activity in ${scopedAccount?.nickname || scopedAccount?.accountType || "your account"}`}
+          </p>
+        </div>
+        {!DEMO_MODE && (
+          <a
+            href={`/api/transactions/export${
+              !isAggregate && scopedAccount ? `?accountId=${scopedAccount.id}` : ""
+            }`}
+            className={cn(buttonVariants({ variant: "outline" }))}
+            download
+          >
+            <ArrowDownToLine className="mr-1.5 h-4 w-4" />
+            Export CSV
+          </a>
+        )}
       </div>
 
       {/* Stat strip */}
