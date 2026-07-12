@@ -73,9 +73,9 @@ know it's done.
 | 5 | Profile editing ✅ | PATCH /api/users/profile (name); Settings form | Rename → header/sidebar reflect it after refresh |
 | 6 | Statements export ✅ | GET /api/transactions/export → CSV (account + date-range filters); Export button on Transactions | Downloaded CSV opens in Numbers/Excel with correct rows + running balance |
 | 7 | Working search ✅ | Header search submits to /transactions?q=; server-side ilike filter on type/asset/reference + amount match | Typing "coffee" or "5000" and hitting Enter shows only matching rows |
-| 8 | Real insights categories | `transactions.category` column; merchant-keyword mapper at write time + manual override PATCH; stats API aggregates real sums | Insights bars equal the sum of actual ledger rows per category; recategorizing one tx updates the chart |
-| 9 | Savings goals | `accounts.goal_amount` + progress on Accounts page + set-goal dialog | Set $5k goal on Savings → progress bar shows balance/goal correctly |
-| 10 | Recurring internal transfers | `recurring_transfers` table + schedule UI on Between accounts + executor route on the CRON_SECRET pattern (manual trigger in dev) | A weekly rule fires when the executor runs its due-date sweep, exactly once per period |
+| 8 | Real insights categories ✅ (auto-categorize at write + override PATCH + real chart; picker UI on tx detail pending) | `transactions.category` column; merchant-keyword mapper at write time + manual override PATCH; stats API aggregates real sums | Insights bars equal the sum of actual ledger rows per category; recategorizing one tx updates the chart |
+| 9 | Savings goals — API ✅ (goalAmount PATCH); progress UI on Accounts pending | `accounts.goal_amount` + progress on Accounts page + set-goal dialog | Set $5k goal on Savings → progress bar shows balance/goal correctly |
+| 10 | Recurring internal transfers — backend ✅ drill-verified (rules API + claim-then-execute sweep); schedule UI pending | `recurring_transfers` table + schedule UI on Between accounts + executor route on the CRON_SECRET pattern (manual trigger in dev) | A weekly rule fires when the executor runs its due-date sweep, exactly once per period |
 | 11 | Staging deploy | Vercel project against restored Supabase, demo mode ON, BYPASS_KYC off — needs YOUR Vercel login | The app is clickable at a public URL on your phone |
 | 12 | Error monitoring | @sentry/nextjs once a DSN exists (your account) | A thrown test error appears in Sentry |
 

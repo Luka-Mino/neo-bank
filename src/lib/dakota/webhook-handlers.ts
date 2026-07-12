@@ -17,6 +17,7 @@ import {
   isValidAmount,
   ledgerTxType,
 } from "./transaction-transitions";
+import { categorizeTransaction } from "@/lib/categorize";
 
 type EventObject = Record<string, unknown>;
 type Handler = (object: EventObject, envelope: DakotaEventEnvelope) => Promise<void>;
@@ -213,6 +214,7 @@ async function onAutoTransaction(object: EventObject) {
           dakotaTxId,
           txType,
           status: newStatus,
+          category: categorizeTransaction({ txType }),
           sourceAsset: receipt.input_currency as string | undefined,
           destinationAsset: receipt.output_currency as string | undefined,
           sourceAmount: isValidAmount(receipt.initial_amount)

@@ -72,6 +72,7 @@ export const PATCH = apiHandler({
     // Plain rename / freeze / unfreeze.
     const patch: Partial<typeof accounts.$inferInsert> = { updatedAt: new Date() };
     if (body.nickname !== undefined) patch.nickname = body.nickname;
+    if (body.goalAmount !== undefined) patch.goalAmount = body.goalAmount;
     if (body.status !== undefined) patch.status = body.status;
 
     const [row] = await db

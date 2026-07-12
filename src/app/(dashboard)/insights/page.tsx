@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DEMO_MODE, DEMO_TRANSACTIONS } from "@/lib/demo-data";
+import { CATEGORIES, type CategoryKey } from "@/lib/categorize";
 import { useSelectedAccount } from "@/components/account/use-accounts";
 
 const periods = ["This Month", "Last Month", "3 Months"] as const;
@@ -149,10 +150,29 @@ export default function InsightsPage() {
     return { income, outflows, savings: Math.max(0, income - outflows) };
   }, [filtered]);
 
-  // Total under the breakdown is a SUM of the placeholder categories — it
-  // moves with them, not with real transactions. Once real categorization
-  // ships, both sides become real together.
-  const totalSpent = sampleCategories.reduce((s, c) => s + c.spent, 0);
+  // Demo mode keeps the curated sample chart; real mode aggregates actual
+  // ledger rows by their category column (auto-assigned at write time,
+  // user-overridable per transaction).
+  const OUTFLOW_TYPES = new Set(["offramp", "withdrawal", "send", "internal_out", "wallet_send"]);
+  const realCategories = (() => {
+    const sums = new Map<CategoryKey, number>();
+    for (const tx of filtered as Array<{ txType: string; category?: string | null; sourceAmount?: string | null }>) {
+      if (!OUTFLOW_TYPES.has(tx.txType)) continue;
+      const key = (tx.category && tx.category in CATEGORIES ? tx.category : "other") as CategoryKey;
+      sums.set(key, (sums.get(key) ?? 0) + parseFloat(tx.sourceAmount || "0"));
+    }
+    return [...sums.entries()]
+      .map(([key, spent]) => ({
+        name: CATEGORIES[key].label,
+        color: CATEGORIES[key].color,
+        spent,
+        budget: null as number | null,
+        icon: Wallet,
+      }))
+      .sort((a, b) => b.spent - a.spent);
+  })();
+  const categories = DEMO_MODE ? sampleCategories : realCategories;
+  const totalSpent = categories.reduce((s, c) => s + c.spent, 0);
 
   // Scope-aware eyebrow. Period drives the leading phrase, scope drives
   // the trailing phrase.
@@ -262,8 +282,20 @@ export default function InsightsPage() {
               </span>
             </div>
             <div className="space-y-4">
-              {sampleCategories.map((c) => {
-                const pct = Math.min(100, (c.spent / c.budget) * 100);
+              {categories.length === 0 && (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  No spending in this period yet.
+                </p>
+              )}
+              {categories.map((c) => {
+                const pct = Math.min(
+                  100,
+                  c.budget
+                    ? (c.spent / c.budget) * 100
+                    : totalSpent > 0
+                      ? (c.spent / totalSpent) * 100
+                      : 0
+                );
                 return (
                   <div key={c.name}>
                     <div className="flex items-center justify-between">
@@ -301,9 +333,16 @@ export default function InsightsPage() {
               <span className="text-xs text-muted-foreground">Monthly caps</span>
             </div>
             <div className="space-y-4">
-              {sampleCategories.slice(0, 4).map((c) => {
-                const pct = Math.min(100, (c.spent / c.budget) * 100);
-                const over = c.spent / c.budget > 0.9;
+              {categories.slice(0, 4).map((c) => {
+                const pct = Math.min(
+                  100,
+                  c.budget
+                    ? (c.spent / c.budget) * 100
+                    : totalSpent > 0
+                      ? (c.spent / totalSpent) * 100
+                      : 0
+                );
+                const over = c.budget ? c.spent / c.budget > 0.9 : false;
                 return (
                   <div key={c.name}>
                     <div className="flex items-center justify-between text-sm">
@@ -316,7 +355,9 @@ export default function InsightsPage() {
                             : "text-muted-foreground"
                         )}
                       >
-                        {formatCurrency(c.spent)} / {formatCurrency(c.budget)}
+                        {c.budget
+                          ? `${formatCurrency(c.spent)} / ${formatCurrency(c.budget)}`
+                          : formatCurrency(c.spent)}
                       </span>
                     </div>
                     <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-muted">

@@ -32,6 +32,7 @@ import { defaultNetworkId, isSupportedNetwork } from "@/lib/dakota/networks";
 import { randomBytes } from "node:crypto";
 import { logStatusChange } from "@/lib/transaction-history";
 import { createTransactionSchema } from "@/lib/validators/transaction";
+import { categorizeTransaction } from "@/lib/categorize";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 import {
   assertAccountOwnership,
@@ -192,6 +193,7 @@ export const POST = apiHandler({
             dakotaTxId: dakotaTx.id,
             txType: body.txType,
             status: dakotaTx.status || "pending",
+            category: categorizeTransaction({ txType: body.txType }),
             sourceAsset: body.sourceAsset,
             destinationAsset: body.destinationAsset,
             sourceAmount: sendAmount,
