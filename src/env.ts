@@ -18,6 +18,7 @@ export const env = createEnv({
     // Bearer token for the reconcile cron route; mandatory in production.
     CRON_SECRET: z.string().min(16).optional(),
     REDIS_URL: z.string().optional(),
+    SENTRY_DSN: z.string().url().optional(),
     RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
   },
@@ -36,6 +37,7 @@ export const env = createEnv({
     DAKOTA_NETWORK_ID: process.env.DAKOTA_NETWORK_ID,
     CRON_SECRET: process.env.CRON_SECRET,
     REDIS_URL: process.env.REDIS_URL,
+    SENTRY_DSN: process.env.SENTRY_DSN,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,

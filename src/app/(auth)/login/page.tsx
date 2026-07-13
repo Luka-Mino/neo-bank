@@ -44,6 +44,8 @@ export default function LoginPage() {
       } else if (code === "2fa_invalid") {
         setNeedsTotp(true);
         setError("That code didn't work — check your authenticator app.");
+      } else if (code === "rate_limited") {
+        setError("Too many sign-in attempts. Please wait 15 minutes and try again.");
       } else if (result.error === "CredentialsSignin") {
         setError("Invalid email or password");
       } else {

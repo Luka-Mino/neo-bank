@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { users, dakotaCustomers } from "@/lib/db/schema";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 import { decryptSecret, verifyTotpCode } from "@/lib/auth/totp";
+import { rateLimit } from "@/lib/rate-limit";
+import { logAudit } from "@/lib/audit";
 
 // Password was right but the account has 2FA — the login page shows the
 // code field and resubmits. Distinct from a bad password on purpose only
@@ -15,6 +17,9 @@ class TwoFactorRequired extends CredentialsSignin {
 }
 class InvalidTwoFactorCode extends CredentialsSignin {
   code = "2fa_invalid";
+}
+class TooManyAttempts extends CredentialsSignin {
+  code = "rate_limited";
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -29,8 +34,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const email = credentials.email as string;
+        const email = (credentials.email as string).toLowerCase();
         const password = credentials.password as string;
+
+        // Brute-force guard: 15 attempts per email per 15 minutes (counts
+        // successes too — nobody legitimately signs in 15 times in 15min).
+        // Keyed by target email so credential-stuffing one account stalls
+        // regardless of source IP. Uses the shared limiter (Upstash-backed
+        // in production, in-memory in dev).
+        const rl = await rateLimit(`login:${email}`, 15, 15 * 60 * 1000);
+        if (!rl.allowed) {
+          logAudit({
+            actorType: "system",
+            action: "login_rate_limited",
+            resourceType: "user",
+            resourceId: email,
+          });
+          throw new TooManyAttempts();
+        }
 
         let row;
         try {
@@ -48,7 +69,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!row) return null;
 
         const isValid = await bcrypt.compare(password, row.passwordHash);
-        if (!isValid) return null;
+        if (!isValid) {
+          logAudit({
+            actorType: "system",
+            action: "login_failed",
+            resourceType: "user",
+            resourceId: row.id,
+          });
+          return null;
+        }
 
         if (row.totpEnabledAt && row.totpSecret) {
           const code = (credentials.totp as string | undefined)?.trim();
