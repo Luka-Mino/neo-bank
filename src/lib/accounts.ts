@@ -16,10 +16,14 @@ export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
  * 14-digit Moneta account number with a fixed 2-digit IIN-style prefix.
  * Pure-random (not Luhn) for now; the issuer would replace this.
  */
+import { randomInt } from "node:crypto";
+
 export function generateAccountNumber(): string {
-  const rand12 = Math.floor(Math.random() * 1e12)
-    .toString()
-    .padStart(12, "0");
+  // Cryptographically random so numbers aren't guessable/sequential. This is
+  // Moneta's internal display number; the real ACH/wire routing+account
+  // numbers come from Dakota (dakota_rails.bank_account_info, shown once
+  // provisioning completes).
+  const rand12 = Array.from({ length: 12 }, () => randomInt(10)).join("");
   return `40${rand12}`;
 }
 

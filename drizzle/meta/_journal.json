@@ -43,6 +43,13 @@
       "when": 1783885122593,
       "tag": "0005_features_2fa_prefs_recurring",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783970189704,
+      "tag": "0006_login_devices",
+      "breakpoints": true
     }
   ]
 }

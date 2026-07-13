@@ -131,6 +131,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
+  events: {
+    // Fires only after a fully successful sign-in (password + any 2FA).
+    // Records the device and sends a "new sign-in" alert for unfamiliar ones.
+    async signIn({ user }) {
+      if (!user?.id) return;
+      try {
+        const { headers } = await import("next/headers");
+        const h = await headers();
+        const ip =
+          h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          h.get("x-real-ip") ||
+          "0.0.0.0";
+        const userAgent = h.get("user-agent") ?? "unknown";
+        const { recordLoginDevice } = await import("@/lib/auth/login-devices");
+        await recordLoginDevice({ userId: user.id, userAgent, ip });
+      } catch (error) {
+        console.error("signIn event error:", error);
+      }
+    },
+  },
   pages: {
     signIn: "/login",
   },

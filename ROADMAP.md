@@ -82,6 +82,30 @@ know it's done.
 Items 2–7 first (this session), then 8–10; 11–12 need accounts only you
 can create.
 
+## Security lockdown (current-security focus, no cert needed)
+
+Done: bcrypt-12 passwords, server-verified JWT sessions (identity from
+`auth()` never a URL param), 26 ownership-scoped routes (no IDOR / no
+"same-URL-logged-in"), TOTP 2FA (drill-verified), login brute-force limit,
+AES-256-GCM secrets, security headers, audit log, **new-device sign-in
+alerts** ("Is this you?" email + in-app when a login arrives from an
+unfamiliar device/location — drill-verified: first device silent, new
+device alerts once, repeat no re-alert). Crypto-random internal account
+numbers. Removed the false "SOC 2 Type II" marketing claim (we are not
+certified; SOC 2 is an org-level audit, revisit as a real program later).
+
+Account-number architecture (decided 2026-07-13): ONE real Dakota-issued
+routing+account number per user (industry standard — Monzo/Revolut model).
+It's already provisioned into `dakota_rails.bank_account_info` and shown on
+the deposit page. TODO when Dakota is live: surface it as the PRIMARY
+account's number and relabel savings/vacation buckets as internal spaces
+(they don't get their own routing number). Per-bucket real numbers =
+multiple Dakota onramp accounts; possible but not planned.
+
+Still open (mostly M3): email OTP as an optional 2FA channel; strict CSP;
+signer key + API key into a secrets manager; demo/bypass hard-off in prod;
+key-rotation calendar.
+
 ## M2 — Sandbox proof  ⛔ blocked on Dakota credentials (user action)
 
 **How:** the moment the API key arrives (~30 min setup):

@@ -13,7 +13,7 @@ const trustItems = [
   {
     icon: Lock,
     title: "Bank-grade encryption",
-    description: "256-bit AES, end-to-end. SOC 2 Type II environment.",
+    description: "256-bit AES end-to-end, two-factor authentication, and continuous monitoring.",
   },
   {
     icon: Scale,

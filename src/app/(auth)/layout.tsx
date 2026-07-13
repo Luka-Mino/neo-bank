@@ -33,7 +33,7 @@ export default function AuthLayout({
 
         <div className="relative flex items-center gap-2 text-xs text-white/55">
           <ShieldCheck className="h-4 w-4 text-[#4ac280]" />
-          FDIC pass-through up to $250K · SOC 2 Type II
+          FDIC pass-through up to $250K · Bank-grade security
         </div>
       </div>
 

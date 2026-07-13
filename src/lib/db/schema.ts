@@ -28,6 +28,26 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Recognized login devices, for "new sign-in" security alerts. We store a
+// salted hash of (user-agent + IP prefix) — never the raw IP — so we can
+// tell "seen before" from "new device/location" without keeping PII.
+export const loginDevices = pgTable(
+  "login_devices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    fingerprint: text("fingerprint").notNull(), // sha256(userId + UA + ip/16)
+    userAgent: text("user_agent"),
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("idx_login_devices_user_fp").on(table.userId, table.fingerprint),
+  ]
+);
+
 // Per-user notification settings. Row created lazily on first read.
 export const userPreferences = pgTable("user_preferences", {
   userId: uuid("user_id")

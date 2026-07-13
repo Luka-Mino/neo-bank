@@ -68,7 +68,7 @@ export function Hero({ isAuthenticated }: HeroProps) {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/50 lg:justify-start">
               <span>FDIC pass-through up to $250K</span>
               <span className="hidden h-1 w-1 rounded-full bg-white/30 sm:block" />
-              <span>SOC 2 Type II</span>
+              <span>Bank-grade encryption</span>
               <span className="hidden h-1 w-1 rounded-full bg-white/30 sm:block" />
               <span>Settles on-chain in seconds</span>
             </div>
