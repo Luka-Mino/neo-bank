@@ -53,7 +53,7 @@ dead controls, zero console errors — verified by screenshot in the browser.
 | Settings | ✅ rebuilt — profile edit, verification card, 2FA enrollment, email prefs, password |
 | /recipients/new | ✅ rebuilt — fixed payload bugs (snake_case keys, partial addresses), all-or-nothing address validation, brand form |
 | Onboarding | 🔲 code-reviewed; visual pass with bypass off pending Chrome recovery |
-| Mobile pass | 🔲 code-level fixes from the guidelines audit applied; visual 390px pass pending Chrome recovery |
+| Mobile pass | ◑ code fixes applied + spot-checked in browser; hero card width bug fixed |
 
 **Done when:** every row is ✅; `npm test` + `npm run build` green; a full
 click-through at 1440px and 390px produces zero console errors and zero
@@ -76,7 +76,7 @@ know it's done.
 | 8 | Real insights categories ✅ (auto-categorize at write + override PATCH + real chart; picker UI on tx detail pending) | `transactions.category` column; merchant-keyword mapper at write time + manual override PATCH; stats API aggregates real sums | Insights bars equal the sum of actual ledger rows per category; recategorizing one tx updates the chart |
 | 9 | Savings goals — API ✅ (goalAmount PATCH); progress UI on Accounts pending | `accounts.goal_amount` + progress on Accounts page + set-goal dialog | Set $5k goal on Savings → progress bar shows balance/goal correctly |
 | 10 | Recurring internal transfers — backend ✅ drill-verified (rules API + claim-then-execute sweep); schedule UI pending | `recurring_transfers` table + schedule UI on Between accounts + executor route on the CRON_SECRET pattern (manual trigger in dev) | A weekly rule fires when the executor runs its due-date sweep, exactly once per period |
-| 11 | Staging deploy | Vercel project against restored Supabase, demo mode ON, BYPASS_KYC off — needs YOUR Vercel login | The app is clickable at a public URL on your phone |
+| 11 | Staging deploy ✅ LIVE at https://neo-bank-rho.vercel.app | Vercel project `neo-bank` (luka-minos-projects), auto-deploys on push to main, NEXT_PUBLIC_DEMO_MODE=true (seed data, no backend) | Clickable public URL — landing + full app in demo mode |
 | 12 | Error monitoring | @sentry/nextjs once a DSN exists (your account) | A thrown test error appears in Sentry |
 
 Items 2–7 first (this session), then 8–10; 11–12 need accounts only you
