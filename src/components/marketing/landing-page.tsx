@@ -2,7 +2,7 @@
 
 import { Navbar } from "./navbar";
 import { Hero } from "./hero";
-import { FeaturesGrid } from "./features-grid";
+import { ProductStory } from "./product-story";
 import { CardShowcase } from "./card-showcase";
 import { TrustSection } from "./trust-section";
 import { CtaSection } from "./cta-section";
@@ -18,7 +18,7 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
       <Navbar isAuthenticated={isAuthenticated} />
       <div className="h-16" aria-hidden />
       <Hero isAuthenticated={isAuthenticated} />
-      <FeaturesGrid />
+      <ProductStory />
       <CardShowcase />
       <TrustSection />
       <CtaSection />
