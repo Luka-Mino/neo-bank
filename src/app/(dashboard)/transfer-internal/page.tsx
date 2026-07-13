@@ -29,6 +29,8 @@ import { SourceAccountPicker } from "@/components/account/source-account-picker"
 import { fetchApi, queryKeys } from "@/lib/queries";
 import { useNewAccountDialog } from "@/components/account/new-account-dialog-provider";
 import { DEMO_MODE } from "@/lib/demo-data";
+import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 
 const presetAmounts = [50, 100, 500, 1000];
 
@@ -65,6 +67,7 @@ export default function TransferInternalPage() {
     if (!toId && initialTo) setToId(initialTo);
   }, [fromId, toId, scopedAccount, openAccounts]);
 
+  const [repeat, setRepeat] = useState<"once" | "weekly" | "biweekly" | "monthly">("once");
   const fromAccount = openAccounts.find((a) => a.id === fromId);
   const toAccount = openAccounts.find((a) => a.id === toId);
   const numAmount = parseFloat(amount || "0") || 0;
@@ -89,6 +92,19 @@ export default function TransferInternalPage() {
           }),
         }
       );
+      // "Repeat" = move now AND schedule the next one a period out.
+      if (repeat !== "once") {
+        await fetchApi("/api/transfers/recurring", {
+          method: "POST",
+          body: JSON.stringify({
+            fromAccountId: fromId,
+            toAccountId: toId,
+            amount,
+            frequency: repeat,
+            note: note.trim() || undefined,
+          }),
+        });
+      }
       return res.data;
     },
     onSuccess: () => {
@@ -119,9 +135,17 @@ export default function TransferInternalPage() {
         queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
         queryClient.invalidateQueries({ queryKey: ["transactions"] });
       }
-      toast.success("Transfer complete");
+      toast.success(
+        repeat === "once"
+          ? "Transfer complete"
+          : `Transfer complete — repeats ${repeat}`
+      );
+      if (!DEMO_MODE && repeat !== "once") {
+        queryClient.invalidateQueries({ queryKey: ["recurring-transfers"] });
+      }
       setAmount("");
       setNote("");
+      setRepeat("once");
     },
     onError: (e) => {
       toast.error(e instanceof Error ? e.message : "Transfer failed");
@@ -308,6 +332,37 @@ export default function TransferInternalPage() {
               />
             </div>
 
+            {/* Repeat */}
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                Repeat
+              </Label>
+              <div className="flex gap-1 rounded-full bg-muted p-1">
+                {(
+                  [
+                    ["once", "One-time"],
+                    ["weekly", "Weekly"],
+                    ["biweekly", "Every 2 weeks"],
+                    ["monthly", "Monthly"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setRepeat(value)}
+                    className={cn(
+                      "flex-1 rounded-full px-2 py-1.5 text-xs font-semibold transition",
+                      repeat === value
+                        ? "bg-forest text-white shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Summary */}
             {fromAccount && toAccount && numAmount > 0 && (
               <div className="rounded-xl bg-primary/5 p-3 text-xs">
@@ -338,7 +393,9 @@ export default function TransferInternalPage() {
                 {transfer.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Move {amount ? fmtUsd(numAmount) : "funds"}
+                {repeat === "once"
+                  ? `Move ${amount ? fmtUsd(numAmount) : "funds"}`
+                  : `Move now & repeat ${repeat === "biweekly" ? "every 2 weeks" : repeat}`}
               </Button>
             </div>
 
@@ -349,6 +406,8 @@ export default function TransferInternalPage() {
           </form>
         </CardContent>
       </Card>
+
+      {!DEMO_MODE && <RecurringRules />}
 
       <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
         <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
@@ -361,5 +420,82 @@ export default function TransferInternalPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Standing orders ──────────────────────────────────────────────────────────
+
+interface RecurringRule {
+  id: string;
+  amount: string;
+  note: string | null;
+  frequency: string;
+  nextRunAt: string;
+  fromLabel: string | null;
+  fromType: string;
+  toLabel: string | null;
+  toType: string;
+}
+
+function RecurringRules() {
+  const queryClient = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["recurring-transfers"],
+    queryFn: () => fetchApi<{ data: { data: RecurringRule[] } }>("/api/transfers/recurring"),
+  });
+  const rules = data?.data?.data ?? [];
+
+  const cancel = useMutation({
+    mutationFn: (id: string) =>
+      fetchApi(`/api/transfers/recurring/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recurring-transfers"] });
+      toast.success("Standing order cancelled");
+    },
+    onError: (e) =>
+      toast.error(e instanceof Error ? e.message : "Could not cancel"),
+  });
+
+  if (rules.length === 0) return null;
+
+  const freqLabel = (f: string) =>
+    f === "biweekly" ? "every 2 weeks" : f;
+
+  return (
+    <Card>
+      <CardContent>
+        <p className="text-sm font-semibold">Standing orders</p>
+        <div className="mt-3 divide-y divide-border">
+          {rules.map((r) => (
+            <div key={r.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <ArrowLeftRight className="h-3.5 w-3.5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">
+                  {fmtUsd(r.amount)} · {(r.fromLabel || r.fromType)} → {(r.toLabel || r.toType)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Repeats {freqLabel(r.frequency)} · next{" "}
+                  {new Date(r.nextRunAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                  {r.note ? ` · ${r.note}` : ""}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => cancel.mutate(r.id)}
+                disabled={cancel.isPending}
+              >
+                Cancel
+              </Button>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

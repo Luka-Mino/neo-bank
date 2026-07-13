@@ -14,6 +14,7 @@ export type AccountRow = {
   balance: string;
   status: "active" | "frozen" | "closed";
   isPrimary: boolean;
+  goalAmount?: string | null;
   createdAt?: string;
   updatedAt?: string;
 };

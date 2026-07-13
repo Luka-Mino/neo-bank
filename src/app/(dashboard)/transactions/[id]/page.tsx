@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,14 @@ import {
   XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CATEGORIES, CATEGORY_KEYS, type CategoryKey } from "@/lib/categorize";
 
 // Dakota puts money detail inside metadata.receipt (there is no top-level
 // amount on webhook payloads): input/output amounts, FX rate, fee lines,
@@ -42,12 +50,30 @@ const RETURN_STATUSES = new Set(["returned", "reversed", "pending_return"]);
 
 export default function TransactionDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
 
   const { data: txRes, isLoading } = useQuery({
     queryKey: ["transaction", id],
     queryFn: () => fetch(`/api/transactions/${id}`).then((r) => r.json()),
   });
   const tx = txRes?.data || txRes;
+
+  const recategorize = useMutation({
+    mutationFn: async (category: CategoryKey) => {
+      const res = await fetch(`/api/transactions/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category }),
+      });
+      const body = await res.json();
+      if (!body.success) throw new Error(body.error?.message || "Update failed");
+      return body.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transaction", id] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -209,6 +235,31 @@ export default function TransactionDetailPage() {
               <span className="text-sm font-medium">{item.value}</span>
             </div>
           ))}
+
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Category</span>
+            <Select
+              value={(tx.category as string) ?? "other"}
+              onValueChange={(v) => recategorize.mutate(v as CategoryKey)}
+            >
+              <SelectTrigger className="h-8 w-[180px] text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORY_KEYS.map((key) => (
+                  <SelectItem key={key} value={key}>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: CATEGORIES[key].color }}
+                      />
+                      {CATEGORIES[key].label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <Separator />
 
