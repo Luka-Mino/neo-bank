@@ -79,8 +79,9 @@ export const POST = apiHandler({
           kycStatus: dakotaCustomer.kyb_status || "pending",
           applicationId: dakotaCustomer.application_id,
           applicationUrl: dakotaCustomer.application_url,
+          // application_expires_at is a Unix timestamp in NANOSECONDS
           applicationExpiresAt: dakotaCustomer.application_expires_at
-            ? new Date(dakotaCustomer.application_expires_at)
+            ? new Date(Number(dakotaCustomer.application_expires_at) / 1e6)
             : null,
           externalId: user.id,
         })

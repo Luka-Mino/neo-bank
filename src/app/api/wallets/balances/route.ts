@@ -29,7 +29,12 @@ export const GET = apiHandler({
     for (const wallet of userWallets) {
       try {
         const dakotaBalances = await fetchDakotaBalances(wallet.dakotaWalletId);
-        const balances = dakotaBalances.data || [];
+        // OpenAPI shape: balances[] of {asset: AssetDeployment, amount_usd}
+        const balances = (dakotaBalances.balances || []).map((b) => ({
+          networkId: b.asset?.network_id ?? "",
+          asset: b.asset?.name ?? b.asset?.id ?? "USDC",
+          balance: b.amount_usd,
+        }));
 
         // Update cache
         for (const b of balances) {
@@ -37,7 +42,7 @@ export const GET = apiHandler({
             .insert(walletBalances)
             .values({
               walletId: wallet.id,
-              networkId: b.network_id,
+              networkId: b.networkId,
               asset: b.asset,
               balance: b.balance,
               updatedAt: new Date(),
@@ -58,11 +63,7 @@ export const GET = apiHandler({
           family: wallet.family,
           name: wallet.name,
           address: wallet.address,
-          balances: balances.map((b) => ({
-            networkId: b.network_id,
-            asset: b.asset,
-            balance: b.balance,
-          })),
+          balances,
         });
       } catch (error) {
         console.error(

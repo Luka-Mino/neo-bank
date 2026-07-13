@@ -20,6 +20,24 @@ interface DakotaWallet {
   created_at: string;
 }
 
+export interface WalletBalanceEntry {
+  asset: {
+    id?: string;
+    name?: string;
+    network_id?: string;
+    contract_address?: string;
+    decimals?: number;
+  };
+  amount_usd: string;
+}
+
+export interface WalletBalancesResponse {
+  wallet_id: string;
+  address: string;
+  balances: WalletBalanceEntry[];
+  total_amount_usd: string;
+}
+
 interface WalletBalance {
   network_id: string;
   asset: string;
@@ -43,10 +61,12 @@ export async function createWallet(
   );
 }
 
+// Response shape per OpenAPI: balances[] with an AssetDeployment and a
+// USD-valued amount string (2dp, truncated toward zero) — NOT {data:[...]}.
 export async function getWalletBalances(
   walletId: string
-): Promise<{ data: WalletBalance[] }> {
-  return dakota.get<{ data: WalletBalance[] }>(`/wallets/${walletId}/balances`);
+): Promise<WalletBalancesResponse> {
+  return dakota.get<WalletBalancesResponse>(`/wallets/${walletId}/balances`);
 }
 
 // Sending from a wallet requires a signed intent (endorsed request) —

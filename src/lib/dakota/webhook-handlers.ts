@@ -50,7 +50,10 @@ async function onKybStatus(object: EventObject) {
   // The object may be a customer resource ({id, kyb_status}) or the slim
   // shape ({customer_id, kyb_status}) shown in parts of the docs.
   const customerId = (object.customer_id ?? object.id) as string | undefined;
-  const kybStatus = object.kyb_status as string | undefined;
+  let kybStatus = object.kyb_status as string | undefined;
+  // Sandbox kyb_approve simulations emit kyb_status "approved"; the customer
+  // lifecycle status is "active". Same meaning — normalize.
+  if (kybStatus === "approved") kybStatus = "active";
   const reasonCode = object.reason_code as string | undefined;
   if (!customerId || !kybStatus) return;
 

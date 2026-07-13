@@ -128,11 +128,12 @@ export const POST = apiHandler({
       return err("Destination not found", 404);
     }
 
-    // Statement reference the recipient's bank shows. ACH allows ≤18 chars,
-    // letters/digits/spaces only — "MONETA " + 8 base36 chars fits.
+    // Statement reference the recipient's bank shows. Docs conflict on the
+    // ACH cap (18 vs 10 chars) — 10 satisfies both readings.
+    // "MNTA " + 5 base36 chars = 10.
     const paymentReference =
       body.paymentReference ??
-      `MONETA ${randomBytes(6).readUIntBE(0, 6).toString(36).toUpperCase().padStart(8, "0").slice(-8)}`;
+      `MNTA ${randomBytes(4).readUIntBE(0, 4).toString(36).toUpperCase().padStart(5, "0").slice(-5)}`;
 
     const [wallet] = await db
       .select()

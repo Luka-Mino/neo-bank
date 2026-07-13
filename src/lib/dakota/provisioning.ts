@@ -166,7 +166,9 @@ export async function provisionCustomer(userId: string): Promise<ProvisioningRes
         sourceAsset: "USD",
         destinationAsset: "USDC",
         destinationNetworkId: networkId,
-        capabilities: ["ach", "fedwire"],
+        // Docs: "as input, you can only request one in this list";
+        // us_bank_account on an onramp = accepts BOTH ACH and Fedwire.
+        capabilities: ["us_bank_account"],
         rail: "ach",
       },
       { idempotencyKey: provisioningIdempotencyKey(userId, "onramp") }
