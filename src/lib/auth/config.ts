@@ -1,9 +1,9 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { users, dakotaCustomers } from "@/lib/db/schema";
+import { users, dakotaCustomers, magicLinkTokens } from "@/lib/db/schema";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 import { decryptSecret, verifyTotpCode } from "@/lib/auth/totp";
 import { rateLimit } from "@/lib/rate-limit";
@@ -92,6 +92,59 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: row.email,
           name: row.fullName,
         };
+      },
+    }),
+    // Passwordless sign-in. Consumes a single-use magic-link token
+    // (atomic mark-used so it can't be replayed), then still enforces 2FA
+    // if the account has it — an email link must not weaken the second
+    // factor. See POST /api/auth/magic-link.
+    Credentials({
+      id: "magic-link",
+      name: "Magic Link",
+      credentials: {
+        token: { label: "Token", type: "text" },
+        totp: { label: "2FA code", type: "text" },
+      },
+      async authorize(credentials) {
+        const token = credentials?.token as string | undefined;
+        if (!token) return null;
+
+        // Atomic consume: only succeeds if unused and unexpired.
+        let consumed;
+        try {
+          consumed = await db
+            .update(magicLinkTokens)
+            .set({ usedAt: new Date() })
+            .where(
+              and(
+                eq(magicLinkTokens.token, token),
+                isNull(magicLinkTokens.usedAt),
+                gt(magicLinkTokens.expiresAt, sql`now()`)
+              )
+            )
+            .returning({ userId: magicLinkTokens.userId });
+        } catch (error) {
+          console.error("Magic-link consume error:", error);
+          return null;
+        }
+        if (consumed.length === 0) return null; // invalid / expired / used
+
+        const [row] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, consumed[0].userId))
+          .limit(1);
+        if (!row) return null;
+
+        if (row.totpEnabledAt && row.totpSecret) {
+          const code = (credentials?.totp as string | undefined)?.trim();
+          if (!code) throw new TwoFactorRequired();
+          if (!verifyTotpCode(decryptSecret(row.totpSecret), code)) {
+            throw new InvalidTwoFactorCode();
+          }
+        }
+
+        return { id: row.id, email: row.email, name: row.fullName };
       },
     }),
   ],

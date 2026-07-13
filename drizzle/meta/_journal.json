@@ -50,6 +50,13 @@
       "when": 1783970189704,
       "tag": "0006_login_devices",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783986456601,
+      "tag": "0007_magic_link_tokens",
+      "breakpoints": true
     }
   ]
 }

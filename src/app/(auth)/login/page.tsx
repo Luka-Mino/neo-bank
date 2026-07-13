@@ -11,7 +11,65 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Loader2, ShieldCheck } from "lucide-react";
+import { AlertCircle, Loader2, ShieldCheck, Mail } from "lucide-react";
+import { toast } from "sonner";
+
+// Passwordless option: reads the email already typed into the form and
+// requests a sign-in link. Uses the form's email field via the DOM so it
+// doesn't need to be lifted into shared state.
+function MagicLinkButton() {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  async function requestLink() {
+    const emailEl = document.getElementById("email") as HTMLInputElement | null;
+    const email = emailEl?.value?.trim();
+    if (!email) {
+      toast.error("Enter your email first, then request a link.");
+      emailEl?.focus();
+      return;
+    }
+    setSending(true);
+    try {
+      await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setSent(true);
+    } catch {
+      toast.error("Something went wrong. Try again.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <p className="text-center text-sm text-muted-foreground" role="status" aria-live="polite">
+        Check your inbox — if an account exists for that email, a sign-in link
+        is on its way.
+      </p>
+    );
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      className="w-full"
+      onClick={requestLink}
+      disabled={sending}
+    >
+      {sending ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <Mail className="mr-2 h-4 w-4" />
+      )}
+      Email me a sign-in link
+    </Button>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -139,6 +197,18 @@ export default function LoginPage() {
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {needsTotp ? "Verify & sign in" : "Sign In"}
           </Button>
+
+          {!needsTotp && (
+            <>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="h-px flex-1 bg-border" />
+                or
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <MagicLinkButton />
+            </>
+          )}
+
           <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link href="/register" className="text-primary underline-offset-4 hover:underline">

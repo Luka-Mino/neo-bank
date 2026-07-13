@@ -81,6 +81,29 @@ export async function sendPasswordResetEmail(to: string, token: string) {
   });
 }
 
+export async function sendMagicLinkEmail(to: string, token: string) {
+  const url = `${APP_URL}/magic?token=${token}`;
+  return sendEmail({
+    to,
+    subject: "Your Moneta sign-in link",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+        <p style="font-weight: 700; color: #122e2e; font-size: 18px; margin-bottom: 24px;">moneta</p>
+        <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 16px; color: #212020;">Sign in to Moneta</h2>
+        <p style="color: #555; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+          Click the button below to sign in. No password needed.
+        </p>
+        <a href="${url}" style="display: inline-block; background: #4ac280; color: #122e2e; padding: 12px 32px; border-radius: 999px; text-decoration: none; font-size: 14px; font-weight: 600;">
+          Sign in to Moneta
+        </a>
+        <p style="color: #999; font-size: 13px; margin-top: 32px;">
+          This link expires in 15 minutes and can be used once. If you didn't request it, you can safely ignore this email — your account is unaffected.
+        </p>
+      </div>
+    `,
+  });
+}
+
 // Generic branded notification email — the in-app notification's email
 // mirror (see createNotification in src/lib/notifications.ts).
 export async function sendNotificationEmail(params: {

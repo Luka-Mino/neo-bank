@@ -367,6 +367,21 @@ export const emailVerificationTokens = pgTable("email_verification_tokens", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ─── Magic-Link Login Tokens ────────────────────────────────────────────────
+// Passwordless sign-in: a single-use, short-lived token emailed as a link.
+// Consumed by the "magic-link" credentials provider in src/lib/auth/config.ts.
+
+export const magicLinkTokens = pgTable("magic_link_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ─── Transaction Status History ─────────────────────────────────────────────
 
 export const transactionStatusHistory = pgTable(
