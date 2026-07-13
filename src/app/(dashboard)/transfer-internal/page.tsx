@@ -158,7 +158,7 @@ export default function TransferInternalPage() {
   if (openAccounts.length === 0) {
     return (
       <div className="mx-auto max-w-xl space-y-6">
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+        <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
           Between accounts
         </h1>
         <Card>
@@ -181,7 +181,7 @@ export default function TransferInternalPage() {
     return (
       <div className="mx-auto max-w-xl space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+          <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
             Between accounts
           </h1>
           <p className="text-muted-foreground">
@@ -204,7 +204,7 @@ export default function TransferInternalPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+        <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
           Between accounts
         </h1>
         <p className="text-muted-foreground">

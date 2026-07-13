@@ -153,7 +153,7 @@ export default function TransactionsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+          <h1 className="font-display text-2xl font-semibold tracking-tight md:text-3xl">
             Transactions
           </h1>
           <p className="text-muted-foreground">
