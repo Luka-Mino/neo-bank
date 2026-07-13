@@ -75,7 +75,7 @@ export function Hero({ isAuthenticated }: HeroProps) {
           </div>
 
           {/* Right: the card is the protagonist */}
-          <div className="hero-card flex-1">
+          <div className="hero-card w-full flex-1">
             <div className="relative mx-auto w-full max-w-[420px]">
               <TiltCard>
                 <MonetaCard
