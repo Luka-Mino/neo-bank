@@ -1,0 +1,18 @@
+version: 2
+updates:
+  # Weekly dependency scan + auto-PRs for security and version updates.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # Batch dev-tooling bumps into one PR to cut noise.
+      dev-dependencies:
+        dependency-type: development
+    labels:
+      - dependencies
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

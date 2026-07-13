@@ -14,6 +14,25 @@ interface HeroProps {
 export function Hero({ isAuthenticated }: HeroProps) {
   return (
     <section className="relative overflow-hidden">
+      {/* Topographic contour texture — faint depth on the flat forest ground.
+          Masked to fade toward the content so it never fights the type. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.06]"
+        style={{
+          backgroundImage: "url(/images/patterns/pattern-topographic.png)",
+          backgroundSize: "440px",
+          maskImage:
+            "radial-gradient(ellipse 90% 80% at 70% 40%, black 20%, transparent 75%)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse 90% 80% at 70% 40%, black 20%, transparent 75%)",
+        }}
+      />
+      {/* Soft brand glow behind the card, low and wide — not a blob-halo */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute right-0 top-1/4 -z-10 h-[420px] w-[520px] rounded-full bg-[#4ac280]/[0.07] blur-[120px]"
+      />
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="flex flex-col items-center gap-12 lg:flex-row lg:gap-16">
           <div className="hero-seq flex-1 text-center lg:text-left">
@@ -23,8 +42,8 @@ export function Hero({ isAuthenticated }: HeroProps) {
             </span>
 
             <h1 className="font-display mt-5 text-balance text-4xl font-semibold tracking-tight text-white md:text-5xl lg:text-[3.6rem] lg:leading-[1.05]">
-              Money that moves at{" "}
-              <span className="text-[#4ac280]">internet speed</span>
+              Real dollars,{" "}
+              <span className="text-[#4ac280]">moving in real time</span>
             </h1>
 
             <p className="mx-auto mt-5 max-w-2xl text-lg text-white/65 md:text-xl lg:mx-0">

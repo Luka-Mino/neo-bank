@@ -102,6 +102,12 @@ account's number and relabel savings/vacation buckets as internal spaces
 (they don't get their own routing number). Per-bucket real numbers =
 multiple Dakota onramp accounts; possible but not planned.
 
+Vulnerability management (started 2026-07-13): `npm audit fix` cleared 12
+of 18 (18→6, all remaining are dev-only build tooling, not runtime).
+Added Dependabot (weekly npm + actions scans, grouped dev PRs) and a CI
+security gate (`npm audit --omit=dev --audit-level=high` — fails only on
+runtime high/critical; passes today). Runtime dependency surface is clean.
+
 Still open (mostly M3): email OTP as an optional 2FA channel; strict CSP;
 signer key + API key into a secrets manager; demo/bypass hard-off in prod;
 key-rotation calendar.

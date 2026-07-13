@@ -16,6 +16,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Security gate: fail only on runtime (production) high/critical vulns.
+      # Dev-tooling advisories are tracked by Dependabot, not a merge blocker.
+      - run: npm audit --omit=dev --audit-level=high
       - run: npx tsc --noEmit
       - run: npm test
       - run: npm run build

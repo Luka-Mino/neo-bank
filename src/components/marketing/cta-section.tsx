@@ -30,7 +30,7 @@ export function CtaSection() {
               </h2>
               <p className="mt-4 text-lg text-white/75">
                 No paperwork. No branch visits. Just you and your money &mdash;
-                moving at internet speed.
+                moving in real time.
               </p>
               <div className="mt-8">
                 <Link

@@ -23,7 +23,7 @@ export default function AuthLayout({
             Stablecoin banking, regulated rails
           </p>
           <h2 className="text-3xl font-semibold leading-tight md:text-4xl">
-            Money that moves at internet speed.
+            Real dollars, moving in real time.
           </h2>
           <p className="text-sm text-white/70">
             Hold, send, and spend dollar-backed digital cash that settles
