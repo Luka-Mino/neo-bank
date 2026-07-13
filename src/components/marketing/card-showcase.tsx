@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Wifi, SlidersHorizontal, Snowflake } from "lucide-react";
 import { MonetaCard } from "@/components/account/moneta-card";
 
@@ -27,17 +28,13 @@ export function CardShowcase() {
       id="card"
       className="relative overflow-hidden bg-[#0a1c1c] py-16 sm:py-24"
     >
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -right-32 top-1/2 h-[400px] w-[400px] -translate-y-1/2 rounded-full bg-[#4ac280]/15 blur-[100px]" />
-      </div>
-
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#4ac280]">
               Moneta card
             </p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white md:text-4xl">
+            <h2 className="font-display mt-3 text-3xl font-semibold tracking-tight text-white md:text-4xl">
               The only card you&apos;ll need
             </h2>
             <p className="mt-3 max-w-md text-lg text-white/60">
@@ -65,21 +62,37 @@ export function CardShowcase() {
           </div>
 
           <div className="flex items-center justify-center">
-            <div className="relative w-full max-w-sm">
-              <div className="absolute inset-0 -z-10 translate-y-6 scale-95 rounded-3xl bg-[#4ac280]/15 blur-2xl" />
-              <MonetaCard
-                size="lg"
-                variant="forest"
-                holder="Alex Morgan"
-                card={{
-                  last4: "7891",
-                  cardType: "virtual",
-                  status: "active",
-                  expMonth: 12,
-                  expYear: 2028,
-                  network: "visa",
-                }}
-              />
+            <div className="relative w-full max-w-md">
+              {/* Real tap-to-pay moment, graded to the palette */}
+              <div className="relative overflow-hidden rounded-3xl">
+                <Image
+                  src="/images/photos/card-tap.jpg"
+                  alt="A hand paying with a card at a terminal"
+                  width={1600}
+                  height={2000}
+                  className="h-[440px] w-full object-cover object-center saturate-[0.8]"
+                />
+                <div
+                  aria-hidden
+                  className="absolute inset-0 bg-gradient-to-t from-[#0a1c1c]/70 via-[#0a1c1c]/10 to-transparent"
+                />
+              </div>
+              {/* The card itself, floating over the scene */}
+              <div className="absolute -bottom-8 left-1/2 w-[78%] max-w-[340px] -translate-x-1/2 drop-shadow-[0_24px_40px_rgba(0,0,0,0.45)]">
+                <MonetaCard
+                  size="lg"
+                  variant="forest"
+                  holder="Alex Morgan"
+                  card={{
+                    last4: "7891",
+                    cardType: "virtual",
+                    status: "active",
+                    expMonth: 12,
+                    expYear: 2028,
+                    network: "visa",
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
