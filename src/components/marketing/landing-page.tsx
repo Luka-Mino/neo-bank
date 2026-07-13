@@ -15,13 +15,21 @@ interface LandingPageProps {
 export function LandingPage({ isAuthenticated }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-deep-forest text-[#f6f6f6]">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-[#4ac280] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-[#122e2e]"
+      >
+        Skip to content
+      </a>
       <Navbar isAuthenticated={isAuthenticated} />
       <div className="h-16" aria-hidden />
-      <Hero isAuthenticated={isAuthenticated} />
-      <ProductStory />
-      <CardShowcase />
-      <TrustSection />
-      <CtaSection />
+      <main id="main">
+        <Hero isAuthenticated={isAuthenticated} />
+        <ProductStory />
+        <CardShowcase />
+        <TrustSection />
+        <CtaSection />
+      </main>
       <Footer />
     </div>
   );

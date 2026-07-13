@@ -22,7 +22,7 @@ export function Hero({ isAuthenticated }: HeroProps) {
               Stablecoin banking, regulated rails
             </span>
 
-            <h1 className="font-display mt-5 text-4xl font-semibold tracking-tight text-white md:text-5xl lg:text-[3.6rem] lg:leading-[1.05]">
+            <h1 className="font-display mt-5 text-balance text-4xl font-semibold tracking-tight text-white md:text-5xl lg:text-[3.6rem] lg:leading-[1.05]">
               Money that moves at{" "}
               <span className="text-[#4ac280]">internet speed</span>
             </h1>

@@ -22,7 +22,7 @@ export function Footer() {
         </div>
 
         <p className="text-sm text-white/45">
-          &copy; {new Date().getFullYear()} Moneta. All rights reserved.
+          &copy; <span suppressHydrationWarning>{new Date().getFullYear()}</span> Moneta. All rights reserved.
         </p>
       </div>
     </footer>

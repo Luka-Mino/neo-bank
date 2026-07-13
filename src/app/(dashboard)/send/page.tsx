@@ -197,6 +197,7 @@ export default function SendPage() {
               <button
                 type="button"
                 onClick={() => setTab("P2P")}
+                aria-pressed={tab === "P2P"}
                 className={cn(
                   "flex-1 rounded-full px-3 py-2 text-sm font-semibold transition",
                   tab === "P2P"
@@ -241,6 +242,7 @@ export default function SendPage() {
                           shouldValidate: true,
                         })
                       }
+                      aria-pressed={active}
                       className="flex shrink-0 flex-col items-center gap-1.5 text-center"
                     >
                       <Avatar
@@ -296,11 +298,12 @@ export default function SendPage() {
                   <Input
                     id="amount"
                     type="number"
+                  inputMode="decimal"
                     step="0.01"
                     placeholder="0.00"
                     disabled={step === "confirm"}
                     {...register("amount")}
-                    className="h-auto border-none bg-transparent p-0 text-3xl font-semibold tabular-nums shadow-none focus-visible:ring-0 md:text-4xl"
+                    className="h-auto border-none bg-transparent p-0 text-3xl font-semibold tabular-nums shadow-none focus-visible:ring-2 focus-visible:ring-primary/30 md:text-4xl"
                   />
                   <span className="text-sm font-medium text-muted-foreground">
                     USDC

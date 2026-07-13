@@ -51,9 +51,9 @@ dead controls, zero console errors — verified by screenshot in the browser.
 | Recipients | ✅ (hydration bug fixed) |
 | Auth (login/register/reset) | ✅ acceptable (copy fixed) |
 | Settings | ✅ rebuilt — profile edit, verification card, 2FA enrollment, email prefs, password |
-| /recipients/new | 🔲 functional but plain — bring up to form standard |
-| Onboarding | 🔲 unreviewed in browser (KYC bypass hides it) — review with bypass off |
-| Mobile pass | 🔲 every screen at 390px — sidebar drawer, tables, hero cards |
+| /recipients/new | ✅ rebuilt — fixed payload bugs (snake_case keys, partial addresses), all-or-nothing address validation, brand form |
+| Onboarding | 🔲 code-reviewed; visual pass with bypass off pending Chrome recovery |
+| Mobile pass | 🔲 code-level fixes from the guidelines audit applied; visual 390px pass pending Chrome recovery |
 
 **Done when:** every row is ✅; `npm test` + `npm run build` green; a full
 click-through at 1440px and 390px produces zero console errors and zero

@@ -62,13 +62,17 @@ export default function LoginPage() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+        <CardTitle className="text-2xl font-bold"><h1>Welcome back</h1></CardTitle>
         <CardDescription>Sign in to your account</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div
+              role="alert"
+              aria-live="polite"
+              className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive"
+            >
               <AlertCircle className="h-4 w-4 shrink-0" />
               {error}
             </div>
@@ -78,6 +82,8 @@ export default function LoginPage() {
             <Input
               id="email"
               type="email"
+              autoComplete="email"
+              spellCheck={false}
               placeholder="you@example.com"
               {...register("email")}
             />
@@ -90,6 +96,7 @@ export default function LoginPage() {
             <Input
               id="password"
               type="password"
+              autoComplete="current-password"
               placeholder="Enter your password"
               {...register("password")}
             />

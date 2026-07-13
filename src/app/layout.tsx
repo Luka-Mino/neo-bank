@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/layout/providers";
 import { Toaster } from "@/components/ui/sonner";
@@ -21,6 +21,10 @@ const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
+
+export const viewport: Viewport = {
+  themeColor: "#122e2e",
+};
 
 export const metadata: Metadata = {
   title: "Moneta — Stablecoin Banking, Done Right",

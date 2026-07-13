@@ -187,7 +187,7 @@ export default function TransferInternalPage() {
         </h1>
         <Card>
           <CardContent className="py-10 text-center">
-            <p className="text-sm font-medium">You don't have any accounts yet</p>
+            <p className="text-sm font-medium">You don’t have any accounts yet</p>
             <p className="mt-1 text-xs text-muted-foreground">
               Open at least two accounts to move funds between them.
             </p>
@@ -280,11 +280,12 @@ export default function TransferInternalPage() {
                 <Input
                   id="amount"
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="h-auto border-none bg-transparent p-0 text-3xl font-semibold tabular-nums shadow-none focus-visible:ring-0 md:text-4xl"
+                  className="h-auto border-none bg-transparent p-0 text-3xl font-semibold tabular-nums shadow-none focus-visible:ring-2 focus-visible:ring-primary/30 md:text-4xl"
                 />
                 <span className="text-sm font-medium text-muted-foreground">
                   USD
@@ -350,6 +351,7 @@ export default function TransferInternalPage() {
                     key={value}
                     type="button"
                     onClick={() => setRepeat(value)}
+                    aria-pressed={repeat === value}
                     className={cn(
                       "flex-1 rounded-full px-2 py-1.5 text-xs font-semibold transition",
                       repeat === value
@@ -439,6 +441,8 @@ interface RecurringRule {
 
 function RecurringRules() {
   const queryClient = useQueryClient();
+  // Two-step destructive action: first click arms, second confirms.
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const { data } = useQuery({
     queryKey: ["recurring-transfers"],
     queryFn: () => fetchApi<{ data: { data: RecurringRule[] } }>("/api/transfers/recurring"),
@@ -486,11 +490,19 @@ function RecurringRules() {
               </div>
               <Button
                 size="sm"
-                variant="ghost"
-                onClick={() => cancel.mutate(r.id)}
+                variant={confirmingId === r.id ? "destructive" : "ghost"}
+                onClick={() => {
+                  if (confirmingId === r.id) {
+                    cancel.mutate(r.id);
+                    setConfirmingId(null);
+                  } else {
+                    setConfirmingId(r.id);
+                    setTimeout(() => setConfirmingId(null), 4000);
+                  }
+                }}
                 disabled={cancel.isPending}
               >
-                Cancel
+                {confirmingId === r.id ? "Confirm cancel" : "Cancel"}
               </Button>
             </div>
           ))}

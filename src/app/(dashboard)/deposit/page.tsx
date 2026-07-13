@@ -83,11 +83,15 @@ export default function DepositPage() {
     }
   }
 
-  function copyToClipboard(text: string, label: string) {
-    navigator.clipboard.writeText(text);
-    setCopied(label);
-    toast.success(`${label} copied to clipboard`);
-    setTimeout(() => setCopied(null), 2000);
+  async function copyToClipboard(text: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(label);
+      toast.success(`${label} copied to clipboard`);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      toast.error("Copy failed — select and copy the value manually");
+    }
   }
 
   const bankDetails = DEMO_MODE
@@ -261,7 +265,7 @@ export default function DepositPage() {
                 <div className="py-6 text-center text-sm text-muted-foreground">
                   <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary" />
                   <p className="mt-3 font-medium text-foreground">
-                    Setting up your deposit account
+                    Setting up your deposit account…
                   </p>
                   <p className="mt-1">
                     We&apos;re creating your personal account and routing

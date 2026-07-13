@@ -203,6 +203,15 @@
     .hero-seq > *, .hero-card { animation: none; }
   }
 
+  html {
+    color-scheme: light;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-pulse {
+      animation: none;
+    }
+  }
+
   /* Burst mark as the system's loading spinner — slow, calm rotation */
   @keyframes burst-spin { to { transform: rotate(360deg); } }
   .burst-spinner { animation: burst-spin 2.4s linear infinite; }

@@ -32,7 +32,7 @@ export function TrustSection() {
             <div className="relative mx-auto max-w-md overflow-hidden rounded-3xl">
               <Image
                 src="/images/photos/trust-friends.jpg"
-                alt="Two friends at a caf\u00e9 table, laughing over a phone"
+                alt="Two friends at a cafe table, laughing over a phone"
                 width={1600}
                 height={1067}
                 className="h-auto w-full object-cover saturate-[0.85]"

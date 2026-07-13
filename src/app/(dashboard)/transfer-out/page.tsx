@@ -295,7 +295,8 @@ export default function TransferOutPage() {
 
       {kycActive && step !== "success" && (
         <Card>
-          <CardContent className="space-y-5">
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Amount */}
             <div className="rounded-2xl bg-muted/50 p-5">
               <Label
@@ -311,11 +312,12 @@ export default function TransferOutPage() {
                 <Input
                   id="amount"
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   placeholder="0.00"
                   disabled={step === "confirm"}
                   {...register("amount")}
-                  className="h-auto border-none bg-transparent p-0 text-3xl font-semibold tabular-nums shadow-none focus-visible:ring-0 md:text-4xl"
+                  className="h-auto border-none bg-transparent p-0 text-3xl font-semibold tabular-nums shadow-none focus-visible:ring-2 focus-visible:ring-primary/30 md:text-4xl"
                 />
                 <span className="text-sm font-medium text-muted-foreground">
                   USD
@@ -345,7 +347,6 @@ export default function TransferOutPage() {
               )}
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <SourceAccountPicker
                 value={sourceAccountId}
                 onChange={(id) =>
@@ -445,6 +446,7 @@ export default function TransferOutPage() {
                         type="button"
                         key={opt.key}
                         disabled={step === "confirm"}
+                        aria-pressed={selected}
                         onClick={() => setValue("rail", opt.key)}
                         className={cn(
                           "flex items-center gap-3 rounded-xl px-4 py-3.5 text-left transition disabled:opacity-50",

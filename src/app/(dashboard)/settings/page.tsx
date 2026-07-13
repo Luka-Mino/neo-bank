@@ -105,6 +105,7 @@ function ProfileSection() {
           <Label htmlFor="fullName">Full name</Label>
           <Input
             id="fullName"
+            autoComplete="name"
             value={currentName}
             onChange={(e) => setName(e.target.value)}
             maxLength={70}
@@ -288,7 +289,7 @@ function TwoFactorSection() {
             <div className="flex flex-col items-center gap-3 rounded-xl bg-muted/40 p-5 sm:flex-row sm:items-start">
               {qrDataUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={qrDataUrl} alt="2FA enrollment QR code" className="h-[140px] w-[140px] rounded-lg bg-white p-2" />
+                <img src={qrDataUrl} alt="2FA enrollment QR code" width={140} height={140} className="h-[140px] w-[140px] rounded-lg bg-white p-2" />
               )}
               <div className="space-y-2 text-sm">
                 <p className="font-medium">1. Scan with your authenticator app</p>
@@ -311,6 +312,8 @@ function TwoFactorSection() {
                 <Input
                   id="enrollCode"
                   inputMode="numeric"
+                  autoComplete="one-time-code"
+                  spellCheck={false}
                   maxLength={6}
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
@@ -336,6 +339,8 @@ function TwoFactorSection() {
               <Input
                 id="disableCode"
                 inputMode="numeric"
+                autoComplete="one-time-code"
+                spellCheck={false}
                 maxLength={6}
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
@@ -468,7 +473,10 @@ function PasswordSection() {
     setSuccess(false);
 
     if (!currentPassword) { setError("Current password is required"); return; }
-    if (newPassword.length < 8) { setError("New password must be at least 8 characters"); return; }
+    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      setError("Password needs at least 8 characters, one uppercase letter, and one number");
+      return;
+    }
     if (newPassword !== confirmPassword) { setError("Passwords don't match"); return; }
 
     setLoading(true);
@@ -510,6 +518,7 @@ function PasswordSection() {
             <Input
               id="currentPassword"
               type="password"
+              autoComplete="current-password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               placeholder="Enter current password"
@@ -521,6 +530,7 @@ function PasswordSection() {
               <Input
                 id="newPassword"
                 type="password"
+                autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="New password"
@@ -531,6 +541,7 @@ function PasswordSection() {
               <Input
                 id="confirmPassword"
                 type="password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repeat new password"

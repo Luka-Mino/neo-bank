@@ -142,7 +142,7 @@ const CHAPTERS = [
   {
     eyebrow: "Get paid",
     title: "Real account and routing numbers, minted for you",
-    body: "The moment you're verified, Moneta issues personal US bank details in your name. Point your paycheck at them once — deposits convert to digital dollars automatically and show up spendable.",
+    body: "The moment you’re verified, Moneta issues personal US bank details in your name. Point your paycheck at them once — deposits convert to digital dollars automatically and show up spendable.",
     visual: BankDetailsVisual,
     dark: false,
   },
@@ -156,7 +156,7 @@ const CHAPTERS = [
   {
     eyebrow: "Trust the numbers",
     title: "Every fee, on the receipt, before and after",
-    body: "No spread hidden in the exchange rate, no surprise line items. You see the exact total that leaves your balance, and the reference that will appear on the receiving bank's statement.",
+    body: "No spread hidden in the exchange rate, no surprise line items. You see the exact total that leaves your balance, and the reference that will appear on the receiving bank’s statement.",
     visual: ReceiptVisual,
     dark: false,
   },
