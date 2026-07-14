@@ -17,8 +17,26 @@ import { recordAndProcessEvent } from "@/lib/dakota/event-processing";
  * making one failure permanent. The reconciliation poller
  * (src/lib/dakota/reconcile.ts) is the backstop after Dakota's retry window.
  */
+// Webhook bodies are small JSON envelopes; a legitimate one is well under
+// this. Reject anything larger before doing any work — a cheap guard against
+// a malicious oversized payload.
+const MAX_WEBHOOK_BODY_BYTES = 256 * 1024;
+
 export async function POST(req: NextRequest) {
+  const contentType = req.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return NextResponse.json({ error: "Unsupported content type" }, { status: 415 });
+  }
+  const declaredLength = Number(req.headers.get("content-length") ?? "0");
+  if (declaredLength > MAX_WEBHOOK_BODY_BYTES) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+
   const rawBody = await req.text();
+  if (Buffer.byteLength(rawBody, "utf8") > MAX_WEBHOOK_BODY_BYTES) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+
   const signature = req.headers.get("x-webhook-signature");
   const timestamp = req.headers.get("x-webhook-timestamp");
   const headerEventId = req.headers.get("x-dakota-event-id");

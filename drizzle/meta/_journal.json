@@ -57,6 +57,13 @@
       "when": 1783986456601,
       "tag": "0007_magic_link_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784042373371,
+      "tag": "0008_webhook_dead_letter",
+      "breakpoints": true
     }
   ]
 }

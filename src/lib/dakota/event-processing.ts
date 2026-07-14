@@ -1,10 +1,22 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { webhookEvents } from "@/lib/db/schema";
+import { logger } from "@/lib/logger";
+import { alertOps } from "@/lib/alerts";
 import type { DakotaEventEnvelope } from "./webhooks";
 import { handlers } from "./webhook-handlers";
 
-export type ProcessOutcome = "processed" | "ignored" | "already_processed" | "failed";
+export type ProcessOutcome =
+  | "processed"
+  | "ignored"
+  | "already_processed"
+  | "failed"
+  | "dead_letter";
+
+// After this many failed processing attempts, a webhook is dead-lettered:
+// it stops being retried and is surfaced to ops, so one poison event can't
+// churn forever or block the reconcile sweep.
+const MAX_ATTEMPTS = 8;
 
 /**
  * The inbox contract, shared by the webhook receiver and the reconciliation
@@ -27,13 +39,21 @@ export async function recordAndProcessEvent(
     .onConflictDoNothing({ target: webhookEvents.dakotaEventId });
 
   const [inboxRow] = await db
-    .select({ processedAt: webhookEvents.processedAt })
+    .select({
+      processedAt: webhookEvents.processedAt,
+      attempts: webhookEvents.attempts,
+      deadLetteredAt: webhookEvents.deadLetteredAt,
+    })
     .from(webhookEvents)
     .where(eq(webhookEvents.dakotaEventId, eventId))
     .limit(1);
 
   if (inboxRow?.processedAt) {
     return { outcome: "already_processed" };
+  }
+  // A dead-lettered event is done retrying — a human owns it now.
+  if (inboxRow?.deadLetteredAt) {
+    return { outcome: "dead_letter" };
   }
 
   const handler = (handlers as Record<string, (typeof handlers)[string] | undefined>)[
@@ -53,11 +73,34 @@ export async function recordAndProcessEvent(
     return { outcome: handler ? "processed" : "ignored" };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`Dakota event ${eventType} (${eventId}) processing error:`, error);
-    await db
+    logger.error("dakota.event.processing_failed", {
+      eventType,
+      eventId,
+      error: message,
+    });
+    // Bump the attempt counter; dead-letter once it crosses the ceiling.
+    const [updated] = await db
       .update(webhookEvents)
-      .set({ processingError: message })
-      .where(eq(webhookEvents.dakotaEventId, eventId));
+      .set({
+        processingError: message,
+        attempts: sql`${webhookEvents.attempts} + 1`,
+      })
+      .where(eq(webhookEvents.dakotaEventId, eventId))
+      .returning({ attempts: webhookEvents.attempts });
+
+    if ((updated?.attempts ?? 0) >= MAX_ATTEMPTS) {
+      await db
+        .update(webhookEvents)
+        .set({ deadLetteredAt: new Date() })
+        .where(eq(webhookEvents.dakotaEventId, eventId));
+      await alertOps("webhook_dead_letter", {
+        eventType,
+        eventId,
+        attempts: updated?.attempts,
+        error: message,
+      });
+      return { outcome: "dead_letter", error: message };
+    }
     return { outcome: "failed", error: message };
   }
 }

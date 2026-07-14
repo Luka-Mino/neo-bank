@@ -8,6 +8,7 @@ import {
   jsonb,
   boolean,
   smallint,
+  integer,
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
@@ -292,6 +293,10 @@ export const webhookEvents = pgTable(
     payload: jsonb("payload").notNull(),
     processedAt: timestamp("processed_at", { withTimezone: true }),
     processingError: text("processing_error"),
+    // How many times processing has thrown. After MAX the row is dead-lettered
+    // (deadLetteredAt set) so a poison event stops retrying and surfaces.
+    attempts: integer("attempts").notNull().default(0),
+    deadLetteredAt: timestamp("dead_lettered_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

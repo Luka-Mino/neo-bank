@@ -23,7 +23,7 @@ function deps(
   pages: Array<{ data: DakotaEventEnvelope[]; has_more_after?: boolean }>,
   outcome: ProcessOutcome = "processed"
 ) {
-  const fetchPage = vi.fn(async (cursor: string | null, limit: number) => {
+  const fetchPage = vi.fn(async (_params: { startingAfter?: string; endingBefore?: string }, limit: number) => {
     void limit;
     const page = pages.shift() ?? { data: [] };
     return { data: page.data, meta: { has_more_after: page.has_more_after ?? false } };
@@ -58,8 +58,8 @@ describe("sweepNewEvents", () => {
     ]);
     const stats = await sweepNewEvents(d, { cursor: "0003" });
 
-    expect(d.fetchPage).toHaveBeenNthCalledWith(1, "0003", 100);
-    expect(d.fetchPage).toHaveBeenNthCalledWith(2, "0005", 100);
+    expect(d.fetchPage).toHaveBeenNthCalledWith(1, { startingAfter: "0003" }, 100);
+    expect(d.fetchPage).toHaveBeenNthCalledWith(2, { startingAfter: "0005" }, 100);
     expect(stats.cursor).toBe("0006");
     expect(stats.pages).toBe(2);
   });

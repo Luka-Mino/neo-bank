@@ -1,9 +1,17 @@
 import { and, asc, eq, isNull, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { dakotaSyncState, webhookEvents } from "@/lib/db/schema";
+import { alertOps } from "@/lib/alerts";
 import { dakota } from "./client";
 import type { DakotaEventEnvelope } from "./webhooks";
 import { recordAndProcessEvent, type ProcessOutcome } from "./event-processing";
+
+export type EventsOrder = "oldest" | "newest";
+
+export interface FetchPageParams {
+  startingAfter?: string;
+  endingBefore?: string;
+}
 
 /**
  * Events reconciliation: the backstop for the webhook pipeline.
@@ -57,7 +65,7 @@ export interface SweepStats {
 }
 
 export interface SweepDeps {
-  fetchPage: (cursor: string | null, limit: number) => Promise<EventsPage>;
+  fetchPage: (params: FetchPageParams, limit: number) => Promise<EventsPage>;
   processEvent: (
     envelope: DakotaEventEnvelope
   ) => Promise<{ outcome: ProcessOutcome }>;
@@ -65,10 +73,16 @@ export interface SweepDeps {
 
 export async function sweepNewEvents(
   deps: SweepDeps,
-  opts: { cursor: string | null; maxPages?: number; pageLimit?: number }
+  opts: {
+    cursor: string | null;
+    maxPages?: number;
+    pageLimit?: number;
+    order?: EventsOrder;
+  }
 ): Promise<SweepStats> {
   const maxPages = opts.maxPages ?? DEFAULT_MAX_PAGES;
   const pageLimit = opts.pageLimit ?? DEFAULT_PAGE_LIMIT;
+  const order: EventsOrder = opts.order ?? "oldest";
 
   const stats: SweepStats = {
     pages: 0,
@@ -81,19 +95,40 @@ export async function sweepNewEvents(
     orderingSuspect: false,
   };
 
-  let pageCursor = opts.cursor;
+  // oldest-first: page forward with starting_after=lastId, follow has_more_after.
+  // newest-first: page backward in time with ending_before=firstId, follow
+  //   has_more_before — the high-water cursor still advances to the max id seen.
+  let pageParams: FetchPageParams =
+    order === "oldest"
+      ? opts.cursor
+        ? { startingAfter: opts.cursor }
+        : {}
+      : {};
 
   while (stats.pages < maxPages) {
-    const page = await deps.fetchPage(pageCursor, pageLimit);
+    const page = await deps.fetchPage(pageParams, pageLimit);
     const items = page.data ?? [];
     if (items.length === 0) break;
     stats.pages++;
 
-    if (items.length > 1 && items[0].id > items[items.length - 1].id) {
+    const newestFirst =
+      items.length > 1 && items[0].id > items[items.length - 1].id;
+    // Only "suspect" when the observed order contradicts the configured one.
+    if (
+      (order === "oldest" && newestFirst) ||
+      (order === "newest" && !newestFirst)
+    ) {
       stats.orderingSuspect = true;
     }
 
+    let reachedCursor = false;
     for (const envelope of items) {
+      // In newest-first mode, stop once we page back to events we've already
+      // seen (id <= stored cursor) — everything newer is now processed.
+      if (order === "newest" && opts.cursor && envelope.id <= opts.cursor) {
+        reachedCursor = true;
+        break;
+      }
       stats.scanned++;
       // A processEvent throw (DB down, etc.) aborts the sweep without
       // advancing the cursor — nothing is skipped; next run resumes here.
@@ -108,11 +143,16 @@ export async function sweepNewEvents(
       }
     }
 
-    // Suspect ordering means "next page" walks the wrong way — stop rather
-    // than churn through history; already-processed dedupe made this safe.
+    // Stop if the observed order disagrees with config (avoid walking wrong).
     if (stats.orderingSuspect) break;
-    if (!page.meta?.has_more_after) break;
-    pageCursor = items[items.length - 1].id;
+
+    if (order === "oldest") {
+      if (!page.meta?.has_more_after) break;
+      pageParams = { startingAfter: items[items.length - 1].id };
+    } else {
+      if (reachedCursor || !page.meta?.has_more_before) break;
+      pageParams = { endingBefore: items[items.length - 1].id };
+    }
   }
 
   return stats;
@@ -182,24 +222,31 @@ export async function reconcileEvents(opts?: {
   const retry = await retryPendingEvents();
 
   const cursor = await loadCursor();
+  // Ordering of GET /events is undocumented. Default to oldest-first
+  // pagination (starting_after walks forward). If a run detects a
+  // newest-first page, we alert; set DAKOTA_EVENTS_ORDER=newest to switch
+  // the sweep to ending_before pagination once the sandbox confirms it.
+  const order = process.env.DAKOTA_EVENTS_ORDER === "newest" ? "newest" : "oldest";
   const sweep = await sweepNewEvents(
     {
-      fetchPage: (after, limit) =>
+      fetchPage: ({ startingAfter, endingBefore }, limit) =>
         dakota.get<EventsPage>("/events", {
           limit: String(limit),
-          ...(after ? { starting_after: after } : {}),
+          ...(startingAfter ? { starting_after: startingAfter } : {}),
+          ...(endingBefore ? { ending_before: endingBefore } : {}),
         }),
       processEvent: (envelope) => recordAndProcessEvent(envelope),
     },
-    { cursor, maxPages: opts?.maxPages }
+    { cursor, maxPages: opts?.maxPages, order }
   );
 
   if (sweep.orderingSuspect) {
-    console.error(
-      "[dakota-reconcile] /events returned a newest-first page; the sweep " +
-        "assumes oldest-first. Verify ordering against the sandbox and flip " +
-        "the pagination strategy in src/lib/dakota/reconcile.ts if needed."
-    );
+    await alertOps("reconcile_failed", {
+      reason:
+        "GET /events returned a newest-first page while sweeping oldest-first; " +
+        "set DAKOTA_EVENTS_ORDER=newest once confirmed against the sandbox",
+      cursor: sweep.cursor,
+    });
   }
 
   if (sweep.cursor && sweep.cursor !== cursor) {
