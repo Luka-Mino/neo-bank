@@ -92,6 +92,13 @@
       "when": 1784042377371,
       "tag": "0012_account_deletion",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1784042378371,
+      "tag": "0013_hot_path_indexes",
+      "breakpoints": true
     }
   ]
 }

@@ -19,6 +19,7 @@ export const createTransactionSchema = z
     paymentReference: z.string().max(140).optional(),
     txType: z.enum(["onramp", "offramp", "send", "swap"]).default("send"),
   })
+  .strict()
   .superRefine((v, ctx) => {
     // Dakota's per-rail statement-reference constraints; ACH (the default
     // rail) is the strictest: ≤18 chars, letters/digits/spaces only.

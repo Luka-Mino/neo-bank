@@ -11,6 +11,7 @@ export const internalTransferSchema = z
       .refine((v) => Number(v) > 0, "Amount must be > 0"),
     note: z.string().trim().max(140).optional(),
   })
+  .strict()
   .refine((v) => v.fromAccountId !== v.toAccountId, {
     message: "Source and destination must differ",
     path: ["toAccountId"],

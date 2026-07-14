@@ -120,9 +120,19 @@ export function apiHandler<TBody = unknown, TParams = Record<string, string>>(
       // 4. Parse and validate request body
       let body = undefined as unknown as TBody;
       if (schema && method !== "GET" && method !== "HEAD") {
+        // Reject oversized bodies before parsing — our JSON payloads are
+        // small; anything over 64 KB is abuse.
+        const declaredLen = Number(request.headers.get("content-length") ?? "0");
+        if (declaredLen > 64 * 1024) {
+          return err("Request body too large", 413);
+        }
         let rawBody: unknown;
         try {
-          rawBody = await request.json();
+          const text = await request.text();
+          if (Buffer.byteLength(text, "utf8") > 64 * 1024) {
+            return err("Request body too large", 413);
+          }
+          rawBody = text ? JSON.parse(text) : undefined;
         } catch {
           return err("Invalid JSON in request body", 400);
         }

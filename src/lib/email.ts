@@ -1,8 +1,5 @@
 import { Resend } from "resend";
-
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+import { logger } from "@/lib/logger";
 
 const FROM = process.env.EMAIL_FROM || "Moneta <notifications@moneta.example>";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -13,26 +10,70 @@ interface SendEmailParams {
   html: string;
 }
 
+// Provider abstraction: pick by env, so whichever service you already have
+// plugs in with config only.
+//   EMAIL_PROVIDER=resend  + RESEND_API_KEY                       (default)
+//   EMAIL_PROVIDER=smtp    + SMTP_URL (smtp://user:pass@host:587) (any host)
+//   none set               → dev dry-run (logs, never sends)
+type Transport = (p: SendEmailParams) => Promise<void>;
+
+function resolveTransport(): { name: string; send: Transport } | null {
+  const provider =
+    process.env.EMAIL_PROVIDER ?? (process.env.SMTP_URL ? "smtp" : "resend");
+
+  if (provider === "smtp" && process.env.SMTP_URL) {
+    return {
+      name: "smtp",
+      send: async ({ to, subject, html }) => {
+        // Lazy import so nodemailer isn't bundled unless SMTP is used.
+        const nodemailer = (await import("nodemailer")).default;
+        const tx = nodemailer.createTransport(process.env.SMTP_URL);
+        await tx.sendMail({ from: FROM, to, subject, html });
+      },
+    };
+  }
+  if (process.env.RESEND_API_KEY) {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    return {
+      name: "resend",
+      send: async ({ to, subject, html }) => {
+        const { error } = await resend.emails.send({ from: FROM, to, subject, html });
+        if (error) throw new Error(typeof error === "string" ? error : JSON.stringify(error));
+      },
+    };
+  }
+  return null;
+}
+
 async function sendEmail({ to, subject, html }: SendEmailParams) {
-  if (!resend) {
-    console.log(`[DEV EMAIL] To: ${to} | Subject: ${subject}`);
-    console.log(`[DEV EMAIL] Body preview: ${html.slice(0, 200)}...`);
+  const transport = resolveTransport();
+  if (!transport) {
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[DEV EMAIL] To: ${to} | Subject: ${subject}`);
+    }
     return { success: true, dev: true };
   }
 
-  const { error } = await resend.emails.send({
-    from: FROM,
-    to,
-    subject,
-    html,
-  });
-
-  if (error) {
-    console.error("Email send error:", error);
-    return { success: false, error };
+  // Retry transient failures with backoff; drop after 3 tries (don't throw
+  // into money-moving callers — email is best-effort).
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await transport.send({ to, subject, html });
+      return { success: true };
+    } catch (error) {
+      const last = attempt === 2;
+      logger.error("email.send_failed", {
+        provider: transport.name,
+        attempt: attempt + 1,
+        final: last,
+        detail: error instanceof Error ? error.message : String(error),
+      });
+      if (last) return { success: false };
+      await sleep(500 * 2 ** attempt);
+    }
   }
-
-  return { success: true };
+  return { success: false };
 }
 
 // ─── Email functions ────────────────────────────────────────────────────────
