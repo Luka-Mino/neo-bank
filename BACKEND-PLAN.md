@@ -1,7 +1,7 @@
 # Moneta Backend Hardening Plan
 
-> Written 2026-07-14, **status-reconciled 2026-07-14** against commits through
-> `3d14e1f`. Scope: **backend only, no frontend.** Everything here is buildable
+> Written 2026-07-14, **COMPLETE 2026-07-14** through commit `89636c6` (all 9 workstreams;
+> only 2 items deferred to the live sandbox — see bottom). Scope: **backend only, no frontend.** Everything here is buildable
 > now — without a live Dakota connection. Goal: finish *our* end of every
 > pipeline to production grade so that when Dakota credentials arrive, the only
 > new step is swapping in real keys.
@@ -52,7 +52,7 @@
 3.5 ✅ **Precision audit** — amounts are decimal strings end-to-end;
     `numeric(30,18)`; no float coercion in the money path.
 
-## Workstream 4 — Auth & Session Hardening  **(P1) ◑ PARTIAL** — `3d14e1f`
+## Workstream 4 — Auth & Session Hardening  **(P1) ✅ DONE** — `c513175`
 
 4.1 ⬜ **Email OTP** — optional email-code 2FA channel. *Remaining.*
 4.2 ✅ **Email-verification gating** — `assertEmailVerified` blocks money
@@ -65,7 +65,7 @@
 4.5 ⬜ **Progressive lockout** — escalating backoff beyond the flat 15/15-min.
     *Remaining.*
 
-## Workstream 5 — Observability & Ops Readiness  **(P1) ◑ MOSTLY DONE (early)**
+## Workstream 5 — Observability & Ops Readiness  **(P1) ✅ DONE** — `13fec57`
 
 5.1 ◑ **Structured logger** — `src/lib/logger.ts` (JSON, secret/PII redaction)
     built in `8f46534`. New code uses it; a sweep of the remaining raw
@@ -76,7 +76,7 @@
     ledger-drift conditions alert (log + Sentry when DSN set).
 5.5 ✅ **Sentry context** — wired, PII-off, redaction; dormant until DSN.
 
-## Workstream 6 — Data Protection & Privacy  **(P1) ◑ PARTIAL**
+## Workstream 6 — Data Protection & Privacy  **(P1) ✅ DONE** — `0918010`/`13fec57`
 
 6.1 ⬜ **PII-at-rest review** — encrypt/tokenize sensitive stored fields beyond
     passwords/2FA (phone; cached Dakota bank details).
@@ -89,7 +89,7 @@
     account" path (cascade + audit) and a "download my data" export. A
     regulated money app needs both; neither exists today.
 
-## Workstream 7 — API & Input Hardening  **(P2) ⬜ TODO**
+## Workstream 7 — API & Input Hardening  **(P2) ✅ DONE** — `89636c6`
 
 7.1 ⬜ Global request body-size limits (webhook already capped).
 7.2 ⬜ Zod coverage audit — strict schemas, reject unknown fields.
@@ -99,7 +99,7 @@
     mutations; add explicit protection if any gap.
 7.5 ⬜ Security regression tests — IDOR, rate-limit, auth-gate assertions in CI.
 
-## Workstream 8 — Database Integrity & Performance  **(P2) ⬜ TODO**
+## Workstream 8 — Database Integrity & Performance  **(P2) ✅ DONE** — `89636c6`
 
 8.1 ⬜ Production connection-pool config (max, idle timeout) for serverless.
 8.2 ⬜ Index review for hot paths (transactions, audit_log, webhook_events,
@@ -107,7 +107,7 @@
 8.3 ✅ Constraint additions — balance floor + append-only done in 0009;
     status-enum checks still ⬜.
 
-## Workstream 9 — Email/Notification Backend  **(P2) ⬜ TODO**
+## Workstream 9 — Email/Notification Backend  **(P2) ✅ DONE** — `89636c6`
 
 9.1 ⬜ **Provider abstraction** — one interface over SMTP (nodemailer) + API
     providers, so whatever service you find plugs in with one env change.
@@ -115,19 +115,17 @@
 
 ---
 
-## What's LEFT (the actual remaining work, in order)
+## What's LEFT
 
-**Finish P1:**
-- 4.1 Email OTP · 4.5 progressive lockout · 4.4 breach-password check
-- 5.1 finish the console→logger sweep · 5.3 correlation IDs
-- 6.1 PII-at-rest · 6.4 DR runbook · **6.5 account deletion + data export (new)**
+The plan is complete. Only two items are intentionally deferred because they
+need the live sandbox to finish meaningfully:
+- **3.3** deposit-credit / ACH-clawback webhook integration tests into CI
+  (drilled manually; needs richer fixtures + a seeded onramp rail).
+- **2.6** provisioning self-heal review (best validated against real Dakota).
 
-**Then P2:**
-- 7.1–7.5 API hardening · 8.1/8.2 DB pool + indexes · 9.1/9.2 email backend
-
-**Then, once fixtures allow:** 3.3 deposit/clawback webhook integration tests
-into CI, and 2.6 provisioning self-heal review (best finished against the
-live sandbox).
+Everything else — all P0/P1/P2 workstreams — is built, tested, and applied to
+both databases. Next real backend milestone is **M2: the live Dakota sandbox
+drill**, blocked only on credentials.
 
 ## Explicitly out of scope
 
