@@ -116,7 +116,7 @@ key-rotation calendar.
 
 **How:** the moment the API key arrives (~30 min setup):
 1. `DAKOTA_API_KEY` into `.env.local`.
-2. DB: local Postgres already migrated through 0004 (see "Local dev DB").
+2. DB: local Postgres already migrated through 0013 (see "Local dev DB").
 3. `npm run dakota:bootstrap` twice (mints signer key, then registers
    signer/group/policy → paste the printed env lines).
 4. Restore the real `DAKOTA_WEBHOOK_PUBLIC_KEY` (commented in `.env.local`),
@@ -176,13 +176,14 @@ passkey-endorsed transactions, external crypto sends, multi-currency.
   dedupe replays, clawback exactly once, holds refund exactly once.
 - Unused ideas go to BACKLOG.md, not into scope.
 
-## Blockers needing YOU (as of 2026-07-10)
+## Blockers needing YOU (as of 2026-07-14)
 
-1. **Dakota sandbox credentials** — email was expected ~2026-07-09; chase
-   sales if it hasn't landed. Gates M2 (and everything after).
+1. **Dakota sandbox credentials** — email was expected ~2026-07-09; now ~5
+   days overdue, chase sales. Gates M2 (and everything after). This is the
+   single blocker between "everything we can build is built" and going live.
 2. ~~Supabase decision~~ **RESOLVED 2026-07-10**: the "neo bank" project
    was paused, not deleted — resumed via the dashboard (Pro org; compute
-   bills while running). Migrated to 0004, drizzle bookkeeping seeded,
+   bills while running). Migrated to 0013, drizzle bookkeeping seeded,
    data intact (2 users). It's the hosted-DB candidate for M3; dev stays
    on local Postgres (drill seed lives there). Note: resumed compute
    accrues usage — pause it again from the dashboard if it'll sit unused
@@ -196,7 +197,7 @@ Dev runs on Homebrew PostgreSQL 16 (Supabase kept for staging/M3):
 - Start after reboot:
   `/opt/homebrew/opt/postgresql@16/bin/pg_ctl -D ~/.moneta-pgdata -o "-p 54321" -l ~/.moneta-pgdata/server.log start`
 - `.env.local` points `DATABASE_URL` here (old Supabase URL kept commented).
-- Migrations 0000–0004 applied. Drill seed user exists
+- Migrations 0000–0013 applied. Drill seed user exists
   (`drill@moneta.test`, account `2222…`, onramp rail `acct_drill_…`).
 - `DAKOTA_WEBHOOK_PUBLIC_KEY` is the **dev simulator key**; the real
   sandbox key is commented above it — swap back for real Dakota webhooks.
