@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { logger } from "@/lib/logger";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { dakotaCustomers } from "@/lib/db/schema";
@@ -90,7 +91,7 @@ export const POST = apiHandler({
 
       return ok(row ?? existing, 201);
     } catch (error) {
-      console.error("Dakota customer creation error:", error);
+      logger.error("Dakota customer creation error:", { detail: error instanceof Error ? error.message : String(error) })
       return err("Could not start verification. Please try again.", 502);
     }
   },

@@ -11,6 +11,7 @@
 //        (see onOneOffTransaction in src/lib/dakota/webhook-handlers.ts).
 
 import { and, desc, eq, sql } from "drizzle-orm";
+import { logger } from "@/lib/logger";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import {
@@ -322,7 +323,9 @@ export const POST = apiHandler({
         );
       }
 
-      console.error("Withdrawal wallet leg uncertain, keeping hold:", e);
+      logger.error("withdrawal.wallet_leg_uncertain", {
+        detail: e instanceof Error ? e.message : String(e),
+      });
       await db
         .update(transactions)
         .set({

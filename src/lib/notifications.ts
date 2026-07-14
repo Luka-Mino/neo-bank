@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { logger } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { notifications, userPreferences, users } from "@/lib/db/schema";
 import { sendNotificationEmail } from "@/lib/email";
@@ -35,7 +36,7 @@ export async function createNotification(params: CreateNotificationParams) {
       actionUrl: params.actionUrl,
     });
   } catch (error) {
-    console.error("Notification creation error:", error);
+    logger.error("Notification creation error:", { detail: error instanceof Error ? error.message : String(error) })
   }
 
   // Email mirror — best-effort, never blocks or fails the caller (which is
@@ -71,6 +72,6 @@ export async function createNotification(params: CreateNotificationParams) {
       actionLabel: params.actionUrl ? "View in Moneta" : undefined,
     });
   } catch (error) {
-    console.error("Notification email error:", error);
+    logger.error("Notification email error:", { detail: error instanceof Error ? error.message : String(error) })
   }
 }

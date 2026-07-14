@@ -4,6 +4,7 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { apiHandler, ok } from "@/lib/api-handler";
+import { encryptField } from "@/lib/crypto/field";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { logAudit } from "@/lib/audit";
@@ -26,7 +27,9 @@ export const PATCH = apiHandler({
       .update(users)
       .set({
         fullName: body.fullName,
-        ...(body.phone !== undefined ? { phone: body.phone } : {}),
+        ...(body.phone !== undefined
+          ? { phone: body.phone ? encryptField(body.phone, "phone") : null }
+          : {}),
         updatedAt: new Date(),
       })
       .where(eq(users.id, user.id))

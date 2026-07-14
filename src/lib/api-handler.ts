@@ -1,8 +1,10 @@
 // API handler factory — adapted from Lawzy for NextAuth + Drizzle
+import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { type ZodSchema } from "zod";
 import { auth } from "@/lib/auth/config";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -149,16 +151,25 @@ export function apiHandler<TBody = unknown, TParams = Record<string, string>>(
         request,
       });
     } catch (error) {
-      const route = request.nextUrl.pathname;
-      const method = request.method;
-      console.error(`${method} ${route} error:`, error);
+      // Correlation id ties the client's opaque error to the server log line
+      // without leaking any internal detail in the response body.
+      const requestId = request.headers.get("x-request-id") ?? randomUUID();
+      logger.error("api.unhandled_error", {
+        requestId,
+        method: request.method,
+        route: request.nextUrl.pathname,
+        error: error instanceof Error ? error.message : String(error),
+      });
 
       if (error && typeof error === "object" && "issues" in error) {
         const issues = (error as { issues: { message: string }[] }).issues;
         if (issues?.[0]) return err(issues[0].message, 400);
       }
 
-      return err("Internal server error", 500);
+      return NextResponse.json(
+        { success: false, error: { message: "Internal server error", requestId } },
+        { status: 500 }
+      );
     }
   }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }

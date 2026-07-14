@@ -7,6 +7,7 @@
 // racing sweeps can't both claim; a crash between claim and execution skips
 // one period rather than ever double-moving money.
 import { timingSafeEqual } from "node:crypto";
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq, lte } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -98,7 +99,7 @@ async function handle(req: NextRequest) {
         actionUrl: "/transfer-internal",
       });
       if (!insufficient) {
-        console.error(`Recurring rule ${rule.id} execution error:`, e);
+        logger.error(`Recurring rule ${rule.id} execution error:`, { detail: e instanceof Error ? e.message : String(e) })
       }
     }
   }

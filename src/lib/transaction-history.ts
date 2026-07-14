@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { logger } from "@/lib/logger";
 import { transactionStatusHistory } from "@/lib/db/schema";
 
 // Either the root db or an open drizzle transaction. When the caller holds a
@@ -29,6 +30,6 @@ export async function logStatusChange(
   } catch (error) {
     // Best-effort when standalone; inside a tx a failed statement poisons
     // the transaction and the caller's next statement will surface it.
-    console.error("Status history log error:", error);
+    logger.error("Status history log error:", { detail: error instanceof Error ? error.message : String(error) })
   }
 }

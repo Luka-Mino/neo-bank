@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth/config";
 import { db } from "@/lib/db";
+import { tryDecryptField } from "@/lib/crypto/field";
 import {
   users,
   accounts,
@@ -72,7 +73,9 @@ export async function GET() {
 
   const payload = {
     exportedAt: new Date().toISOString(),
-    profile,
+    profile: profile
+      ? { ...profile, phone: tryDecryptField(profile.phone, "phone") }
+      : null,
     verification: customer[0] ?? null,
     preferences: prefs[0] ?? null,
     accounts: userAccounts,

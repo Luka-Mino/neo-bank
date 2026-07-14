@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { logger } from "@/lib/logger";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { wallets, dakotaCustomers } from "@/lib/db/schema";
@@ -59,7 +60,7 @@ export const POST = apiHandler({
 
       return ok({ data: wallet }, 201);
     } catch (error) {
-      console.error("Wallet provisioning error:", error);
+      logger.error("Wallet provisioning error:", { detail: error instanceof Error ? error.message : String(error) })
       return err("Failed to set up wallet. Please try again.", 500);
     }
   },

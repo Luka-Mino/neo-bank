@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { reconcileEvents } from "@/lib/dakota/reconcile";
 
@@ -26,7 +27,7 @@ async function handle(req: NextRequest) {
     const result = await reconcileEvents();
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Reconciliation failed:", error);
+    logger.error("Reconciliation failed:", { detail: error instanceof Error ? error.message : String(error) })
     return NextResponse.json({ error: "Reconciliation failed" }, { status: 500 });
   }
 }

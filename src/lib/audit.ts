@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { logger } from "@/lib/logger";
 import { auditLog } from "@/lib/db/schema";
 
 interface AuditParams {
@@ -24,6 +25,6 @@ export async function logAudit(params: AuditParams) {
     });
   } catch (error) {
     // Never let audit logging break the main operation
-    console.error("Audit log error:", error);
+    logger.error("Audit log error:", { detail: error instanceof Error ? error.message : String(error) })
   }
 }

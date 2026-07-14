@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { logger } from "@/lib/logger";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { wallets, walletBalances } from "@/lib/db/schema";
@@ -66,10 +67,8 @@ export const GET = apiHandler({
           balances,
         });
       } catch (error) {
-        console.error(
-          `Failed to fetch balances for wallet ${wallet.dakotaWalletId}:`,
-          error
-        );
+        logger.error(
+          `Failed to fetch balances for wallet ${wallet.dakotaWalletId}:`, { detail: error instanceof Error ? error.message : String(error) })
 
         // Fall back to cached balances
         const cached = await db

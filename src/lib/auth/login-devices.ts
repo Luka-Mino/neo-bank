@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { logger } from "@/lib/logger";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { loginDevices } from "@/lib/db/schema";
@@ -80,6 +81,6 @@ export async function recordLoginDevice(params: {
     }
   } catch (error) {
     // Never block a legitimate login on the alerting path.
-    console.error("Login-device tracking error:", error);
+    logger.error("Login-device tracking error:", { detail: error instanceof Error ? error.message : String(error) })
   }
 }

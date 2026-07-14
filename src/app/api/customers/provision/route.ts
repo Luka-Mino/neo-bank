@@ -1,4 +1,5 @@
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { logger } from "@/lib/logger";
 
 // Manual retry for post-KYC provisioning. The primary trigger is the
 // customer.kyb_status webhook; this endpoint lets the onboarding page (or an
@@ -12,7 +13,7 @@ export const POST = apiHandler({
       const result = await provisionCustomer(user.id);
       return ok(result);
     } catch (error) {
-      console.error("Provisioning retry error:", error);
+      logger.error("Provisioning retry error:", { detail: error instanceof Error ? error.message : String(error) })
       const message =
         error instanceof Error && /not active|no Dakota customer/.test(error.message)
           ? error.message
