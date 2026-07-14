@@ -81,6 +81,27 @@ export async function sendPasswordResetEmail(to: string, token: string) {
   });
 }
 
+export async function sendEmailOtp(to: string, code: string) {
+  return sendEmail({
+    to,
+    subject: `Your Moneta sign-in code: ${code}`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+        <p style="font-weight: 700; color: #122e2e; font-size: 18px; margin-bottom: 24px;">moneta</p>
+        <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #212020;">Your sign-in code</h2>
+        <p style="color: #555; font-size: 15px; line-height: 1.6; margin-bottom: 16px;">
+          Enter this code to finish signing in:
+        </p>
+        <p style="font-size: 34px; font-weight: 700; letter-spacing: 8px; color: #122e2e; margin: 0 0 16px;">${code}</p>
+        <p style="color: #999; font-size: 13px;">
+          This code expires in 10 minutes. If you didn't try to sign in, change
+          your password — someone may have it.
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendMagicLinkEmail(to: string, token: string) {
   const url = `${APP_URL}/magic?token=${token}`;
   return sendEmail({

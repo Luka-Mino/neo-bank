@@ -29,6 +29,9 @@ export const users = pgTable("users", {
   // change, 2FA disable). A session whose token carries an older version is
   // rejected at the jwt callback — this is how stateless JWTs get revoked.
   tokenVersion: integer("token_version").notNull().default(0),
+  // Optional email-code 2FA (alternative to TOTP for users without an
+  // authenticator app). When on, login requires a code emailed at sign-in.
+  emailOtpEnabled: boolean("email_otp_enabled").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -375,6 +378,26 @@ export const emailVerificationTokens = pgTable("email_verification_tokens", {
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ─── Email 2FA Codes ────────────────────────────────────────────────────────
+// Short-lived login codes for users whose 2FA method is email. The code is
+// stored as a bcrypt hash (never plaintext); single-use, 10-minute lifetime.
+
+export const emailOtpCodes = pgTable(
+  "email_otp_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    attempts: integer("attempts").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("idx_email_otp_user").on(table.userId)]
+);
 
 // ─── Magic-Link Login Tokens ────────────────────────────────────────────────
 // Passwordless sign-in: a single-use, short-lived token emailed as a link.

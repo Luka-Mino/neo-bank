@@ -84,9 +84,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         if (row.totpEnabledAt && row.totpSecret) {
+          // Authenticator-app 2FA takes precedence when both are enabled.
           const code = (credentials.totp as string | undefined)?.trim();
           if (!code) throw new TwoFactorRequired();
           if (!verifyTotpCode(decryptSecret(row.totpSecret), code)) {
+            throw new InvalidTwoFactorCode();
+          }
+        } else if (row.emailOtpEnabled) {
+          // Email-code 2FA: first pass (no code) issues + emails a code and
+          // asks for it; second pass verifies. Reuses the same error codes so
+          // the login page shows the same code field.
+          const code = (credentials.totp as string | undefined)?.trim();
+          if (!code) {
+            const { issueEmailOtp } = await import("@/lib/auth/email-otp");
+            await issueEmailOtp(row.id, row.email);
+            throw new TwoFactorRequired();
+          }
+          const { verifyEmailOtp } = await import("@/lib/auth/email-otp");
+          if (!(await verifyEmailOtp(row.id, code))) {
             throw new InvalidTwoFactorCode();
           }
         }

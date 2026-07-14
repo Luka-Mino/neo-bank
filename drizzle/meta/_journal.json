@@ -78,6 +78,13 @@
       "when": 1784042375371,
       "tag": "0010_session_revocation",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1784042376371,
+      "tag": "0011_email_otp",
+      "breakpoints": true
     }
   ]
 }
