@@ -1,0 +1,6 @@
+# Moneta security contact — responsible disclosure
+Contact: mailto:security@moneta.example
+Preferred-Languages: en
+Canonical: https://neo-bank-rho.vercel.app/.well-known/security.txt
+Expires: 2027-01-01T00:00:00.000Z
+Policy: https://neo-bank-rho.vercel.app/security-policy
