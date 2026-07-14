@@ -143,7 +143,13 @@ function AccountRowCard({ account }: { account: AccountRow }) {
   const [goalDraft, setGoalDraft] = useState("");
   const [nicknameDraft, setNicknameDraft] = useState(account.nickname ?? "");
 
-  const TypeIcon = account.accountType === "savings" ? PiggyBank : Wallet;
+  const isSavings = account.accountType === "savings";
+  const TypeIcon = isSavings ? PiggyBank : Wallet;
+  // Tint the account glyph by type so the list scans at a glance —
+  // Checking reads as everyday spend (emerald), Savings as set-aside (blue).
+  const typeTint = isSavings
+    ? "bg-[#2f80ed]/12 text-[#2f80ed]"
+    : "bg-[#4ac280]/15 text-[#3fb073]";
 
   const patch = useMutation({
     mutationFn: async (body: {
@@ -211,7 +217,7 @@ function AccountRowCard({ account }: { account: AccountRow }) {
         account.isPrimary && "ring-1 ring-primary/30"
       )}
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+      <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", typeTint)}>
         <TypeIcon className="h-5 w-5" />
       </span>
 
