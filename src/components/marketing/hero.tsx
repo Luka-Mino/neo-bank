@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ShieldCheck, Lock, Zap } from "lucide-react";
 import { MonetaCard } from "@/components/account/moneta-card";
 import { TiltCard } from "@/components/marketing/tilt-card";
 
@@ -53,43 +51,29 @@ export function Hero({ isAuthenticated }: HeroProps) {
             </p>
 
             <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-              {isAuthenticated ? (
-                <Link
-                  href="/dashboard"
-                  className={cn(
-                    buttonVariants({ size: "lg" }),
-                    "h-12 bg-[#4ac280] px-8 text-base text-[#0a1c1c] hover:bg-[#5ed092]"
-                  )}
-                >
-                  Open the app
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              ) : (
-                <Link
-                  href="/register"
-                  className={cn(
-                    buttonVariants({ size: "lg" }),
-                    "h-12 bg-[#4ac280] px-8 text-base text-[#0a1c1c] hover:bg-[#5ed092]"
-                  )}
-                >
-                  Open an account
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              )}
-              <a
-                href="#features"
-                className="h-12 inline-flex items-center justify-center rounded-md border border-white/15 bg-white/5 px-8 text-sm font-medium text-white transition hover:bg-white/10"
-              >
-                See features
+              <Link href={isAuthenticated ? "/dashboard" : "/register"} className="cta-primary">
+                {isAuthenticated ? "Open the app" : "Open an account"}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a href="#features" className="cta-secondary">
+                See how it works
               </a>
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/50 lg:justify-start">
-              <span>FDIC pass-through up to $250K</span>
-              <span className="hidden h-1 w-1 rounded-full bg-white/30 sm:block" />
-              <span>Bank-grade encryption</span>
-              <span className="hidden h-1 w-1 rounded-full bg-white/30 sm:block" />
-              <span>Settles on-chain in seconds</span>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-2.5 lg:justify-start">
+              {[
+                { icon: ShieldCheck, label: "FDIC pass-through to $250K" },
+                { icon: Lock, label: "Bank-grade encryption" },
+                { icon: Zap, label: "Settles in seconds" },
+              ].map((chip) => (
+                <span
+                  key={chip.label}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/70 ring-1 ring-white/10"
+                >
+                  <chip.icon className="h-3.5 w-3.5 text-[#4ac280]" />
+                  {chip.label}
+                </span>
+              ))}
             </div>
           </div>
 

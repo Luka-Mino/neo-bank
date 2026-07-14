@@ -39,10 +39,7 @@ export function Navbar({ isAuthenticated }: NavbarProps) {
           {isAuthenticated ? (
             <Link
               href="/dashboard"
-              className={cn(
-                buttonVariants(),
-                "bg-[#4ac280] text-[#0a1c1c] hover:bg-[#5ed092]"
-              )}
+              className="inline-flex items-center rounded-full bg-gradient-to-b from-[#59cf8e] to-[#3fb073] px-4 py-2 text-sm font-semibold text-[#08221c] shadow-[0_1px_0_rgba(255,255,255,0.3)_inset,0_6px_16px_-8px_rgba(74,194,128,0.6)] transition hover:brightness-105"
             >
               Open app
             </Link>
@@ -56,10 +53,7 @@ export function Navbar({ isAuthenticated }: NavbarProps) {
               </Link>
               <Link
                 href="/register"
-                className={cn(
-                  buttonVariants(),
-                  "bg-[#4ac280] text-[#0a1c1c] hover:bg-[#5ed092]"
-                )}
+                className="inline-flex items-center rounded-full bg-gradient-to-b from-[#59cf8e] to-[#3fb073] px-4 py-2 text-sm font-semibold text-[#08221c] shadow-[0_1px_0_rgba(255,255,255,0.3)_inset,0_6px_16px_-8px_rgba(74,194,128,0.6)] transition hover:brightness-105"
               >
                 Get started
               </Link>

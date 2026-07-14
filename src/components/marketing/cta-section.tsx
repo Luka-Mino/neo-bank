@@ -35,7 +35,7 @@ export function CtaSection() {
               <div className="mt-8">
                 <Link
                   href="/register"
-                  className="inline-flex h-12 items-center gap-1.5 rounded-full bg-[#4ac280] px-8 text-base font-semibold text-[#0a1c1c] shadow-[0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] transition hover:bg-[#5ed092]"
+                  className="cta-primary"
                 >
                   Get started &mdash; it&apos;s free
                   <ArrowRight className="h-4 w-4" />
