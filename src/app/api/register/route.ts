@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { screenPassword } from "@/lib/auth/passwords";
 import { db } from "@/lib/db";
 import { users, emailVerificationTokens } from "@/lib/db/schema";
 import { registerSchema } from "@/lib/validators/auth";
@@ -14,6 +15,9 @@ export const POST = apiHandler({
   handler: async ({ body }) => {
     const { fullName, email, password } = body;
     const normalizedEmail = email.toLowerCase();
+
+    const weak = screenPassword(password, { email: normalizedEmail, name: fullName });
+    if (weak) return err(weak, 400);
 
     // Check if user exists
     const existing = await db

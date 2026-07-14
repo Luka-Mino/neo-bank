@@ -2,6 +2,7 @@ import { z } from "zod";
 import { eq, and, isNull, gt } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { screenPassword } from "@/lib/auth/passwords";
 import { db } from "@/lib/db";
 import { users, passwordResetTokens } from "@/lib/db/schema";
 
@@ -37,6 +38,9 @@ export const POST = apiHandler({
     if (!resetToken) {
       return err("Invalid or expired reset link. Please request a new one.", 400);
     }
+
+    const weak = screenPassword(body.password);
+    if (weak) return err(weak, 400);
 
     // Update password
     const passwordHash = await bcrypt.hash(body.password, 12);

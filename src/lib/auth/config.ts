@@ -37,18 +37,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = (credentials.email as string).toLowerCase();
         const password = credentials.password as string;
 
-        // Brute-force guard: 15 attempts per email per 15 minutes (counts
-        // successes too — nobody legitimately signs in 15 times in 15min).
-        // Keyed by target email so credential-stuffing one account stalls
-        // regardless of source IP. Uses the shared limiter (Upstash-backed
-        // in production, in-memory in dev).
-        const rl = await rateLimit(`login:${email}`, 15, 15 * 60 * 1000);
-        if (!rl.allowed) {
+        // Progressive brute-force guard: two tiers, keyed by target email so
+        // credential-stuffing one account stalls regardless of source IP.
+        //  • fast: 15 / 15 min — normal fumbling
+        //  • slow: 40 / 6 h   — a sustained low-and-slow attack that stays
+        //    under the fast window still hits a much longer lockout
+        const [fast, slow] = await Promise.all([
+          rateLimit(`login:fast:${email}`, 15, 15 * 60 * 1000),
+          rateLimit(`login:slow:${email}`, 40, 6 * 60 * 60 * 1000),
+        ]);
+        if (!fast.allowed || !slow.allowed) {
           logAudit({
             actorType: "system",
             action: "login_rate_limited",
             resourceType: "user",
             resourceId: email,
+            metadata: { tier: !slow.allowed ? "slow" : "fast" },
           });
           throw new TooManyAttempts();
         }

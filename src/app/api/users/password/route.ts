@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { logAudit } from "@/lib/audit";
 import { revokeSessions } from "@/lib/auth/sessions";
+import { screenPassword } from "@/lib/auth/passwords";
 import { createNotification } from "@/lib/notifications";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
@@ -32,6 +33,9 @@ export const PATCH = apiHandler({
 
     const isValid = await bcrypt.compare(body.currentPassword, dbUser.passwordHash);
     if (!isValid) return err("Current password is incorrect", 400);
+
+    const weak = screenPassword(body.newPassword, { email: user.email });
+    if (weak) return err(weak, 400);
 
     // Update password
     const passwordHash = await bcrypt.hash(body.newPassword, 12);
