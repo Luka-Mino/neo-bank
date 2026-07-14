@@ -54,64 +54,52 @@
 
 ## Workstream 4 — Auth & Session Hardening  **(P1) ✅ DONE** — `c513175`
 
-4.1 ⬜ **Email OTP** — optional email-code 2FA channel. *Remaining.*
+4.1 ✅ **Email OTP** — optional email-code 2FA (email_otp_codes, bcrypt-hashed single-use codes); login demands the emailed code. Drill-verified.
 4.2 ✅ **Email-verification gating** — `assertEmailVerified` blocks money
     movement for unverified accounts; auto-activates only when email is
     deliverable (RESEND_API_KEY) so nobody's locked out prematurely.
 4.3 ✅ **Session revocation** — `users.token_version` (migration 0010) checked
     per request; `revokeSessions()` on password change + reset. Drill-verified.
-4.4 ✅ **Server-side password strength** — ≥8/upper/number enforced across
-    register, change, reset. *(Common-password/breach check still ⬜.)*
-4.5 ⬜ **Progressive lockout** — escalating backoff beyond the flat 15/15-min.
-    *Remaining.*
+4.4 ✅ **Server-side password strength** — ≥8/upper/number + common/breach + email/name screen across register, change, reset.
+4.5 ✅ **Progressive lockout** — two tiers per email (15/15min + 40/6h).
 
 ## Workstream 5 — Observability & Ops Readiness  **(P1) ✅ DONE** — `13fec57`
 
-5.1 ◑ **Structured logger** — `src/lib/logger.ts` (JSON, secret/PII redaction)
-    built in `8f46534`. New code uses it; a sweep of the remaining raw
-    `console.*` in older files is ⬜.
+5.1 ✅ **Structured logger** — JSON + secret/PII redaction; console.* swept across server code.
 5.2 ✅ **Health/readiness endpoint** — `/api/health` (DB ping), built early.
-5.3 ⬜ **Correlation IDs** — thread a request id through logs + error bodies.
+5.3 ✅ **Correlation IDs** — api-handler logs errors with a requestId and returns it in the 500 body.
 5.4 ✅ **Alerting hooks** — `src/lib/alerts.ts`; dead-letter, reconcile, and
     ledger-drift conditions alert (log + Sentry when DSN set).
 5.5 ✅ **Sentry context** — wired, PII-off, redaction; dormant until DSN.
 
 ## Workstream 6 — Data Protection & Privacy  **(P1) ✅ DONE** — `0918010`/`13fec57`
 
-6.1 ⬜ **PII-at-rest review** — encrypt/tokenize sensitive stored fields beyond
-    passwords/2FA (phone; cached Dakota bank details).
+6.1 ✅ **PII-at-rest** — reusable AES-256-GCM field crypto (src/lib/crypto/field.ts); phone encrypted at rest; ready for Dakota bank details.
 6.2 ✅ **Append-only audit log** — DB trigger blocks UPDATE/DELETE (0009).
     Verified rejects.
 6.3 ✅ **Retention/cleanup** — `/api/maintenance/cleanup` purges expired/used
     tokens + aged processed events; daily cron.
-6.4 ⬜ **Backup/DR runbook** — document Supabase backup cadence + tested restore.
-6.5 ⬜ **Account deletion & data export (NEW)** — GDPR/CCPA: a "delete my
-    account" path (cascade + audit) and a "download my data" export. A
-    regulated money app needs both; neither exists today.
+6.4 ✅ **Backup/DR runbook** — DR-RUNBOOK.md (backup cadence, restore, RPO/RTO, signer-key loss, post-incident checklist).
+6.5 ✅ **Account deletion & data export** — GET /api/users/data (JSON export); DELETE /api/users (AML-compliant anonymize-and-close, records retained). Drill-verified.
 
 ## Workstream 7 — API & Input Hardening  **(P2) ✅ DONE** — `89636c6`
 
-7.1 ⬜ Global request body-size limits (webhook already capped).
-7.2 ⬜ Zod coverage audit — strict schemas, reject unknown fields.
-7.3 ⬜ Error-sanitization formalized (handler returns generic 500 already;
-    make it a tested guarantee).
-7.4 ⬜ CSRF posture — confirm session cookie `SameSite` + same-origin covers
-    mutations; add explicit protection if any gap.
-7.5 ⬜ Security regression tests — IDOR, rate-limit, auth-gate assertions in CI.
+7.1 ✅ 64KB body cap in the handler (verified 413).
+7.2 ✅ Money schemas .strict() — unknown fields rejected (verified 400).
+7.3 ✅ Generic 500 + correlation id; no internal leakage.
+7.4 ✅ CSRF: NextAuth SameSite=Lax + httpOnly + secure-in-prod cookies (documented).
+7.5 ✅ Security-regression tests lock strict/positive/same-account invariants.
 
 ## Workstream 8 — Database Integrity & Performance  **(P2) ✅ DONE** — `89636c6`
 
-8.1 ⬜ Production connection-pool config (max, idle timeout) for serverless.
-8.2 ⬜ Index review for hot paths (transactions, audit_log, webhook_events,
-    login_devices).
-8.3 ✅ Constraint additions — balance floor + append-only done in 0009;
-    status-enum checks still ⬜.
+8.1 ✅ Serverless pool (max 5, idle/connect timeouts, DB_POOL_MAX override).
+8.2 ✅ Hot-path indexes (0013): audit_log actor+created, unprocessed events, unread notifications.
+8.3 ✅ Balance floor + append-only audit (0009). Status-enum checks deferred (low value).
 
 ## Workstream 9 — Email/Notification Backend  **(P2) ✅ DONE** — `89636c6`
 
-9.1 ⬜ **Provider abstraction** — one interface over SMTP (nodemailer) + API
-    providers, so whatever service you find plugs in with one env change.
-9.2 ⬜ **Send retry/queue** — transient send failures retried, not dropped.
+9.1 ✅ **Provider abstraction** — Resend (API) or SMTP (nodemailer) behind one transport, selected by EMAIL_PROVIDER.
+9.2 ✅ **Send retry** — 3x backoff, best-effort (never throws into money callers).
 
 ---
 
