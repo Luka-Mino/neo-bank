@@ -454,7 +454,10 @@ function RealTxRow({
         className="h-7 w-[3px] self-center rounded-sm"
         style={{ background: meta.strip }}
       />
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground/[0.06] text-foreground/65">
+      <div
+        className="flex h-10 w-10 items-center justify-center rounded-full"
+        style={{ backgroundColor: `${meta.strip}1f`, color: meta.strip }}
+      >
         <Icon className="h-[17px] w-[17px]" />
       </div>
       <div className="min-w-0">
@@ -485,20 +488,23 @@ function RealTxRow({
   );
 }
 
+// Canonical transaction palette — kept in lockstep with the txMeta map in
+// transactions/page.tsx so a given type reads the same color + directional
+// icon everywhere in the app.
 function txMeta(t: string) {
   switch (t) {
     case "onramp":
-      return { label: "Deposit", direction: "in" as const, icon: Briefcase, strip: "#10b981" };
+      return { label: "Deposit", direction: "in" as const, icon: ArrowDownToLine, strip: "#3fb073" };
     case "offramp":
-      return { label: "Withdrawal", direction: "out" as const, icon: ShoppingBag, strip: "#ff9500" };
+      return { label: "Withdrawal", direction: "out" as const, icon: ArrowUpFromLine, strip: "#2f80ed" };
     case "send":
-      return { label: "Sent", direction: "out" as const, icon: Send, strip: "#2f80ed" };
+      return { label: "Sent", direction: "out" as const, icon: Send, strip: "#8b5cf6" };
     case "internal_in":
-      return { label: "Move in", direction: "in" as const, icon: Repeat, strip: "#4ac280" };
+      return { label: "Move in", direction: "in" as const, icon: Repeat, strip: "#3fb073" };
     case "internal_out":
       return { label: "Move out", direction: "out" as const, icon: Repeat, strip: "#8b5cf6" };
     default:
-      return { label: "Transaction", direction: "out" as const, icon: ShoppingBag, strip: "#94a3b8" };
+      return { label: "Transaction", direction: "out" as const, icon: ArrowUpFromLine, strip: "#94a3b8" };
   }
 }
 
@@ -765,7 +771,10 @@ function TxRow({ tx }: { tx: (typeof FEED)[number] }) {
         className="h-7 w-[3px] self-center rounded-sm"
         style={{ background: tx.strip }}
       />
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground/[0.06] text-foreground/65">
+      <div
+        className="flex h-10 w-10 items-center justify-center rounded-full"
+        style={{ backgroundColor: `${tx.strip}1f`, color: tx.strip }}
+      >
         <Icon className="h-[17px] w-[17px]" />
       </div>
       <div className="min-w-0">

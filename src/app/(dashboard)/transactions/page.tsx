@@ -31,14 +31,19 @@ import { useSelectedAccount } from "@/components/account/use-accounts";
 
 const txMeta: Record<
   string,
-  { label: string; icon: React.ComponentType<{ className?: string }>; strip: string }
+  {
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    strip: string;
+    tint: string;
+  }
 > = {
-  onramp: { label: "Deposit", icon: ArrowDownToLine, strip: "strip-emerald" },
-  offramp: { label: "Withdrawal", icon: ArrowUpFromLine, strip: "strip-blue" },
-  send: { label: "Sent", icon: Send, strip: "strip-purple" },
-  swap: { label: "Swap", icon: ArrowLeftRight, strip: "strip-orange" },
-  internal_in: { label: "Move in", icon: ArrowLeftRight, strip: "strip-emerald" },
-  internal_out: { label: "Move out", icon: ArrowLeftRight, strip: "strip-purple" },
+  onramp: { label: "Deposit", icon: ArrowDownToLine, strip: "strip-emerald", tint: "bg-[#4ac280]/12 text-[#3fb073]" },
+  offramp: { label: "Withdrawal", icon: ArrowUpFromLine, strip: "strip-blue", tint: "bg-[#2f80ed]/12 text-[#2f80ed]" },
+  send: { label: "Sent", icon: Send, strip: "strip-purple", tint: "bg-[#8b5cf6]/12 text-[#8b5cf6]" },
+  swap: { label: "Swap", icon: ArrowLeftRight, strip: "strip-orange", tint: "bg-[#ff9500]/12 text-[#e07d00]" },
+  internal_in: { label: "Move in", icon: ArrowLeftRight, strip: "strip-emerald", tint: "bg-[#4ac280]/12 text-[#3fb073]" },
+  internal_out: { label: "Move out", icon: ArrowLeftRight, strip: "strip-purple", tint: "bg-[#8b5cf6]/12 text-[#8b5cf6]" },
 };
 
 function relTime(iso: string): string {
@@ -323,7 +328,12 @@ export default function TransactionsPage() {
                             meta.strip
                           )}
                         >
-                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                          <span
+                            className={cn(
+                              "flex h-10 w-10 items-center justify-center rounded-full",
+                              meta.tint
+                            )}
+                          >
                             <Icon className="h-4 w-4" />
                           </span>
                           <div className="min-w-0 flex-1">
