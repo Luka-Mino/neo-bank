@@ -13,14 +13,14 @@ export default function TermsPage() {
 
       <h1 className="text-3xl font-bold mb-2">Terms of Service</h1>
       <p className="text-sm text-muted-foreground mb-8">
-        Last updated: April 1, 2026
+        Last updated: July 14, 2026
       </p>
 
       <div className="prose prose-sm max-w-none space-y-6 text-foreground/80">
         <section>
           <h2 className="text-lg font-semibold text-foreground">1. Acceptance of Terms</h2>
           <p>
-            By accessing or using NeoBank (&quot;Service&quot;), you agree to be bound by
+            By accessing or using Moneta (&quot;Service&quot;), you agree to be bound by
             these Terms of Service. If you do not agree, do not use the Service.
           </p>
         </section>
@@ -28,10 +28,12 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold text-foreground">2. Description of Service</h2>
           <p>
-            NeoBank provides digital banking services including account management,
+            Moneta provides digital banking services including account management,
             fund deposits (on-ramp), withdrawals (off-ramp), and peer-to-peer
-            transfers powered by stablecoin infrastructure. NeoBank is not a bank.
-            Banking services are provided by our partner financial institutions.
+            transfers powered by regulated stablecoin infrastructure provided by
+            Dakota. Moneta is not a bank. Banking, custody, and money-transmission
+            services are provided by our partner financial institutions and
+            licensed infrastructure providers.
           </p>
         </section>
 
@@ -58,7 +60,7 @@ export default function TermsPage() {
           <p>
             Deposits may be eligible for FDIC pass-through insurance up to
             $250,000 per depositor through our partner banks, subject to
-            applicable requirements. NeoBank itself is not FDIC-insured.
+            applicable requirements. Moneta itself is not FDIC-insured.
           </p>
         </section>
 
@@ -82,7 +84,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold text-foreground">8. Limitation of Liability</h2>
           <p>
-            To the maximum extent permitted by law, NeoBank shall not be liable
+            To the maximum extent permitted by law, Moneta shall not be liable
             for indirect, incidental, special, or consequential damages.
           </p>
         </section>
@@ -98,7 +100,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold text-foreground">10. Contact</h2>
           <p>
-            For questions about these terms, contact us at support@neobank.app.
+            For questions about these terms, contact us at support@moneta.app.
           </p>
         </section>
       </div>

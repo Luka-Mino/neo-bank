@@ -13,7 +13,7 @@ export default function PrivacyPage() {
 
       <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
       <p className="text-sm text-muted-foreground mb-8">
-        Last updated: April 1, 2026
+        Last updated: July 14, 2026
       </p>
 
       <div className="prose prose-sm max-w-none space-y-6 text-foreground/80">
@@ -49,8 +49,9 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold text-foreground">3. Information Sharing</h2>
           <p>
-            We share information with our banking partners for transaction
-            processing, identity verification providers, and as required by law.
+            We share information with our banking partners and regulated
+            infrastructure provider (Dakota) for transaction processing, with
+            identity verification providers for KYC/AML, and as required by law.
             We do not sell your personal information.
           </p>
         </section>
@@ -88,7 +89,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold text-foreground">7. Contact</h2>
           <p>
-            For privacy inquiries, contact us at privacy@neobank.app.
+            For privacy inquiries, contact us at privacy@moneta.app.
           </p>
         </section>
       </div>
