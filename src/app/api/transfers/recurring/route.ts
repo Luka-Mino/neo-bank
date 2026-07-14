@@ -5,6 +5,7 @@ import { z } from "zod";
 import { alias } from "drizzle-orm/pg-core";
 import { and, eq, ne } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import { accounts, recurringTransfers } from "@/lib/db/schema";
 import { addPeriod, type Frequency } from "@/lib/transfers";
@@ -91,6 +92,14 @@ export const POST = apiHandler({
         nextRunAt,
       })
       .returning();
+    await logAudit({
+      actorType: "user",
+      actorId: user.id,
+      action: "recurring_transfer_created",
+      resourceType: "recurring_transfer",
+      resourceId: rule.id,
+      metadata: { fromAccountId: body.fromAccountId, toAccountId: body.toAccountId, amount: body.amount, frequency: body.frequency },
+    });
     return ok(rule, 201);
   },
 });

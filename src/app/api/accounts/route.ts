@@ -3,6 +3,7 @@
 
 import { and, desc, eq, ne } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import { accounts } from "@/lib/db/schema";
 import { createAccountSchema } from "@/lib/validators/account";
@@ -58,6 +59,14 @@ export const POST = apiHandler({
       return err("Could not allocate an account number; please retry", 503);
     }
 
+    await logAudit({
+      actorType: "user",
+      actorId: user.id,
+      action: "account_opened",
+      resourceType: "account",
+      resourceId: inserted.id,
+      metadata: { accountType: inserted.accountType },
+    });
     return ok(inserted, 201);
   },
 });

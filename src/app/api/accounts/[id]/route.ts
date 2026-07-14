@@ -4,6 +4,7 @@
 
 import { and, eq, ne, sql } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import { accounts, cards } from "@/lib/db/schema";
 import { updateAccountSchema } from "@/lib/validators/account";
@@ -65,6 +66,14 @@ export const PATCH = apiHandler({
           .where(eq(accounts.id, current.id))
           .returning();
         return row;
+      });
+      await logAudit({
+        actorType: "user",
+        actorId: user.id,
+        action: "account_updated",
+        resourceType: "account",
+        resourceId: current.id,
+        metadata: { nickname: body.nickname, status: body.status, setPrimary: body.setPrimary, goalAmount: body.goalAmount },
       });
       return ok(updated);
     }
@@ -145,6 +154,13 @@ export const DELETE = apiHandler({
         );
     }
 
+    await logAudit({
+      actorType: "user",
+      actorId: user.id,
+      action: "account_closed",
+      resourceType: "account",
+      resourceId: row.id,
+    });
     return ok(row);
   },
 });

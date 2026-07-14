@@ -4,6 +4,7 @@
 
 import { desc, eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import { cards } from "@/lib/db/schema";
 import { createCardSchema } from "@/lib/validators/card";
@@ -61,6 +62,14 @@ export const POST = apiHandler({
       })
       .returning();
 
+    await logAudit({
+      actorType: "user",
+      actorId: user.id,
+      action: "card_issued",
+      resourceType: "card",
+      resourceId: row.id,
+      metadata: { accountId: row.accountId, last4: row.last4 },
+    });
     return ok(row, 201);
   },
 });

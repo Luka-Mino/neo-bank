@@ -5,6 +5,7 @@
 // linked by metadata.internal_pair_id, both inside a single DB transaction.
 
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { logAudit } from "@/lib/audit";
 import { internalTransferSchema } from "@/lib/validators/transfer";
 import { INSUFFICIENT_FUNDS, performInternalTransfer } from "@/lib/transfers";
 import {
@@ -55,6 +56,14 @@ export const POST = apiHandler({
         currency: from.currency,
       });
 
+      await logAudit({
+        actorType: "user",
+        actorId: user.id,
+        action: "internal_transfer",
+        resourceType: "account",
+        resourceId: from.id,
+        metadata: { toAccountId: to.id, amount: body.amount, pairId: result.pairId },
+      });
       return ok(result, 201);
     } catch (e) {
       if (e instanceof Error && e.message === INSUFFICIENT_FUNDS) {

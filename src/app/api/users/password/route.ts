@@ -2,6 +2,7 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 
@@ -37,6 +38,13 @@ export const PATCH = apiHandler({
       .set({ passwordHash, updatedAt: new Date() })
       .where(eq(users.id, user.id));
 
+    await logAudit({
+      actorType: "user",
+      actorId: user.id,
+      action: "password_changed",
+      resourceType: "user",
+      resourceId: user.id,
+    });
     return ok({ message: "Password updated successfully" });
   },
 });
