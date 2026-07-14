@@ -203,10 +203,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Hero row: 64% / 36% */}
-      <div
-        className="grid gap-5"
-        style={{ gridTemplateColumns: "minmax(0, 1.78fr) minmax(0, 1fr)" }}
-      >
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.78fr)_minmax(0,1fr)]">
         {/* Hero balance */}
         <div className="moneta-hero-bg with-halo relative flex min-h-[280px] flex-col justify-between overflow-hidden rounded-card p-7 text-white">
           <button
@@ -335,10 +332,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Chart + card row: 62% / 38% */}
-      <div
-        className="grid gap-5"
-        style={{ gridTemplateColumns: "minmax(0, 1.63fr) minmax(0, 1fr)" }}
-      >
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.63fr)_minmax(0,1fr)]">
         <BalanceTrend totalBalance={totalBalance} range={range} setRange={setRange} />
         <CardWidget cardholder={(demoSession?.user?.name || "ALEX MORGAN").toUpperCase()} />
       </div>

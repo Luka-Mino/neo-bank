@@ -167,7 +167,7 @@ export function LinkBankDialog({
           })}
           {field("bankName", "Bank name", { placeholder: "e.g. Chase", maxLength: 35 })}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {field("abaRoutingNumber", "Routing number", {
               inputMode: "numeric",
               maxLength: 9,
@@ -205,8 +205,8 @@ export function LinkBankDialog({
               Account holder address (required for bank payouts)
             </p>
             {field("street1", "Street", { maxLength: 35 })}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-1">{field("city", "City")}</div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="col-span-2 sm:col-span-1">{field("city", "City")}</div>
               <div>{field("region", "State", { placeholder: "CA", maxLength: 2 })}</div>
               <div>{field("postalCode", "ZIP", { inputMode: "numeric" })}</div>
             </div>
