@@ -3,6 +3,13 @@
 import * as Sentry from "@sentry/nextjs";
 
 export async function register() {
+  // Only run in the Node.js server runtime (not edge/browser).
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    // Fail fast on misconfigured secrets rather than at first money movement.
+    const { validateSecretsAtStartup } = await import("@/lib/secrets");
+    validateSecretsAtStartup();
+  }
+
   if (!process.env.SENTRY_DSN) return;
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
