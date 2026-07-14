@@ -154,8 +154,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
       }
 
-      // Fetch KYC status — but don't break the session if DB query fails
       if (token.id) {
+        // KYC status + token-version check in one query (this callback runs
+        // per request; folding both in keeps it a single round-trip).
+        try {
+          const [row] = await db
+            .select({ tokenVersion: users.tokenVersion })
+            .from(users)
+            .where(eq(users.id, token.id as string))
+            .limit(1);
+
+          // Session revocation: a token minted before the current version is
+          // rejected (password change / 2FA disable / sign-out-everywhere).
+          if (!row) return null;
+          if (user) {
+            token.tv = row.tokenVersion; // fresh login — adopt current version
+          } else if (token.tv !== row.tokenVersion) {
+            return null; // stale token → session invalidated
+          }
+        } catch {
+          // DB unavailable — don't lock out a valid session on a transient
+          // error; keep the existing token (fail-open on availability only).
+        }
+
         if (isKycBypassed()) {
           token.kycStatus = "active";
         } else {
@@ -165,10 +186,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               .from(dakotaCustomers)
               .where(eq(dakotaCustomers.userId, token.id as string))
               .limit(1);
-
             token.kycStatus = customer[0]?.kycStatus ?? "none";
           } catch {
-            // DB query failed — keep existing kycStatus or default
             token.kycStatus = token.kycStatus ?? "none";
           }
         }

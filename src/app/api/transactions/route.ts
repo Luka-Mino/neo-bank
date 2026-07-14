@@ -34,6 +34,7 @@ import { logStatusChange } from "@/lib/transaction-history";
 import { createTransactionSchema } from "@/lib/validators/transaction";
 import { categorizeTransaction } from "@/lib/categorize";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
+import { assertEmailVerified } from "@/lib/auth/verification";
 import {
   assertAccountOwnership,
   ownershipErr,
@@ -92,6 +93,9 @@ export const POST = apiHandler({
     ) {
       return err("KYC verification required", 403);
     }
+
+    const unverified = await assertEmailVerified(user.id);
+    if (unverified) return err(unverified.message, unverified.status);
 
     // Caller must own the account this tx will debit.
     let account;

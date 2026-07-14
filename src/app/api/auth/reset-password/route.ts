@@ -51,6 +51,11 @@ export const POST = apiHandler({
       .set({ usedAt: now })
       .where(eq(passwordResetTokens.id, resetToken.id));
 
+    // A reset is the account-recovery path — invalidate every existing
+    // session so a prior attacker session can't survive the recovery.
+    const { revokeSessions } = await import("@/lib/auth/sessions");
+    await revokeSessions(resetToken.userId, "password_reset");
+
     return ok({ message: "Password updated successfully" });
   },
 });

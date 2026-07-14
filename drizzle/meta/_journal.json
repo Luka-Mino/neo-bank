@@ -71,6 +71,13 @@
       "when": 1784042374371,
       "tag": "0009_ledger_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784042375371,
+      "tag": "0010_session_revocation",
+      "breakpoints": true
     }
   ]
 }

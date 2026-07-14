@@ -25,6 +25,10 @@ export const users = pgTable("users", {
   // proven a valid code (totp_enabled_at set).
   totpSecret: text("totp_secret"),
   totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),
+  // Bumped to invalidate all existing JWTs (sign-out-everywhere, password
+  // change, 2FA disable). A session whose token carries an older version is
+  // rejected at the jwt callback — this is how stateless JWTs get revoked.
+  tokenVersion: integer("token_version").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

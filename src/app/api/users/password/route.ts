@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { logAudit } from "@/lib/audit";
+import { revokeSessions } from "@/lib/auth/sessions";
+import { createNotification } from "@/lib/notifications";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 
@@ -44,6 +46,16 @@ export const PATCH = apiHandler({
       action: "password_changed",
       resourceType: "user",
       resourceId: user.id,
+    });
+    // Invalidate all existing sessions (incl. this one) — a password change
+    // signs everyone out; the user re-authenticates with the new password.
+    await revokeSessions(user.id, "password_changed");
+    await createNotification({
+      userId: user.id,
+      type: "security",
+      title: "Your password was changed",
+      body: "If this wasn't you, reset your password immediately and enable two-factor authentication.",
+      actionUrl: "/settings",
     });
     return ok({ message: "Password updated successfully" });
   },

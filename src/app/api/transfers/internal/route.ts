@@ -8,6 +8,7 @@ import { apiHandler, ok, err } from "@/lib/api-handler";
 import { logAudit } from "@/lib/audit";
 import { internalTransferSchema } from "@/lib/validators/transfer";
 import { INSUFFICIENT_FUNDS, performInternalTransfer } from "@/lib/transfers";
+import { assertEmailVerified } from "@/lib/auth/verification";
 import {
   assertAccountOwnership,
   ownershipErr,
@@ -29,6 +30,9 @@ export const POST = apiHandler({
       if (o) return err(o.message, o.status);
       throw e;
     }
+
+    const unverified = await assertEmailVerified(user.id);
+    if (unverified) return err(unverified.message, unverified.status);
 
     if (from.status !== "active") {
       return err("Source account is not active", 409);
