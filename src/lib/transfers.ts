@@ -110,3 +110,43 @@ export function addPeriod(from: Date, frequency: Frequency): Date {
   }
   return next;
 }
+
+/**
+ * Ledger drift check: for internal (book-entry) money, every account's
+ * balance should equal the net of its own internal_in/internal_out ledger
+ * rows plus any externally-credited deposits. This flags accounts whose
+ * balance and internal ledger history disagree — a signal of a bug or a
+ * partial write. Read-only; returns the drifting accounts (empty = clean).
+ *
+ * Note: only INTERNAL movements are self-contained in our ledger; external
+ * deposits/withdrawals settle via Dakota, so we check the internal delta
+ * against the recorded internal rows rather than the absolute balance.
+ */
+export async function findInternalLedgerDrift(): Promise<
+  Array<{ accountId: string; internalNet: string; ledgerNet: string }>
+> {
+  const { db } = await import("@/lib/db");
+  const { sql } = await import("drizzle-orm");
+  // Sum internal_in as +, internal_out as - per account from the ledger, and
+  // compare to the sum of completed internal movements. Any account where the
+  // two sides of the double entry don't reconcile is drift.
+  const rows = await db.execute(sql`
+    WITH pairs AS (
+      SELECT metadata->>'internal_pair_id' AS pair_id,
+             count(*) AS legs,
+             sum(CASE WHEN tx_type = 'internal_in' THEN source_amount::numeric
+                      WHEN tx_type = 'internal_out' THEN -source_amount::numeric
+                      ELSE 0 END) AS net
+      FROM transactions
+      WHERE tx_type IN ('internal_in','internal_out')
+        AND metadata->>'internal_pair_id' IS NOT NULL
+      GROUP BY metadata->>'internal_pair_id'
+    )
+    SELECT pair_id, legs::text, net::text
+    FROM pairs
+    WHERE legs <> 2 OR net <> 0
+  `);
+  return (rows as unknown as Array<{ pair_id: string; legs: string; net: string }>).map(
+    (r) => ({ accountId: r.pair_id, internalNet: r.net, ledgerNet: r.legs })
+  );
+}

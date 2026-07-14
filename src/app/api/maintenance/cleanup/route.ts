@@ -76,8 +76,29 @@ async function handle(req: NextRequest) {
     .returning({ id: webhookEvents.id });
   result.webhookEvents = we.length;
 
-  logger.info("maintenance.cleanup", result);
-  return NextResponse.json({ purged: result, time: now.toISOString() });
+  // Ledger integrity sweep — alert on any internal double-entry that doesn't
+  // reconcile (should always be empty).
+  let drift = 0;
+  try {
+    const { findInternalLedgerDrift } = await import("@/lib/transfers");
+    const { alertOps } = await import("@/lib/alerts");
+    const drifting = await findInternalLedgerDrift();
+    drift = drifting.length;
+    if (drift > 0) {
+      await alertOps("ledger_drift", { count: drift, sample: drifting.slice(0, 5) });
+    }
+  } catch (e) {
+    logger.error("maintenance.drift_check_failed", {
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
+
+  logger.info("maintenance.cleanup", { ...result, ledgerDrift: drift });
+  return NextResponse.json({
+    purged: result,
+    ledgerDrift: drift,
+    time: now.toISOString(),
+  });
 }
 
 export async function GET(req: NextRequest) {
