@@ -71,6 +71,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         if (!row) return null;
+        if (row.deletedAt) return null; // deleted accounts can't sign in
 
         const isValid = await bcrypt.compare(password, row.passwordHash);
         if (!isValid) {

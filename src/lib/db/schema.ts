@@ -32,6 +32,10 @@ export const users = pgTable("users", {
   // Optional email-code 2FA (alternative to TOTP for users without an
   // authenticator app). When on, login requires a code emailed at sign-in.
   emailOtpEnabled: boolean("email_otp_enabled").notNull().default(false),
+  // Set when the user requests deletion. PII is scrubbed and login disabled,
+  // but transaction/audit records are RETAINED — AML/BSA require multi-year
+  // retention, so "delete" is anonymize-and-close, not a hard row delete.
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
