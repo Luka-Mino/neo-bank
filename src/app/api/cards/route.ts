@@ -12,12 +12,8 @@ import {
   assertAccountOwnership,
   ownershipErr,
 } from "@/lib/auth/ownership";
-import {
-  defaultCardNickname,
-  defaultNetwork,
-  generateLast4,
-  nextExpiry,
-} from "@/lib/cards";
+import { defaultCardNickname } from "@/lib/cards";
+import { getIssuerProvider } from "@/lib/card-issuer";
 
 export const GET = apiHandler({
   handler: async ({ user }) => {
@@ -47,18 +43,28 @@ export const POST = apiHandler({
       return err("Cannot issue a card on a non-active account", 409);
     }
 
-    const exp = nextExpiry();
+    // Issue through the swappable provider (mock today; Stripe Issuing once
+    // we incorporate). The provider owns last4/expiry/network so the call
+    // sites don't change when a real issuer lands. See CARD-ISSUING-PLAN.md.
+    const issued = await getIssuerProvider().issueCard({
+      userId: user.id,
+      accountId: body.accountId,
+      cardType: body.cardType,
+      cardholder: { name: user.name ?? "", email: user.email ?? "" },
+    });
+
     const [row] = await db
       .insert(cards)
       .values({
         userId: user.id,
         accountId: body.accountId,
         cardType: body.cardType,
-        last4: generateLast4(),
+        last4: issued.last4,
         nickname: body.nickname ?? defaultCardNickname(body.cardType),
-        expMonth: exp.month,
-        expYear: exp.year,
-        network: defaultNetwork(),
+        expMonth: issued.expMonth,
+        expYear: issued.expYear,
+        network: issued.network,
+        panToken: issued.panToken,
       })
       .returning();
 
