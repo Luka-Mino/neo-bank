@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { apiHandler, ok } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
+import { countRemainingBackupCodes } from "@/lib/auth/backup-codes";
 
 export const GET = apiHandler({
   handler: async ({ user }) => {
@@ -11,10 +12,14 @@ export const GET = apiHandler({
       .from(users)
       .where(eq(users.id, user.id))
       .limit(1);
+    const enabled = Boolean(row?.totpEnabledAt);
     return ok({
-      enabled: Boolean(row?.totpEnabledAt),
+      enabled,
       // secret stored but never verified — enrollment abandoned midway
       pending: Boolean(row?.totpSecret && !row?.totpEnabledAt),
+      backupCodesRemaining: enabled
+        ? await countRemainingBackupCodes(user.id)
+        : 0,
     });
   },
 });

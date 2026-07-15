@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { users, dakotaCustomers, magicLinkTokens } from "@/lib/db/schema";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 import { decryptSecret, verifyTotpCode } from "@/lib/auth/totp";
+import { consumeBackupCode } from "@/lib/auth/backup-codes";
 import { rateLimit } from "@/lib/rate-limit";
 import { logAudit } from "@/lib/audit";
 
@@ -88,7 +89,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           // Authenticator-app 2FA takes precedence when both are enabled.
           const code = (credentials.totp as string | undefined)?.trim();
           if (!code) throw new TwoFactorRequired();
-          if (!verifyTotpCode(decryptSecret(row.totpSecret), code)) {
+          // Accept either a TOTP code or a one-time backup code (device-loss
+          // recovery). The backup path is atomic single-use.
+          const totpOk = verifyTotpCode(decryptSecret(row.totpSecret), code);
+          if (!totpOk && !(await consumeBackupCode(row.id, code))) {
             throw new InvalidTwoFactorCode();
           }
         } else if (row.emailOtpEnabled) {
@@ -159,7 +163,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (row.totpEnabledAt && row.totpSecret) {
           const code = (credentials?.totp as string | undefined)?.trim();
           if (!code) throw new TwoFactorRequired();
-          if (!verifyTotpCode(decryptSecret(row.totpSecret), code)) {
+          const totpOk = verifyTotpCode(decryptSecret(row.totpSecret), code);
+          if (!totpOk && !(await consumeBackupCode(row.id, code))) {
             throw new InvalidTwoFactorCode();
           }
         }

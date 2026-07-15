@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Bell,
   CheckCircle,
+  Copy,
+  Download,
   Loader2,
   Lock,
   ShieldCheck,
@@ -188,12 +190,37 @@ function TwoFactorSection() {
     enabled: !DEMO_MODE,
   });
   const enabled = DEMO_MODE ? demoEnabled : Boolean(statusRes?.data?.enabled);
+  const codesRemaining = DEMO_MODE
+    ? 10
+    : Number(statusRes?.data?.backupCodesRemaining ?? 0);
 
-  const [phase, setPhase] = useState<"idle" | "enrolling" | "disabling">("idle");
+  const [phase, setPhase] = useState<
+    "idle" | "enrolling" | "disabling" | "codes" | "regen"
+  >("idle");
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [manualSecret, setManualSecret] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
+
+  // Demo codes so the flow is explorable without a session.
+  const DEMO_CODES = [
+    "RT2Q8-6M59S", "H7XKP-3WD4N", "9BQY2-VT8FE", "MK5RH-QN7XA", "2WPD6-YB3JC",
+    "X8HN4-KR9MQ", "5VQT7-2DFHB", "P3MW9-XK6RN", "Q7BY2-8HVND", "4RKX6-MP2WT",
+  ];
+
+  function saveCodesToFile(codes: string[]) {
+    const blob = new Blob(
+      [`Moneta — two-factor backup codes\n\nEach code works once. Keep them somewhere safe.\n\n${codes.join("\n")}\n`],
+      { type: "text/plain" }
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "moneta-backup-codes.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   async function beginEnroll() {
     setBusy(true);
@@ -226,6 +253,11 @@ function TwoFactorSection() {
     try {
       if (DEMO_MODE) {
         setDemoEnabled(endpoint === "verify");
+        if (endpoint === "verify") {
+          setBackupCodes(DEMO_CODES);
+          setPhase("codes");
+          return;
+        }
       } else {
         const res = await fetch(`/api/auth/2fa/${endpoint}`, {
           method: "POST",
@@ -235,6 +267,14 @@ function TwoFactorSection() {
         const data = await res.json();
         if (!data.success) throw new Error(data.error?.message || "Invalid code");
         queryClient.invalidateQueries({ queryKey: ["2fa-status"] });
+        if (endpoint === "verify" && Array.isArray(data.data?.backupCodes)) {
+          // Show the one-time recovery codes before finishing.
+          setBackupCodes(data.data.backupCodes);
+          setCode("");
+          setPhase("codes");
+          toast.success("Two-factor authentication enabled");
+          return;
+        }
       }
       toast.success(
         endpoint === "verify"
@@ -245,6 +285,32 @@ function TwoFactorSection() {
       setQrDataUrl(null);
       setManualSecret(null);
       setCode("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Invalid code");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function regenerate() {
+    setBusy(true);
+    try {
+      if (DEMO_MODE) {
+        setBackupCodes(DEMO_CODES);
+      } else {
+        const res = await fetch("/api/auth/2fa/backup-codes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error?.message || "Invalid code");
+        queryClient.invalidateQueries({ queryKey: ["2fa-status"] });
+        setBackupCodes(data.data.backupCodes);
+      }
+      setCode("");
+      setPhase("codes");
+      toast.success("New backup codes generated — your old ones no longer work");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Invalid code");
     } finally {
@@ -279,9 +345,105 @@ function TwoFactorSection() {
           </Button>
         )}
         {phase === "idle" && enabled && (
-          <Button variant="outline" onClick={() => { setPhase("disabling"); setCode(""); }}>
-            Disable 2FA
-          </Button>
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/40 px-4 py-3">
+              <div className="text-sm">
+                <p className="font-medium">Recovery codes</p>
+                <p className="text-muted-foreground">
+                  {codesRemaining > 0
+                    ? `${codesRemaining} of 10 unused — use one if you lose your authenticator.`
+                    : "No unused codes left — regenerate a fresh set."}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setPhase("regen"); setCode(""); }}
+              >
+                Regenerate codes
+              </Button>
+            </div>
+            {codesRemaining > 0 && codesRemaining <= 3 && (
+              <p className="text-xs text-amber-600 dark:text-amber-500">
+                You&apos;re running low on recovery codes. Regenerate to get a new set.
+              </p>
+            )}
+            <Button variant="outline" onClick={() => { setPhase("disabling"); setCode(""); }}>
+              Disable 2FA
+            </Button>
+          </div>
+        )}
+
+        {phase === "codes" && backupCodes && (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <p className="font-medium">Save your recovery codes</p>
+              <p className="text-sm text-muted-foreground">
+                Each code works <span className="font-medium">once</span>. Store them
+                somewhere safe — if you lose your authenticator, a code gets you back in.
+                They won&apos;t be shown again.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted/40 p-4 font-mono text-sm">
+              {backupCodes.map((c) => (
+                <span key={c} className="tabular-nums tracking-wider">{c}</span>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard?.writeText(backupCodes.join("\n"));
+                  toast.success("Copied");
+                }}
+              >
+                <Copy className="mr-2 h-4 w-4" /> Copy
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => saveCodesToFile(backupCodes)}>
+                <Download className="mr-2 h-4 w-4" /> Download
+              </Button>
+              <Button
+                onClick={() => {
+                  setBackupCodes(null);
+                  setPhase("idle");
+                  setQrDataUrl(null);
+                  setManualSecret(null);
+                }}
+              >
+                I&apos;ve saved them
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {phase === "regen" && (
+          <div className="space-y-2">
+            <Label htmlFor="regenCode">Enter a current code to generate new backup codes</Label>
+            <p className="text-xs text-muted-foreground">
+              This invalidates your existing recovery codes.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                id="regenCode"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                spellCheck={false}
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="123456"
+                className="max-w-[160px] text-center tracking-[0.3em] tabular-nums"
+              />
+              <Button onClick={regenerate} disabled={busy || code.length !== 6}>
+                {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Regenerate
+              </Button>
+              <Button variant="ghost" onClick={() => setPhase("idle")} disabled={busy}>
+                Cancel
+              </Button>
+            </div>
+          </div>
         )}
 
         {phase === "enrolling" && (

@@ -407,6 +407,25 @@ export const emailOtpCodes = pgTable(
   (table) => [index("idx_email_otp_user").on(table.userId)]
 );
 
+// ─── Two-Factor Backup Codes ────────────────────────────────────────────────
+// One-time recovery codes issued when a user enables TOTP 2FA, so losing an
+// authenticator device doesn't mean permanent lockout. Codes are high-entropy
+// and stored as a keyed HMAC (never plaintext); each is single-use (used_at).
+
+export const twoFactorBackupCodes = pgTable(
+  "two_factor_backup_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    codeHash: text("code_hash").notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("idx_2fa_backup_user").on(table.userId)]
+);
+
 // ─── Magic-Link Login Tokens ────────────────────────────────────────────────
 // Passwordless sign-in: a single-use, short-lived token emailed as a link.
 // Consumed by the "magic-link" credentials provider in src/lib/auth/config.ts.

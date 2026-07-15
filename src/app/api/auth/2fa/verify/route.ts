@@ -5,6 +5,7 @@ import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { decryptSecret, verifyTotpCode } from "@/lib/auth/totp";
+import { generateBackupCodes } from "@/lib/auth/backup-codes";
 import { logAudit } from "@/lib/audit";
 import { createNotification } from "@/lib/notifications";
 
@@ -31,6 +32,10 @@ export const POST = apiHandler({
       .set({ totpEnabledAt: new Date(), updatedAt: new Date() })
       .where(eq(users.id, user.id));
 
+    // Issue recovery codes so a lost authenticator isn't a permanent lockout.
+    // Returned once here; only hashes are stored.
+    const backupCodes = await generateBackupCodes(user.id);
+
     await logAudit({
       actorType: "user",
       actorId: user.id,
@@ -46,6 +51,6 @@ export const POST = apiHandler({
       actionUrl: "/settings",
     });
 
-    return ok({ enabled: true });
+    return ok({ enabled: true, backupCodes });
   },
 });
