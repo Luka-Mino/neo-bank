@@ -65,6 +65,7 @@ export const POST = apiHandler({
         expYear: issued.expYear,
         network: issued.network,
         panToken: issued.panToken,
+        externalCardId: issued.externalCardId,
       })
       .returning();
 

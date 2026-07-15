@@ -214,12 +214,16 @@ export const cards = pgTable(
     expYear: smallint("exp_year"),
     network: text("network"), // 'visa' | 'mastercard'
     panToken: text("pan_token"), // placeholder for issuer PAN reference
+    // Issuer's own card id (e.g. Stripe `ic_...`). Null for mock-issued cards.
+    // The auth webhook maps an incoming authorization back to our card by this.
+    externalCardId: text("external_card_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("idx_cards_user").on(table.userId),
     index("idx_cards_account").on(table.accountId),
+    index("idx_cards_external_id").on(table.externalCardId),
   ]
 );
 

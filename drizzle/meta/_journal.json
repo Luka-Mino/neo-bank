@@ -99,6 +99,13 @@
       "when": 1784042378371,
       "tag": "0013_hot_path_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1784042379371,
+      "tag": "0014_card_external_id",
+      "breakpoints": true
     }
   ]
 }
