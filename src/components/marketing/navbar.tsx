@@ -19,19 +19,25 @@ export function Navbar({ isAuthenticated }: NavbarProps) {
 
         <nav className="flex items-center gap-3">
           <Link
-            href="#features"
+            href="/#features"
             className="hidden text-sm text-white/60 transition-colors hover:text-white sm:block"
           >
             Features
           </Link>
           <Link
-            href="#card"
+            href="/#card"
             className="hidden text-sm text-white/60 transition-colors hover:text-white sm:block"
           >
             Card
           </Link>
           <Link
-            href="#trust"
+            href="/pricing"
+            className="hidden text-sm text-white/60 transition-colors hover:text-white sm:block"
+          >
+            Pricing
+          </Link>
+          <Link
+            href="/#trust"
             className="hidden text-sm text-white/60 transition-colors hover:text-white sm:block"
           >
             Security
