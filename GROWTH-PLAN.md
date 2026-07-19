@@ -17,16 +17,22 @@ Transparency is the wedge; fake polish would undercut it.
 
 ## 1. Website streamline — what to take from Revolut (honestly)
 What makes Revolut's site work: one crisp section per product, relentless clarity,
-motion that demonstrates rather than decorates, and an always-visible price/plan story.
+and motion that demonstrates rather than decorates.
+
+> **DECISION (2026-07-19): no pricing, no tiers for now.** We have nothing to
+> offer beyond basic banking, so presenting Free/Plus/Premium/Metal — or a
+> pricing page at all — would overpromise. A /pricing page + tier ladder + fee
+> comparison were prototyped 2026-07-18 and **reverted the next day**. Revisit
+> only when there are real paid features and confirmed fees (see BACKLOG →
+> Revenue). Everything below about pricing/tiers is parked accordingly.
 
 | Take from Revolut | Moneta action | Status |
 |---|---|---|
 | Product-led sections, one job each | Tighten hero → account → card → send → deposit into clean, single-idea blocks | Have most; streamline |
-| An always-available **Pricing/Plans page** | **Build one** — we have no pricing page today; this is a real gap | ❌ missing |
-| Plan ladder (Standard→Metal) | Present Moneta tiers (see §3) even as "coming" | ❌ missing |
+| ~~Pricing/Plans page + plan ladder~~ | **Parked** — nothing to offer yet; basic banking only | ⏸ deferred |
 | Motion that shows the product | Extend the existing tilt-card; add a deposit/settle micro-demo | Have seed |
 | Confident trust row | Use **real** signals only (regulated, FDIC pass-through, encryption) | Have |
-| Fee clarity front-and-center | Promote the **fee-transparency** section to a hero pillar ("every fee on the receipt") | Have copy; elevate |
+| Fee clarity | Honest "no hidden fees" messaging is fine, but a full fee **comparison/pricing** section is parked until real fees exist | Deferred |
 
 **Net site work (buildable now, no Dakota):** add a Pricing/Plans page, add a
 fee-transparency comparison block (Moneta vs a legacy bank / vs Revolut's catches),
@@ -67,6 +73,10 @@ funds a Revolut-competitive fee schedule without eating losses.
   "your money, moving," not a brokerage. Focus is a feature.
 
 ## 3. Fee strategy — comparable to Revolut, funded by our rails
+> ⏸ **Parked (2026-07-19)** — kept for reference, but not to be surfaced on the
+> site until there are real fees/features. Basic banking only for now. This is
+> the *eventual* revenue framing, not a current offering.
+
 Revolut monetizes via **interchange (~22%), subscriptions (~16%), FX markups (~13%)**,
 plus trading + interest. Our rails let us match the good parts and *drop the parts
 users hate* (weekend FX markup, hidden spreads). Because our balance is a **US-dollar
@@ -100,8 +110,8 @@ Revolut-beating story and it's already half-built in our marketing copy.
 
 ## 4. Sequencing
 **Now — no Dakota credentials needed (front-end + scaffold):**
-1. Site: Pricing/Plans page, fee-transparency comparison block, single-idea section
-   pass, extend motion.
+1. Site: single-idea section pass + extend motion. *(Pricing/fee sections parked —
+   see the §1 decision; basic banking only for now.)*
 2. International-transfer flow against our already-modeled SEPA/SWIFT/IBAN destinations
    (dark until creds).
 3. Crypto-out and **swap** scaffolds (Dakota API shapes exist; build + unit-test).

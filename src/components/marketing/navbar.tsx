@@ -31,12 +31,6 @@ export function Navbar({ isAuthenticated }: NavbarProps) {
             Card
           </Link>
           <Link
-            href="/pricing"
-            className="hidden text-sm text-white/60 transition-colors hover:text-white sm:block"
-          >
-            Pricing
-          </Link>
-          <Link
             href="/#trust"
             className="hidden text-sm text-white/60 transition-colors hover:text-white sm:block"
           >

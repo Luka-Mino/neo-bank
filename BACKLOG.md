@@ -1,8 +1,12 @@
 # Backlog
 
 ## Revenue & Monetization
-- [ ] Premium subscription tiers (free/plus/premium) — Revolut gets 30%+ from paid plans
-- [ ] Fee structure design — transparent pricing page
+- [ ] Premium subscription tiers (free/plus/premium) — Revolut gets 30%+ from paid plans.
+      NOTE: prototyped a /pricing page + tier ladder 2026-07-18, **reverted 2026-07-19** —
+      nothing to offer yet, it's just basic banking for now. Don't rebuild until there are
+      real paid features. Components recoverable from git history (commit cc4ac47).
+- [ ] Fee structure design — transparent "every fee on the receipt" comparison block
+      (also prototyped + reverted with the above; revive once real fees are set with Dakota)
 - [ ] Business accounts — drive 67% of neobank revenue globally
 - [ ] Developer fee (basis points) on Dakota transactions
 
