@@ -5,6 +5,9 @@ import { type ZodSchema } from "zod";
 import { auth } from "@/lib/auth/config";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import { db } from "@/lib/db";
+import { withOrg, type DbTx } from "@/lib/db/with-org";
+import { ROLE_RANK, type Role } from "@/lib/orgs";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -12,6 +15,11 @@ interface AuthUser {
   id: string;
   email: string;
   name?: string;
+  // Org context — resolved server-side in the jwt callback, never from client
+  // input. Undefined when the user has no active org (org-scoped routes deny).
+  orgId?: string;
+  role?: Role;
+  canApprove: boolean;
 }
 
 interface RateLimitConfig {
@@ -30,6 +38,11 @@ interface HandlerContext<TBody = unknown, TParams = Record<string, string>> {
   body: TBody;
   params: TParams;
   request: NextRequest;
+  // DB client for the request. For org-scoped routes this is a transaction with
+  // the RLS GUC set (`app.current_org_id`) — routes MUST use `ctx.db` (not the
+  // imported global `db`) so RLS applies. For non-org-scoped routes it's the
+  // global client. See ORG-FOUNDATION-SPEC.md.
+  db: DbTx;
 }
 
 type HandlerFn<TBody, TParams> = (
@@ -41,6 +54,14 @@ interface ApiHandlerOptions<TBody, TParams> {
   rateLimit?: RateLimitConfig | false;
   schema?: ZodSchema<TBody>;
   handler: HandlerFn<TBody, TParams>;
+  // Org scoping. When true, the route requires an active org (403 otherwise),
+  // enforces requiredRole/requireApprover, and runs the handler inside an
+  // RLS-scoped transaction (ctx.db). Currently OPT-IN so existing routes are
+  // unchanged; the enforce migration (0018) flips the default to on. `auth`
+  // must be true for org scoping to apply.
+  orgScoped?: boolean;
+  requiredRole?: Role; // minimum role (ranked)
+  requireApprover?: boolean; // maker/checker capability
 }
 
 // ─── Response helpers ───────────────────────────────────────────────────────
@@ -66,6 +87,9 @@ export function apiHandler<TBody = unknown, TParams = Record<string, string>>(
     rateLimit: rateLimitConfig,
     schema,
     handler,
+    orgScoped = false,
+    requiredRole,
+    requireApprover,
   } = options;
 
   return (async (
@@ -84,6 +108,9 @@ export function apiHandler<TBody = unknown, TParams = Record<string, string>>(
           id: session.user.id,
           email: session.user.email || "",
           name: session.user.name || undefined,
+          orgId: session.user.orgId,
+          role: session.user.role,
+          canApprove: session.user.canApprove ?? false,
         };
       }
 
@@ -153,12 +180,36 @@ export function apiHandler<TBody = unknown, TParams = Record<string, string>>(
         body = result.data;
       }
 
-      // 5. Execute handler
+      // 5. Execute handler. Org-scoped routes run inside an RLS transaction
+      //    (ctx.db carries the org GUC); others get the global client.
+      if (orgScoped && requireAuth) {
+        const authedUser = user as AuthUser;
+        // Fail-closed: no active org → deny (never fall through unscoped).
+        if (!authedUser.orgId) {
+          return err("No active organization", 403);
+        }
+        if (
+          requiredRole &&
+          ROLE_RANK[authedUser.role ?? "viewer"] < ROLE_RANK[requiredRole]
+        ) {
+          return err("Insufficient role", 403);
+        }
+        if (requireApprover && !authedUser.canApprove) {
+          return err("Approver capability required", 403);
+        }
+        return await withOrg(authedUser.orgId, (tx) =>
+          Promise.resolve(
+            handler({ user: authedUser, body, params, request, db: tx })
+          )
+        );
+      }
+
       return await handler({
         user: user as AuthUser,
         body,
         params,
         request,
+        db: db as unknown as DbTx,
       });
     } catch (error) {
       // Correlation id ties the client's opaque error to the server log line

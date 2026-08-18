@@ -5,6 +5,7 @@ import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users, dakotaCustomers, magicLinkTokens } from "@/lib/db/schema";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
+import { resolveActiveMembership, type Role } from "@/lib/orgs";
 import { decryptSecret, verifyTotpCode } from "@/lib/auth/totp";
 import { consumeBackupCode } from "@/lib/auth/backup-codes";
 import { rateLimit } from "@/lib/rate-limit";
@@ -180,11 +181,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       if (token.id) {
-        // KYC status + token-version check in one query (this callback runs
-        // per request; folding both in keeps it a single round-trip).
+        // Token-version check + the user's active_org pointer in one query
+        // (this callback runs per request).
+        let activeOrgId: string | null = null;
         try {
           const [row] = await db
-            .select({ tokenVersion: users.tokenVersion })
+            .select({
+              tokenVersion: users.tokenVersion,
+              activeOrgId: users.activeOrgId,
+            })
             .from(users)
             .where(eq(users.id, token.id as string))
             .limit(1);
@@ -197,24 +202,49 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           } else if (token.tv !== row.tokenVersion) {
             return null; // stale token → session invalidated
           }
+          activeOrgId = row.activeOrgId;
         } catch {
           // DB unavailable — don't lock out a valid session on a transient
-          // error; keep the existing token (fail-open on availability only).
+          // error; keep the existing token (fail-open on AVAILABILITY only).
         }
 
+        // Org context — resolved server-side via a LIVE membership check each
+        // request (so a role/membership change goes live immediately). Fail
+        // CLOSED for authorization: on any miss/error drop the org claim so
+        // org-scoped routes deny rather than act on a stale role.
+        try {
+          const m = await resolveActiveMembership(token.id as string, activeOrgId);
+          if (m) {
+            token.orgId = m.orgId;
+            token.role = m.role;
+            token.canApprove = m.canApprove;
+          } else {
+            token.orgId = undefined;
+            token.role = undefined;
+            token.canApprove = false;
+          }
+        } catch {
+          token.orgId = undefined;
+          token.role = undefined;
+          token.canApprove = false;
+        }
+
+        // KYC pivots to ORG level — the organization is the regulated entity.
         if (isKycBypassed()) {
           token.kycStatus = "active";
-        } else {
+        } else if (token.orgId) {
           try {
             const customer = await db
               .select({ kycStatus: dakotaCustomers.kycStatus })
               .from(dakotaCustomers)
-              .where(eq(dakotaCustomers.userId, token.id as string))
+              .where(eq(dakotaCustomers.orgId, token.orgId as string))
               .limit(1);
             token.kycStatus = customer[0]?.kycStatus ?? "none";
           } catch {
             token.kycStatus = token.kycStatus ?? "none";
           }
+        } else {
+          token.kycStatus = token.kycStatus ?? "none";
         }
       }
 
@@ -223,7 +253,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        (session as any).kycStatus = token.kycStatus as string;
+        session.user.orgId = token.orgId as string | undefined;
+        session.user.role = token.role as Role | undefined;
+        session.user.canApprove = (token.canApprove as boolean | undefined) ?? false;
+        session.kycStatus = token.kycStatus as string | undefined;
       }
       return session;
     },

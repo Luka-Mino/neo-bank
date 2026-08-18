@@ -5,6 +5,7 @@ import { apiHandler, ok, err } from "@/lib/api-handler";
 import { screenPassword } from "@/lib/auth/passwords";
 import { db } from "@/lib/db";
 import { users, emailVerificationTokens } from "@/lib/db/schema";
+import { createPersonalOrg } from "@/lib/orgs";
 import { registerSchema } from "@/lib/validators/auth";
 import { sendVerificationEmail } from "@/lib/email";
 
@@ -30,16 +31,18 @@ export const POST = apiHandler({
       return err("An account with this email already exists", 409);
     }
 
-    // Create user
+    // Create the user + their personal org (owner membership) atomically, then
+    // point the user at that org. Every user belongs to at least one org.
     const passwordHash = await bcrypt.hash(password, 12);
-    const [user] = await db
-      .insert(users)
-      .values({
-        email: normalizedEmail,
-        passwordHash,
-        fullName,
-      })
-      .returning({ id: users.id });
+    const user = await db.transaction(async (tx) => {
+      const [u] = await tx
+        .insert(users)
+        .values({ email: normalizedEmail, passwordHash, fullName })
+        .returning({ id: users.id });
+      const orgId = await createPersonalOrg(tx, u.id, fullName);
+      await tx.update(users).set({ activeOrgId: orgId }).where(eq(users.id, u.id));
+      return u;
+    });
 
     // Send verification email
     const verifyToken = uuidv4();
