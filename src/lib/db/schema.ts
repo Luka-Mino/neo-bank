@@ -32,6 +32,12 @@ export const users = pgTable("users", {
   // Optional email-code 2FA (alternative to TOTP for users without an
   // authenticator app). When on, login requires a code emailed at sign-in.
   emailOtpEnabled: boolean("email_otp_enabled").notNull().default(false),
+  // The caller's current active org — set ONLY server-side by the org-switch
+  // endpoint after a membership check, never from a request body. The jwt
+  // callback reads this to mint the org claim. See ORG-FOUNDATION-SPEC.md.
+  // FK to organizations(id) is declared in SQL (migration), not here, to avoid
+  // a circular type reference (organizations already references users).
+  activeOrgId: uuid("active_org_id"),
   // Set when the user requests deletion. PII is scrubbed and login disabled,
   // but transaction/audit records are RETAINED — AML/BSA require multi-year
   // retention, so "delete" is anonymize-and-close, not a hard row delete.
@@ -39,6 +45,200 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ─── Multi-tenancy: Organizations, Membership, Invitations, Approvals ────────
+// The tenant boundary. Every user-owned business row (accounts, transactions,
+// cards, recipients, wallets, dakota_customers, rails, recurring transfers) is
+// scoped to an organization. A user is a MEMBER of one or more orgs via
+// org_members (which carries their role). Existing single users get an
+// auto-created "personal" org (migration 0016) so nothing breaks.
+//
+// SECURITY: org context is always resolved server-side from session + a
+// verified org_members row — it is NEVER trusted from client input. This is
+// the tenant-isolation boundary; a query missing its org_id filter is a
+// cross-tenant leak.
+
+export const organizations = pgTable(
+  "organizations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    slug: text("slug"), // nullable; public handle for business orgs
+    // 'personal' = the auto-created backward-compat org for a single user;
+    // 'business' = a real institutional tenant (KYB entity).
+    type: text("type").notNull().default("personal"),
+    status: text("status").notNull().default("active"), // 'active' | 'suspended' | 'closed'
+    // Founding user; NULL = system. Orgs are never hard-deleted (status='closed').
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "restrict" }),
+    // Set ONLY on auto-created personal orgs — the idempotency key + 1:1 backfill
+    // link that guarantees exactly one personal org per user.
+    personalForUserId: uuid("personal_for_user_id")
+      .unique()
+      .references(() => users.id, { onDelete: "restrict" }),
+    settings: jsonb("settings"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("idx_orgs_slug").on(table.slug).where(sql`${table.slug} IS NOT NULL`),
+  ]
+);
+
+// Membership + role. One row per (org, user). Role gates what a member may do.
+export const orgMembers = pgTable(
+  "org_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: text("role").notNull().default("member"), // 'owner'|'admin'|'member'|'viewer' (ranked 3/2/1/0)
+    // Orthogonal maker/checker capability (NOT a rank): a member can be an approver;
+    // an admin who *makes* a payment still can't self-approve. Owners approve implicitly.
+    canApprove: boolean("can_approve").notNull().default(false),
+    status: text("status").notNull().default("active"), // 'invited'|'active'|'suspended'|'removed'
+    invitedBy: uuid("invited_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Exactly one membership per user per org — prevents duplicate/ambiguous roles.
+    uniqueIndex("idx_org_members_unique").on(table.orgId, table.userId),
+    index("idx_org_members_user").on(table.userId),
+    index("idx_org_members_org").on(table.orgId),
+  ]
+);
+
+// Invite-by-email. The raw token is emailed once and only its hash is stored
+// (same pattern as magic links / backup codes). Single-use, expiring.
+export const orgInvitations = pgTable(
+  "org_invitations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    email: text("email").notNull(), // invitee's email (lowercased)
+    role: text("role").notNull().default("member"),
+    canApprove: boolean("can_approve").notNull().default(false),
+    tokenHash: text("token_hash").notNull().unique(),
+    invitedBy: uuid("invited_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("pending"), // 'pending' | 'accepted' | 'revoked'
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    acceptedByUserId: uuid("accepted_by_user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_org_invitations_org").on(table.orgId),
+    index("idx_org_invitations_email").on(table.email),
+  ]
+);
+
+// Currency/asset registry — model only, no FX logic in Phase 0. accounts.asset,
+// approval_policies.threshold_asset and approval_requests.asset reference it.
+export const assets = pgTable("assets", {
+  code: text("code").primaryKey(), // 'USD' | 'USDC' | 'EUR' | 'EURC' | 'GBP'
+  name: text("name").notNull(),
+  kind: text("kind").notNull(), // 'fiat' | 'stablecoin'
+  decimals: smallint("decimals").notNull().default(2),
+  defaultNetworkId: text("default_network_id"),
+  enabled: boolean("enabled").notNull().default(true),
+});
+
+// Maker/checker policy: "action over $X needs N approvals". Ships disabled
+// (enabled=false) — inert scaffold until an org opts in. Threshold is
+// asset-normalized so it can't be evaded by denominating in another currency.
+export const approvalPolicies = pgTable(
+  "approval_policies",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    actionType: text("action_type").notNull(), // 'transfer.external' | 'transfer.internal' | 'card.issue' | ...
+    thresholdAmount: numeric("threshold_amount", { precision: 30, scale: 18 }), // null = always require
+    thresholdAsset: text("threshold_asset")
+      .notNull()
+      .default("USD")
+      .references(() => assets.code),
+    requiredApprovals: smallint("required_approvals").notNull().default(1),
+    enabled: boolean("enabled").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("idx_approval_policies_unique").on(
+      table.orgId,
+      table.actionType,
+      table.thresholdAsset
+    ),
+  ]
+);
+
+// A pending maker/checker action instance. payload_hash is an HMAC of the
+// canonical payload, re-verified at execute (TOCTOU guard); executed_tx_id makes
+// execution idempotent (set once → never re-run).
+export const approvalRequests = pgTable(
+  "approval_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    actionType: text("action_type").notNull(),
+    payload: jsonb("payload").notNull(),
+    payloadHash: text("payload_hash").notNull(),
+    amount: numeric("amount", { precision: 30, scale: 18 }),
+    asset: text("asset").references(() => assets.code),
+    status: text("status").notNull().default("pending"), // pending|approved|rejected|executed|expired|cancelled
+    requiredApprovals: smallint("required_approvals").notNull().default(1),
+    approvalsCount: smallint("approvals_count").notNull().default(0),
+    requestedBy: uuid("requested_by") // the maker
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    executedTxId: uuid("executed_tx_id").references(() => transactions.id, {
+      onDelete: "set null",
+    }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    executedAt: timestamp("executed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("idx_approval_requests_org").on(table.orgId, table.status)]
+);
+
+// One row per approver vote (race-safe N-of-M). Maker≠checker enforced in code
+// AND DB (approver_id != requested_by); UNIQUE prevents padding the count.
+export const approvalDecisions = pgTable(
+  "approval_decisions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requestId: uuid("request_id")
+      .notNull()
+      .references(() => approvalRequests.id, { onDelete: "cascade" }),
+    approverId: uuid("approver_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    decision: text("decision").notNull(), // 'approve' | 'reject'
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("idx_approval_decisions_unique").on(
+      table.requestId,
+      table.approverId
+    ),
+  ]
+);
 
 // Recognized login devices, for "new sign-in" security alerts. We store a
 // salted hash of (user-agent + IP prefix) — never the raw IP — so we can
@@ -79,6 +279,9 @@ export const dakotaCustomers = pgTable(
       .notNull()
       .unique()
       .references(() => users.id, { onDelete: "cascade" }),
+    // Nullable during the expand→backfill→enforce migration (0016→0018); set
+    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
     dakotaCustomerId: text("dakota_customer_id").notNull().unique(),
     customerType: text("customer_type").notNull().default("individual"),
     kycStatus: text("kyc_status").notNull().default("pending"),
@@ -100,6 +303,7 @@ export const dakotaCustomers = pgTable(
   },
   (table) => [
     index("idx_dakota_customers_user").on(table.userId),
+    index("idx_dakota_customers_org").on(table.orgId),
     index("idx_dakota_customers_dak_id").on(table.dakotaCustomerId),
   ]
 );
@@ -111,13 +315,19 @@ export const wallets = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    // Nullable during the expand→backfill→enforce migration (0016→0018); set
+    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
     dakotaWalletId: text("dakota_wallet_id").notNull().unique(),
     family: text("family").notNull(),
     address: text("address").notNull(),
     name: text("name").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("idx_wallets_user").on(table.userId)]
+  (table) => [
+    index("idx_wallets_user").on(table.userId),
+    index("idx_wallets_org").on(table.orgId),
+  ]
 );
 
 export const walletBalances = pgTable(
@@ -127,6 +337,8 @@ export const walletBalances = pgTable(
     walletId: uuid("wallet_id")
       .notNull()
       .references(() => wallets.id, { onDelete: "cascade" }),
+    // Denormalized org for RLS; composite FK (org_id,wallet_id)→wallets(org_id,id) in 0018.
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
     networkId: text("network_id").notNull(),
     asset: text("asset").notNull(),
     balance: numeric("balance", { precision: 30, scale: 18 }).notNull().default("0"),
@@ -151,6 +363,9 @@ export const dakotaRails = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    // Nullable during the expand→backfill→enforce migration (0016→0018); set
+    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
     dakotaAccountId: text("dakota_account_id").notNull().unique(),
     accountType: text("account_type").notNull(),
     sourceAsset: text("source_asset"),
@@ -172,10 +387,16 @@ export const accounts = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    // Nullable during the expand→backfill→enforce migration (0016→0018); set
+    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
     accountType: text("account_type").notNull(), // 'checking' | 'savings' | future
     nickname: text("nickname"),
     accountNumber: text("account_number").notNull().unique(),
     currency: text("currency").notNull().default("USD"),
+    // The asset this account holds (multi-currency). References the assets
+    // registry (FK added in 0018). Deposits must credit a matching-asset account.
+    asset: text("asset").notNull().default("USDC").references(() => assets.code),
     balance: numeric("balance", { precision: 30, scale: 18 }).notNull().default("0"),
     status: text("status").notNull().default("active"), // 'active' | 'frozen' | 'closed'
     isPrimary: boolean("is_primary").notNull().default(false),
@@ -203,6 +424,9 @@ export const cards = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    // Nullable during the expand→backfill→enforce migration (0016→0018); set
+    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
     accountId: uuid("account_id")
       .notNull()
       .references(() => accounts.id, { onDelete: "restrict" }),
@@ -234,6 +458,9 @@ export const transactions = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    // Nullable during the expand→backfill→enforce migration (0016→0018); set
+    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
     // Which of the user's accounts this transaction debited/credited.
     // Nullable during the backfill window; application requires it for new rows.
     accountId: uuid("account_id").references(() => accounts.id, {
@@ -274,6 +501,9 @@ export const recipients = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    // Nullable during the expand→backfill→enforce migration (0016→0018); set
+    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
     dakotaRecipientId: text("dakota_recipient_id").notNull().unique(),
     name: text("name").notNull(),
     status: text("status").notNull().default("active"),
@@ -290,6 +520,9 @@ export const destinations = pgTable(
     recipientId: uuid("recipient_id")
       .notNull()
       .references(() => recipients.id, { onDelete: "cascade" }),
+    // Denormalized org for RLS (per-row). A composite FK (org_id,recipient_id)→
+    // recipients(org_id,id) added in 0018 makes it impossible to diverge from the parent.
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
     dakotaDestinationId: text("dakota_destination_id").notNull().unique(),
     destinationType: text("destination_type").notNull(),
     label: text("label"),
@@ -331,6 +564,9 @@ export const recurringTransfers = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    // Nullable during the expand→backfill→enforce migration (0016→0018); set
+    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
     fromAccountId: uuid("from_account_id")
       .notNull()
       .references(() => accounts.id, { onDelete: "cascade" }),
@@ -450,6 +686,8 @@ export const transactionStatusHistory = pgTable(
     transactionId: uuid("transaction_id")
       .notNull()
       .references(() => transactions.id, { onDelete: "cascade" }),
+    // Denormalized org for RLS; composite FK (org_id,transaction_id)→transactions(org_id,id) in 0018.
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
     oldStatus: text("old_status"),
     newStatus: text("new_status").notNull(),
     reason: text("reason"),
@@ -465,6 +703,9 @@ export const auditLog = pgTable(
   "audit_log",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    // Nullable — system actors have no org. Not RLS-enforced (per-tenant audit
+    // filtering is app-level). Set for user-initiated actions.
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "set null" }),
     actorId: text("actor_id"),
     actorType: text("actor_type").notNull().default("system"),
     action: text("action").notNull(),
