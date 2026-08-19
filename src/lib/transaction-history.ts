@@ -16,6 +16,7 @@ export async function logStatusChange(
     newStatus: string;
     reason?: string;
     actor?: string;
+    orgId?: string | null;
   },
   executor: DbExecutor = db
 ) {
@@ -26,6 +27,7 @@ export async function logStatusChange(
       newStatus: params.newStatus,
       reason: params.reason,
       actor: params.actor || "system",
+      orgId: params.orgId ?? null,
     });
   } catch (error) {
     // Best-effort when standalone; inside a tx a failed statement poisons

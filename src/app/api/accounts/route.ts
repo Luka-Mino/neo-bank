@@ -1,20 +1,20 @@
-// GET /api/accounts          → list the caller's accounts (primary first)
+// GET /api/accounts          → list the org's accounts (primary first)
 // POST /api/accounts         → open a new account
 
 import { and, desc, eq, ne } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { logAudit } from "@/lib/audit";
-import { db } from "@/lib/db";
 import { accounts } from "@/lib/db/schema";
 import { createAccountSchema } from "@/lib/validators/account";
 import { defaultNickname, generateAccountNumber } from "@/lib/accounts";
 
 export const GET = apiHandler({
-  handler: async ({ user }) => {
+  orgScoped: true,
+  handler: async ({ user, db }) => {
     const rows = await db
       .select()
       .from(accounts)
-      .where(and(eq(accounts.userId, user.id), ne(accounts.status, "closed")))
+      .where(and(eq(accounts.orgId, user.orgId!), ne(accounts.status, "closed")))
       .orderBy(desc(accounts.isPrimary), accounts.createdAt);
 
     return ok({ data: rows });
@@ -22,15 +22,15 @@ export const GET = apiHandler({
 });
 
 export const POST = apiHandler({
+  orgScoped: true,
   schema: createAccountSchema,
-  handler: async ({ user, body }) => {
-    // The first account a user opens becomes their primary; subsequent
-    // ones default to non-primary. The user can change primary later via
-    // PATCH /api/accounts/[id] { setPrimary: true }.
+  handler: async ({ user, body, db }) => {
+    // The first account an org opens becomes its primary; subsequent ones
+    // default to non-primary. Changeable later via PATCH /api/accounts/[id].
     const existing = await db
       .select({ id: accounts.id })
       .from(accounts)
-      .where(and(eq(accounts.userId, user.id), ne(accounts.status, "closed")))
+      .where(and(eq(accounts.orgId, user.orgId!), ne(accounts.status, "closed")))
       .limit(1);
     const isPrimary = existing.length === 0;
 
@@ -41,7 +41,8 @@ export const POST = apiHandler({
         const [row] = await db
           .insert(accounts)
           .values({
-            userId: user.id,
+            orgId: user.orgId!,
+            userId: user.id, // creator/actor
             accountType: body.accountType,
             nickname: body.nickname ?? defaultNickname(body.accountType),
             accountNumber: generateAccountNumber(),

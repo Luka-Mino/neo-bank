@@ -5,26 +5,35 @@
 import { randomUUID } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
+import type { DbTx } from "@/lib/db/with-org";
 import { accounts, transactions } from "@/lib/db/schema";
 import { categorizeTransaction } from "@/lib/categorize";
 
 export const INSUFFICIENT_FUNDS = "INSUFFICIENT_FUNDS_RACE";
 
-export async function performInternalTransfer(params: {
-  userId: string;
-  fromAccountId: string;
-  toAccountId: string;
-  amount: string;
-  note?: string | null;
-  currency: string;
-}) {
+export async function performInternalTransfer(
+  params: {
+    orgId: string;
+    userId: string;
+    fromAccountId: string;
+    toAccountId: string;
+    amount: string;
+    note?: string | null;
+    currency: string;
+  },
+  // Runs on the caller's executor so it shares the request's org-scoped
+  // transaction (RLS GUC) when one is provided; defaults to the global db
+  // (used by the cron executor). `.transaction` nests as a savepoint when
+  // the executor is already a transaction.
+  executor: typeof db | DbTx = db
+) {
   const pairId = randomUUID();
   const category = categorizeTransaction({
     txType: "internal_out",
     note: params.note,
   });
 
-  return db.transaction(async (tx) => {
+  return executor.transaction(async (tx) => {
     // Debit source. WHERE balance >= amount is the optimistic lock: a
     // concurrent drain makes this match zero rows and we abort.
     const debit = await tx
@@ -59,6 +68,7 @@ export async function performInternalTransfer(params: {
       tx
         .insert(transactions)
         .values({
+          orgId: params.orgId,
           userId: params.userId,
           accountId: params.fromAccountId,
           dakotaTxId: `internal_${pairId}_debit`,
@@ -75,6 +85,7 @@ export async function performInternalTransfer(params: {
       tx
         .insert(transactions)
         .values({
+          orgId: params.orgId,
           userId: params.userId,
           accountId: params.toAccountId,
           dakotaTxId: `internal_${pairId}_credit`,

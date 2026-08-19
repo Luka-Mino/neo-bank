@@ -1,16 +1,17 @@
+// GET   /api/cards/[id] → fetch one of the org's cards.
 // PATCH /api/cards/[id] → rename or freeze/unfreeze.
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
-import { db } from "@/lib/db";
 import { cards } from "@/lib/db/schema";
 import { updateCardSchema } from "@/lib/validators/card";
 import { assertCardOwnership, ownershipErr } from "@/lib/auth/ownership";
 
 export const GET = apiHandler({
-  handler: async ({ user, params }) => {
+  orgScoped: true,
+  handler: async ({ user, params, db }) => {
     try {
-      const row = await assertCardOwnership(params.id, user.id);
+      const row = await assertCardOwnership(db, params.id, user.orgId!);
       return ok(row);
     } catch (e) {
       const o = ownershipErr(e);
@@ -21,11 +22,12 @@ export const GET = apiHandler({
 });
 
 export const PATCH = apiHandler({
+  orgScoped: true,
   schema: updateCardSchema,
-  handler: async ({ user, params, body }) => {
+  handler: async ({ user, params, body, db }) => {
     let current;
     try {
-      current = await assertCardOwnership(params.id, user.id);
+      current = await assertCardOwnership(db, params.id, user.orgId!);
     } catch (e) {
       const o = ownershipErr(e);
       if (o) return err(o.message, o.status);
@@ -46,7 +48,7 @@ export const PATCH = apiHandler({
     const [row] = await db
       .update(cards)
       .set(patch)
-      .where(eq(cards.id, current.id))
+      .where(and(eq(cards.id, current.id), eq(cards.orgId, user.orgId!)))
       .returning();
     return ok(row);
   },

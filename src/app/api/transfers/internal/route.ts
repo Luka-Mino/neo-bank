@@ -1,8 +1,8 @@
 // POST /api/transfers/internal
-// Atomic book-transfer between two of the caller's own accounts. No Dakota
-// involvement — the user's underlying custodial wallet is untouched. Two
+// Atomic book-transfer between two of the org's own accounts. No Dakota
+// involvement — the org's underlying custodial wallet is untouched. Two
 // transaction rows are written (debit on source, credit on destination)
-// linked by metadata.internal_pair_id, both inside a single DB transaction.
+// linked by metadata.internal_pair_id, both inside one DB transaction.
 
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { logAudit } from "@/lib/audit";
@@ -15,15 +15,16 @@ import {
 } from "@/lib/auth/ownership";
 
 export const POST = apiHandler({
+  orgScoped: true,
   schema: internalTransferSchema,
   rateLimit: { limit: 60, window: "1h" },
-  handler: async ({ user, body }) => {
-    // Ownership of BOTH legs before doing anything.
+  handler: async ({ user, body, db }) => {
+    // Ownership of BOTH legs (in this org) before doing anything.
     let from, to;
     try {
       [from, to] = await Promise.all([
-        assertAccountOwnership(body.fromAccountId, user.id),
-        assertAccountOwnership(body.toAccountId, user.id),
+        assertAccountOwnership(db, body.fromAccountId, user.orgId!),
+        assertAccountOwnership(db, body.toAccountId, user.orgId!),
       ]);
     } catch (e) {
       const o = ownershipErr(e);
@@ -51,14 +52,18 @@ export const POST = apiHandler({
     }
 
     try {
-      const result = await performInternalTransfer({
-        userId: user.id,
-        fromAccountId: from.id,
-        toAccountId: to.id,
-        amount: body.amount,
-        note: body.note,
-        currency: from.currency,
-      });
+      const result = await performInternalTransfer(
+        {
+          orgId: user.orgId!,
+          userId: user.id,
+          fromAccountId: from.id,
+          toAccountId: to.id,
+          amount: body.amount,
+          note: body.note,
+          currency: from.currency,
+        },
+        db
+      );
 
       await logAudit({
         actorType: "user",

@@ -1,9 +1,8 @@
-// PATCH /api/cards/[id]/account → reassign a card to another of the
-// caller's accounts. Verifies ownership of both card and target account.
+// PATCH /api/cards/[id]/account → reassign a card to another of the org's
+// accounts. Verifies org ownership of both card and target account.
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
-import { db } from "@/lib/db";
 import { cards } from "@/lib/db/schema";
 import { reassignCardSchema } from "@/lib/validators/card";
 import {
@@ -13,11 +12,12 @@ import {
 } from "@/lib/auth/ownership";
 
 export const PATCH = apiHandler({
+  orgScoped: true,
   schema: reassignCardSchema,
-  handler: async ({ user, params, body }) => {
+  handler: async ({ user, params, body, db }) => {
     let card;
     try {
-      card = await assertCardOwnership(params.id, user.id);
+      card = await assertCardOwnership(db, params.id, user.orgId!);
     } catch (e) {
       const o = ownershipErr(e);
       if (o) return err(o.message, o.status);
@@ -33,7 +33,7 @@ export const PATCH = apiHandler({
 
     let target;
     try {
-      target = await assertAccountOwnership(body.accountId, user.id);
+      target = await assertAccountOwnership(db, body.accountId, user.orgId!);
     } catch (e) {
       const o = ownershipErr(e);
       if (o) return err(o.message, o.status);
@@ -51,7 +51,7 @@ export const PATCH = apiHandler({
     const [row] = await db
       .update(cards)
       .set({ accountId: target.id, updatedAt: new Date() })
-      .where(eq(cards.id, card.id))
+      .where(and(eq(cards.id, card.id), eq(cards.orgId, user.orgId!)))
       .returning();
 
     return ok(row);

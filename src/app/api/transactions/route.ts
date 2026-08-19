@@ -1,5 +1,5 @@
 // Transactions API.
-// GET  /api/transactions[?accountId=…] → all caller's tx, optionally
+// GET  /api/transactions[?accountId=…] → all the org's tx, optionally
 //                                        scoped to one of their accounts
 // POST /api/transactions               → two-leg Dakota withdrawal/send:
 //        1. create the Dakota one-off transfer (funding instructions only —
@@ -9,6 +9,11 @@
 //           deposit address, signed by the platform signer
 //        Webhooks finalize; terminal failure or ACH return refunds the hold
 //        (see onOneOffTransaction in src/lib/dakota/webhook-handlers.ts).
+//
+// NOTE: POST is intentionally NOT orgScoped (it interleaves Dakota HTTP calls
+// with short DB transactions — a single request-long tx would hold a connection
+// across external I/O). Isolation is enforced by explicit org predicates + the
+// ownership helpers below. Its RLS-GUC integration is handled in PR-6.
 
 import { and, desc, eq, sql } from "drizzle-orm";
 import { logger } from "@/lib/logger";
@@ -16,8 +21,6 @@ import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import {
   accounts,
-  destinations,
-  recipients,
   transactions,
   dakotaCustomers,
   wallets,
@@ -38,11 +41,14 @@ import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 import { assertEmailVerified } from "@/lib/auth/verification";
 import {
   assertAccountOwnership,
+  assertDestinationOwnership,
   ownershipErr,
 } from "@/lib/auth/ownership";
+import type { DbTx } from "@/lib/db/with-org";
 
 export const GET = apiHandler({
-  handler: async ({ user, request }) => {
+  orgScoped: true,
+  handler: async ({ user, request, db }) => {
     const accountId = request.nextUrl.searchParams.get("accountId");
     const limit = Math.min(
       Number(request.nextUrl.searchParams.get("limit") ?? "50"),
@@ -50,9 +56,8 @@ export const GET = apiHandler({
     );
 
     if (accountId) {
-      // Account-scope: must own the account.
       try {
-        await assertAccountOwnership(accountId, user.id);
+        await assertAccountOwnership(db, accountId, user.orgId!);
       } catch (e) {
         const o = ownershipErr(e);
         if (o) return err(o.message, o.status);
@@ -62,10 +67,10 @@ export const GET = apiHandler({
 
     const where = accountId
       ? and(
-          eq(transactions.userId, user.id),
+          eq(transactions.orgId, user.orgId!),
           eq(transactions.accountId, accountId)
         )
-      : eq(transactions.userId, user.id);
+      : eq(transactions.orgId, user.orgId!);
 
     const txs = await db
       .select()
@@ -82,10 +87,14 @@ export const POST = apiHandler({
   schema: createTransactionSchema,
   rateLimit: { limit: 30, window: "1h" },
   handler: async ({ user, body }) => {
+    if (!user.orgId) return err("No active organization", 403);
+    const orgId = user.orgId;
+    const gdb = db as unknown as DbTx; // for ownership helpers (explicit org filter)
+
     const [customer] = await db
       .select()
       .from(dakotaCustomers)
-      .where(eq(dakotaCustomers.userId, user.id))
+      .where(eq(dakotaCustomers.orgId, orgId))
       .limit(1);
 
     if (
@@ -98,10 +107,10 @@ export const POST = apiHandler({
     const unverified = await assertEmailVerified(user.id);
     if (unverified) return err(unverified.message, unverified.status);
 
-    // Caller must own the account this tx will debit.
+    // The org must own the account this tx will debit.
     let account;
     try {
-      account = await assertAccountOwnership(body.accountId, user.id);
+      account = await assertAccountOwnership(gdb, body.accountId, orgId);
     } catch (e) {
       const o = ownershipErr(e);
       if (o) return err(o.message, o.status);
@@ -116,26 +125,18 @@ export const POST = apiHandler({
       return err(`Unsupported source network: ${sourceNetworkId}`, 400);
     }
 
-    // The destination must be one of the caller's own — Dakota would accept
-    // any destination under our client key, so ownership is enforced here.
-    const [ownedDestination] = await db
-      .select({ id: destinations.id })
-      .from(destinations)
-      .innerJoin(recipients, eq(destinations.recipientId, recipients.id))
-      .where(
-        and(
-          eq(destinations.dakotaDestinationId, body.destinationId),
-          eq(recipients.userId, user.id)
-        )
-      )
-      .limit(1);
-    if (!ownedDestination) {
-      return err("Destination not found", 404);
+    // The destination must be one of the ORG's own — Dakota would accept any
+    // destination under our client key, so ownership is enforced here. This is
+    // the check that stops a send to another tenant's payout endpoint.
+    try {
+      await assertDestinationOwnership(gdb, body.destinationId, orgId);
+    } catch (e) {
+      const o = ownershipErr(e);
+      if (o) return err(o.message, o.status);
+      throw e;
     }
 
-    // Statement reference the recipient's bank shows. Docs conflict on the
-    // ACH cap (18 vs 10 chars) — 10 satisfies both readings.
-    // "MNTA " + 5 base36 chars = 10.
+    // Statement reference the recipient's bank shows. "MNTA " + 5 base36 = 10.
     const paymentReference =
       body.paymentReference ??
       `MNTA ${randomBytes(4).readUIntBE(0, 4).toString(36).toUpperCase().padStart(5, "0").slice(-5)}`;
@@ -143,7 +144,7 @@ export const POST = apiHandler({
     const [wallet] = await db
       .select()
       .from(wallets)
-      .where(eq(wallets.userId, user.id))
+      .where(eq(wallets.orgId, orgId))
       .limit(1);
     if (!wallet) {
       return err(
@@ -152,25 +153,20 @@ export const POST = apiHandler({
       );
     }
 
-    // Leg 1: create the Dakota one-off. This only reserves funding
-    // instructions (single-use deposit address + send_amount); nothing has
-    // moved yet, so failing after this point is recoverable.
-    const dakotaTx = await createDakotaTransaction(
-      {
-        amount: body.amount,
-        customerId: customer?.dakotaCustomerId ?? "",
-        sourceNetworkId,
-        sourceAsset: body.sourceAsset,
-        destinationId: body.destinationId,
-        destinationAsset: body.destinationAsset,
-        destinationNetworkId: body.destinationNetworkId,
-        destinationPaymentRail: body.destinationPaymentRail,
-        paymentReference,
-      }
-    );
+    // Leg 1: create the Dakota one-off (reserves funding instructions only).
+    const dakotaTx = await createDakotaTransaction({
+      amount: body.amount,
+      customerId: customer?.dakotaCustomerId ?? "",
+      sourceNetworkId,
+      sourceAsset: body.sourceAsset,
+      destinationId: body.destinationId,
+      destinationAsset: body.destinationAsset,
+      destinationNetworkId: body.destinationNetworkId,
+      destinationPaymentRail: body.destinationPaymentRail,
+      paymentReference,
+    });
 
-    // send_amount includes Dakota's fees and can exceed the requested
-    // amount — it is what actually leaves the user's balance.
+    // send_amount includes Dakota's fees and can exceed the requested amount.
     const sendAmount = dakotaTx.send_amount || body.amount;
 
     // Hold: debit the source account and write the ledger row atomically.
@@ -194,7 +190,8 @@ export const POST = apiHandler({
         const [row] = await tx
           .insert(transactions)
           .values({
-            userId: user.id,
+            orgId,
+            userId: user.id, // initiating member
             accountId: account.id,
             dakotaTxId: dakotaTx.id,
             txType: body.txType,
@@ -218,7 +215,6 @@ export const POST = apiHandler({
       });
     } catch (e) {
       if (e instanceof Error && e.message === "INSUFFICIENT_FUNDS_RACE") {
-        // Nothing was funded — release Dakota's side (best effort).
         await cancelDakotaTransaction(dakotaTx.id).catch(() => {});
         return err(
           `Insufficient balance: this transfer requires ${sendAmount} ${body.sourceAsset} including fees`,
@@ -231,10 +227,10 @@ export const POST = apiHandler({
       transactionId: ledger.id,
       oldStatus: null,
       newStatus: ledger.status,
+      orgId,
     });
 
-    // Leg 2: on-chain — send exactly send_amount from the user's wallet to
-    // the one-off's single-use deposit address.
+    // Leg 2: on-chain — send exactly send_amount to the one-off's deposit addr.
     try {
       const walletTx = await sendWalletTransaction({
         walletId: wallet.dakotaWalletId,
@@ -246,11 +242,10 @@ export const POST = apiHandler({
         idempotencyKey: deterministicIdempotencyKey(`wallet-send:${dakotaTx.id}`),
       });
 
-      // Ledger row for the on-chain leg so wallet.transaction.* webhooks
-      // have something to update; linked to the withdrawal via metadata.
       await db
         .insert(transactions)
         .values({
+          orgId,
           userId: user.id,
           accountId: account.id,
           dakotaTxId: walletTx.id,
@@ -276,10 +271,8 @@ export const POST = apiHandler({
 
       return ok({ transaction: ledger, sendAmount, walletTransaction: walletTx }, 201);
     } catch (e) {
-      // Only refund when we KNOW the send was rejected (4xx: policy denial,
-      // validation…). On network errors / 5xx the send may still have gone
-      // through — keep the hold and let webhooks/reconciliation settle it,
-      // rather than risk refunding money that also leaves the wallet.
+      // Only refund when we KNOW the send was rejected (4xx). On 5xx/network
+      // errors the send may have gone through — keep the hold, let webhooks settle.
       if (e instanceof DakotaApiError && e.status < 500) {
         await db.transaction(async (tx) => {
           const [row] = await tx
@@ -315,6 +308,7 @@ export const POST = apiHandler({
           oldStatus: ledger.status,
           newStatus: "failed",
           reason: `wallet leg rejected: ${e.detail}`,
+          orgId,
         });
         await cancelDakotaTransaction(dakotaTx.id).catch(() => {});
         return err(

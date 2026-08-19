@@ -6,13 +6,13 @@ import { alias } from "drizzle-orm/pg-core";
 import { and, eq, ne } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { logAudit } from "@/lib/audit";
-import { db } from "@/lib/db";
 import { accounts, recurringTransfers } from "@/lib/db/schema";
 import { addPeriod, type Frequency } from "@/lib/transfers";
 import { assertAccountOwnership, ownershipErr } from "@/lib/auth/ownership";
 
 export const GET = apiHandler({
-  handler: async ({ user }) => {
+  orgScoped: true,
+  handler: async ({ user, db }) => {
     const fromAcc = alias(accounts, "from_acc");
     const toAcc = alias(accounts, "to_acc");
     const rules = await db
@@ -36,7 +36,7 @@ export const GET = apiHandler({
       .innerJoin(toAcc, eq(recurringTransfers.toAccountId, toAcc.id))
       .where(
         and(
-          eq(recurringTransfers.userId, user.id),
+          eq(recurringTransfers.orgId, user.orgId!),
           ne(recurringTransfers.status, "cancelled")
         )
       );
@@ -56,16 +56,17 @@ const createSchema = z.object({
 });
 
 export const POST = apiHandler({
+  orgScoped: true,
   schema: createSchema,
   rateLimit: { limit: 30, window: "1h" },
-  handler: async ({ user, body }) => {
+  handler: async ({ user, body, db }) => {
     if (body.fromAccountId === body.toAccountId) {
       return err("Choose two different accounts", 400);
     }
     try {
       await Promise.all([
-        assertAccountOwnership(body.fromAccountId, user.id),
-        assertAccountOwnership(body.toAccountId, user.id),
+        assertAccountOwnership(db, body.fromAccountId, user.orgId!),
+        assertAccountOwnership(db, body.toAccountId, user.orgId!),
       ]);
     } catch (e) {
       const o = ownershipErr(e);
@@ -83,6 +84,7 @@ export const POST = apiHandler({
     const [rule] = await db
       .insert(recurringTransfers)
       .values({
+        orgId: user.orgId!,
         userId: user.id,
         fromAccountId: body.fromAccountId,
         toAccountId: body.toAccountId,

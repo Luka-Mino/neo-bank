@@ -1,11 +1,10 @@
-// GET    /api/accounts/[id]  → fetch one of the caller's accounts
+// GET    /api/accounts/[id]  → fetch one of the org's accounts
 // PATCH  /api/accounts/[id]  → rename, freeze/activate, or set as primary
 // DELETE /api/accounts/[id]  → soft-close (status = 'closed')
 
 import { and, eq, ne, sql } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { logAudit } from "@/lib/audit";
-import { db } from "@/lib/db";
 import { accounts, cards } from "@/lib/db/schema";
 import { updateAccountSchema } from "@/lib/validators/account";
 import {
@@ -14,9 +13,10 @@ import {
 } from "@/lib/auth/ownership";
 
 export const GET = apiHandler({
-  handler: async ({ user, params }) => {
+  orgScoped: true,
+  handler: async ({ user, params, db }) => {
     try {
-      const row = await assertAccountOwnership(params.id, user.id);
+      const row = await assertAccountOwnership(db, params.id, user.orgId!);
       return ok(row);
     } catch (e) {
       const o = ownershipErr(e);
@@ -27,11 +27,12 @@ export const GET = apiHandler({
 });
 
 export const PATCH = apiHandler({
+  orgScoped: true,
   schema: updateAccountSchema,
-  handler: async ({ user, params, body }) => {
+  handler: async ({ user, params, body, db }) => {
     let current: typeof accounts.$inferSelect;
     try {
-      current = await assertAccountOwnership(params.id, user.id);
+      current = await assertAccountOwnership(db, params.id, user.orgId!);
     } catch (e) {
       const o = ownershipErr(e);
       if (o) return err(o.message, o.status);
@@ -42,31 +43,30 @@ export const PATCH = apiHandler({
       return err("Closed accounts cannot be modified", 409);
     }
 
-    // setPrimary requires demoting the existing primary atomically.
+    // setPrimary requires demoting the org's existing primary. The whole
+    // handler already runs inside the withOrg transaction, so these two writes
+    // are atomic without a nested transaction.
     if (body.setPrimary === true && !current.isPrimary) {
-      const updated = await db.transaction(async (tx) => {
-        await tx
-          .update(accounts)
-          .set({ isPrimary: false, updatedAt: new Date() })
-          .where(
-            and(
-              eq(accounts.userId, user.id),
-              eq(accounts.isPrimary, true),
-              ne(accounts.id, current.id)
-            )
-          );
-        const [row] = await tx
-          .update(accounts)
-          .set({
-            isPrimary: true,
-            ...(body.nickname !== undefined ? { nickname: body.nickname } : {}),
-            ...(body.status !== undefined ? { status: body.status } : {}),
-            updatedAt: new Date(),
-          })
-          .where(eq(accounts.id, current.id))
-          .returning();
-        return row;
-      });
+      await db
+        .update(accounts)
+        .set({ isPrimary: false, updatedAt: new Date() })
+        .where(
+          and(
+            eq(accounts.orgId, user.orgId!),
+            eq(accounts.isPrimary, true),
+            ne(accounts.id, current.id)
+          )
+        );
+      const [updated] = await db
+        .update(accounts)
+        .set({
+          isPrimary: true,
+          ...(body.nickname !== undefined ? { nickname: body.nickname } : {}),
+          ...(body.status !== undefined ? { status: body.status } : {}),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(accounts.id, current.id), eq(accounts.orgId, user.orgId!)))
+        .returning();
       await logAudit({
         actorType: "user",
         actorId: user.id,
@@ -87,17 +87,18 @@ export const PATCH = apiHandler({
     const [row] = await db
       .update(accounts)
       .set(patch)
-      .where(eq(accounts.id, current.id))
+      .where(and(eq(accounts.id, current.id), eq(accounts.orgId, user.orgId!)))
       .returning();
     return ok(row);
   },
 });
 
 export const DELETE = apiHandler({
-  handler: async ({ user, params }) => {
+  orgScoped: true,
+  handler: async ({ user, params, db }) => {
     let current: typeof accounts.$inferSelect;
     try {
-      current = await assertAccountOwnership(params.id, user.id);
+      current = await assertAccountOwnership(db, params.id, user.orgId!);
     } catch (e) {
       const o = ownershipErr(e);
       if (o) return err(o.message, o.status);
@@ -135,10 +136,10 @@ export const DELETE = apiHandler({
         isPrimary: false,
         updatedAt: new Date(),
       })
-      .where(eq(accounts.id, current.id))
+      .where(and(eq(accounts.id, current.id), eq(accounts.orgId, user.orgId!)))
       .returning();
 
-    // If we just closed the primary, promote the next-oldest open account.
+    // If we just closed the primary, promote the next-oldest open org account.
     if (current.isPrimary) {
       await db
         .update(accounts)
@@ -147,7 +148,7 @@ export const DELETE = apiHandler({
           eq(
             accounts.id,
             sql`(select id from ${accounts}
-                 where user_id = ${user.id}
+                 where org_id = ${user.orgId!}
                  and status <> 'closed'
                  order by created_at asc limit 1)`
           )

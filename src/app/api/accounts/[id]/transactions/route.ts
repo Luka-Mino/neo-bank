@@ -5,7 +5,6 @@
 
 import { and, desc, eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
-import { db } from "@/lib/db";
 import { transactions } from "@/lib/db/schema";
 import {
   assertAccountOwnership,
@@ -13,9 +12,10 @@ import {
 } from "@/lib/auth/ownership";
 
 export const GET = apiHandler({
-  handler: async ({ user, params, request }) => {
+  orgScoped: true,
+  handler: async ({ user, params, request, db }) => {
     try {
-      await assertAccountOwnership(params.id, user.id);
+      await assertAccountOwnership(db, params.id, user.orgId!);
     } catch (e) {
       const o = ownershipErr(e);
       if (o) return err(o.message, o.status);
@@ -32,7 +32,7 @@ export const GET = apiHandler({
       .from(transactions)
       .where(
         and(
-          eq(transactions.userId, user.id),
+          eq(transactions.orgId, user.orgId!),
           eq(transactions.accountId, params.id)
         )
       )

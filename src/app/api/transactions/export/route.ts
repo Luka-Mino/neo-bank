@@ -2,7 +2,6 @@
 import { NextResponse } from "next/server";
 import { and, asc, eq, gte, lte } from "drizzle-orm";
 import { apiHandler, err } from "@/lib/api-handler";
-import { db } from "@/lib/db";
 import { transactions } from "@/lib/db/schema";
 import { assertAccountOwnership, ownershipErr } from "@/lib/auth/ownership";
 
@@ -12,14 +11,15 @@ function csvField(value: unknown): string {
 }
 
 export const GET = apiHandler({
-  handler: async ({ user, request }) => {
+  orgScoped: true,
+  handler: async ({ user, request, db }) => {
     const accountId = request.nextUrl.searchParams.get("accountId");
     const from = request.nextUrl.searchParams.get("from");
     const to = request.nextUrl.searchParams.get("to");
 
     if (accountId) {
       try {
-        await assertAccountOwnership(accountId, user.id);
+        await assertAccountOwnership(db, accountId, user.orgId!);
       } catch (e) {
         const o = ownershipErr(e);
         if (o) return err(o.message, o.status);
@@ -27,7 +27,7 @@ export const GET = apiHandler({
       }
     }
 
-    const conditions = [eq(transactions.userId, user.id)];
+    const conditions = [eq(transactions.orgId, user.orgId!)];
     if (accountId) conditions.push(eq(transactions.accountId, accountId));
     if (from) {
       const d = new Date(from);

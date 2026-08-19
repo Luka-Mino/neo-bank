@@ -1,11 +1,10 @@
-// GET  /api/cards   → list the caller's cards (newest first)
-// POST /api/cards   → issue a new card on one of the caller's accounts.
+// GET  /api/cards   → list the org's cards (newest first)
+// POST /api/cards   → issue a new card on one of the org's accounts.
 //                     Mocked: generates last4 and exp, no real issuer call.
 
 import { desc, eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { logAudit } from "@/lib/audit";
-import { db } from "@/lib/db";
 import { cards } from "@/lib/db/schema";
 import { createCardSchema } from "@/lib/validators/card";
 import {
@@ -16,23 +15,25 @@ import { defaultCardNickname } from "@/lib/cards";
 import { getIssuerProvider } from "@/lib/card-issuer";
 
 export const GET = apiHandler({
-  handler: async ({ user }) => {
+  orgScoped: true,
+  handler: async ({ user, db }) => {
     const rows = await db
       .select()
       .from(cards)
-      .where(eq(cards.userId, user.id))
+      .where(eq(cards.orgId, user.orgId!))
       .orderBy(desc(cards.createdAt));
     return ok({ data: rows });
   },
 });
 
 export const POST = apiHandler({
+  orgScoped: true,
   schema: createCardSchema,
-  handler: async ({ user, body }) => {
-    // Caller must own the target account before we issue against it.
+  handler: async ({ user, body, db }) => {
+    // Caller must own the target account (in this org) before we issue against it.
     let target;
     try {
-      target = await assertAccountOwnership(body.accountId, user.id);
+      target = await assertAccountOwnership(db, body.accountId, user.orgId!);
     } catch (e) {
       const o = ownershipErr(e);
       if (o) return err(o.message, o.status);
@@ -44,8 +45,7 @@ export const POST = apiHandler({
     }
 
     // Issue through the swappable provider (mock today; Stripe Issuing once
-    // we incorporate). The provider owns last4/expiry/network so the call
-    // sites don't change when a real issuer lands. See CARD-ISSUING-PLAN.md.
+    // we incorporate). See CARD-ISSUING-PLAN.md.
     const issued = await getIssuerProvider().issueCard({
       userId: user.id,
       accountId: body.accountId,
@@ -56,7 +56,8 @@ export const POST = apiHandler({
     const [row] = await db
       .insert(cards)
       .values({
-        userId: user.id,
+        orgId: user.orgId!,
+        userId: user.id, // cardholder/actor
         accountId: body.accountId,
         cardType: body.cardType,
         last4: issued.last4,

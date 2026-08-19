@@ -12,7 +12,7 @@ describe.skipIf(!RUN)("performInternalTransfer (integration)", () => {
   let schema: typeof import("@/lib/db/schema");
   let performInternalTransfer: typeof import("@/lib/transfers").performInternalTransfer;
   let INSUFFICIENT_FUNDS: string;
-  const ids: { user?: string; a1?: string; a2?: string } = {};
+  const ids: { user?: string; org?: string; a1?: string; a2?: string } = {};
 
   beforeAll(async () => {
     ({ db } = await import("@/lib/db"));
@@ -28,9 +28,20 @@ describe.skipIf(!RUN)("performInternalTransfer (integration)", () => {
       })
       .returning();
     ids.user = u.id;
+    const [org] = await db
+      .insert(schema.organizations)
+      .values({
+        name: "IT Org",
+        type: "personal",
+        createdBy: u.id,
+        personalForUserId: u.id,
+      })
+      .returning();
+    ids.org = org.id;
     const [a1] = await db
       .insert(schema.accounts)
       .values({
+        orgId: org.id,
         userId: u.id,
         accountType: "checking",
         accountNumber: `it${Date.now()}1`,
@@ -41,6 +52,7 @@ describe.skipIf(!RUN)("performInternalTransfer (integration)", () => {
     const [a2] = await db
       .insert(schema.accounts)
       .values({
+        orgId: org.id,
         userId: u.id,
         accountType: "savings",
         accountNumber: `it${Date.now()}2`,
@@ -52,15 +64,21 @@ describe.skipIf(!RUN)("performInternalTransfer (integration)", () => {
   });
 
   afterAll(async () => {
-    if (ids.user) {
-      const { eq } = await import("drizzle-orm");
-      await db.delete(schema.users).where(eq(schema.users.id, ids.user));
+    if (!ids.user) return;
+    const { eq } = await import("drizzle-orm");
+    // FK-safe teardown: transactions + accounts (org RESTRICT) → org → user.
+    if (ids.org) {
+      await db.delete(schema.transactions).where(eq(schema.transactions.orgId, ids.org));
+      await db.delete(schema.accounts).where(eq(schema.accounts.orgId, ids.org));
+      await db.delete(schema.organizations).where(eq(schema.organizations.id, ids.org));
     }
+    await db.delete(schema.users).where(eq(schema.users.id, ids.user));
   });
 
   it("moves funds and writes a balanced double entry", async () => {
     const { eq, sql } = await import("drizzle-orm");
     const result = await performInternalTransfer({
+      orgId: ids.org!,
       userId: ids.user!,
       fromAccountId: ids.a1!,
       toAccountId: ids.a2!,
@@ -93,6 +111,7 @@ describe.skipIf(!RUN)("performInternalTransfer (integration)", () => {
   it("refuses to overdraw and leaves balances untouched", async () => {
     await expect(
       performInternalTransfer({
+        orgId: ids.org!,
         userId: ids.user!,
         fromAccountId: ids.a1!,
         toAccountId: ids.a2!,

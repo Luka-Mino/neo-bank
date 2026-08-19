@@ -69,14 +69,32 @@ async function handle(req: NextRequest) {
     if (claimed.length === 0) continue; // another sweep won
 
     try {
+      // Re-verify BOTH legs still belong to the rule's org and are active
+      // before moving money (a member/account could have changed since setup).
       const [from] = await db
-        .select({ currency: accounts.currency, status: accounts.status })
+        .select({ orgId: accounts.orgId, currency: accounts.currency, status: accounts.status })
         .from(accounts)
         .where(eq(accounts.id, rule.fromAccountId))
         .limit(1);
-      if (!from || from.status !== "active") throw new Error(INSUFFICIENT_FUNDS);
+      const [to] = await db
+        .select({ orgId: accounts.orgId, status: accounts.status })
+        .from(accounts)
+        .where(eq(accounts.id, rule.toAccountId))
+        .limit(1);
+      if (
+        !rule.orgId ||
+        !from ||
+        !to ||
+        from.orgId !== rule.orgId ||
+        to.orgId !== rule.orgId ||
+        from.status !== "active" ||
+        to.status !== "active"
+      ) {
+        throw new Error(INSUFFICIENT_FUNDS);
+      }
 
       await performInternalTransfer({
+        orgId: rule.orgId,
         userId: rule.userId,
         fromAccountId: rule.fromAccountId,
         toAccountId: rule.toAccountId,
