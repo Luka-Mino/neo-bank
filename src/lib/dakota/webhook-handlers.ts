@@ -60,6 +60,7 @@ async function onKybStatus(object: EventObject) {
   const [customer] = await db
     .select({
       userId: dakotaCustomers.userId,
+      orgId: dakotaCustomers.orgId,
       kycStatus: dakotaCustomers.kycStatus,
       kycReasonCode: dakotaCustomers.kycReasonCode,
     })
@@ -133,6 +134,7 @@ async function onKybStatus(object: EventObject) {
     }
 
     await logAudit({
+      orgId: customer.orgId,
       actorType: "system",
       action: "kyc_status_updated",
       resourceType: "customer",
@@ -160,15 +162,17 @@ async function onAutoTransaction(object: EventObject) {
 
   const receipt = (object.receipt ?? {}) as Record<string, unknown>;
 
-  // Attribute to a user via the auto account (rail) that generated it.
+  // Attribute to an ORG via the auto account (rail) that generated it.
   let userId: string | undefined;
+  let orgId: string | null | undefined;
   if (autoAccountId) {
     const [rail] = await db
-      .select({ userId: dakotaRails.userId })
+      .select({ userId: dakotaRails.userId, orgId: dakotaRails.orgId })
       .from(dakotaRails)
       .where(eq(dakotaRails.dakotaAccountId, autoAccountId))
       .limit(1);
     userId = rail?.userId;
+    orgId = rail?.orgId;
   }
 
   const txType = ledgerTxType(dakotaType);
@@ -182,6 +186,7 @@ async function onAutoTransaction(object: EventObject) {
       .select({
         id: transactions.id,
         status: transactions.status,
+        orgId: transactions.orgId,
         userId: transactions.userId,
         accountId: transactions.accountId,
         metadata: transactions.metadata,
@@ -192,7 +197,7 @@ async function onAutoTransaction(object: EventObject) {
 
     if (!row) {
       // Deposits originate outside our app — first webhook creates the row.
-      if (!userId) {
+      if (!userId || !orgId) {
         throw new Error(
           `auto transaction ${dakotaTxId}: unknown auto_account_id ${autoAccountId}`
         );
@@ -202,7 +207,7 @@ async function onAutoTransaction(object: EventObject) {
         .from(accounts)
         .where(
           and(
-            eq(accounts.userId, userId),
+            eq(accounts.orgId, orgId),
             eq(accounts.isPrimary, true),
             ne(accounts.status, "closed")
           )
@@ -212,6 +217,7 @@ async function onAutoTransaction(object: EventObject) {
       const [inserted] = await tx
         .insert(transactions)
         .values({
+          orgId,
           userId,
           accountId: primary?.id,
           dakotaTxId,
@@ -232,6 +238,7 @@ async function onAutoTransaction(object: EventObject) {
         .returning({
           id: transactions.id,
           status: transactions.status,
+          orgId: transactions.orgId,
           userId: transactions.userId,
           accountId: transactions.accountId,
           metadata: transactions.metadata,
@@ -240,7 +247,7 @@ async function onAutoTransaction(object: EventObject) {
       if (inserted) {
         row = inserted;
         await logStatusChange(
-          { transactionId: row.id, oldStatus: null, newStatus },
+          { transactionId: row.id, oldStatus: null, newStatus, orgId },
           tx
         );
         // Row was born in newStatus; fall through so a birth directly into
@@ -251,6 +258,7 @@ async function onAutoTransaction(object: EventObject) {
           .select({
             id: transactions.id,
             status: transactions.status,
+            orgId: transactions.orgId,
             userId: transactions.userId,
             accountId: transactions.accountId,
             metadata: transactions.metadata,
@@ -262,6 +270,13 @@ async function onAutoTransaction(object: EventObject) {
     }
 
     if (!row) return;
+
+    // Dead-letter on org mismatch — never credit across tenants.
+    if (orgId && row.orgId && orgId !== row.orgId) {
+      throw new Error(
+        `auto transaction ${dakotaTxId}: org mismatch (rail ${orgId} vs row ${row.orgId})`
+      );
+    }
 
     const meta = (row.metadata ?? {}) as Record<string, unknown>;
     const alreadyCredited = meta.moneta_credited === true;
@@ -285,6 +300,7 @@ async function onAutoTransaction(object: EventObject) {
           transactionId: row.id,
           oldStatus: row.status,
           newStatus,
+          orgId: row.orgId,
           reason: (object.return_reason ?? object.failure_reason) as
             | string
             | undefined,
@@ -303,12 +319,15 @@ async function onAutoTransaction(object: EventObject) {
     ) {
       let creditAccountId = row.accountId;
       if (!creditAccountId) {
+        if (!row.orgId) {
+          throw new Error(`deposit ${dakotaTxId}: transaction has no org`);
+        }
         const [primary] = await tx
           .select({ id: accounts.id })
           .from(accounts)
           .where(
             and(
-              eq(accounts.userId, row.userId),
+              eq(accounts.orgId, row.orgId),
               eq(accounts.isPrimary, true),
               ne(accounts.status, "closed")
             )
@@ -317,7 +336,7 @@ async function onAutoTransaction(object: EventObject) {
         creditAccountId = primary?.id ?? null;
         if (!creditAccountId) {
           throw new Error(
-            `deposit ${dakotaTxId}: no open primary account for user ${row.userId}`
+            `deposit ${dakotaTxId}: no open primary account for org ${row.orgId}`
           );
         }
         await tx
@@ -391,6 +410,7 @@ async function onAutoTransaction(object: EventObject) {
   }
 
   await logAudit({
+    orgId: orgId ?? null,
     actorType: "system",
     action: "dakota_auto_transaction",
     resourceType: "transaction",
@@ -422,15 +442,16 @@ async function onOneOffTransaction(object: EventObject) {
     const customerId = object.customer_id as string | undefined;
     if (!customerId) return;
     const [customer] = await db
-      .select({ userId: dakotaCustomers.userId })
+      .select({ userId: dakotaCustomers.userId, orgId: dakotaCustomers.orgId })
       .from(dakotaCustomers)
       .where(eq(dakotaCustomers.dakotaCustomerId, customerId))
       .limit(1);
-    if (!customer) return;
+    if (!customer || !customer.orgId) return;
 
     await db
       .insert(transactions)
       .values({
+        orgId: customer.orgId,
         userId: customer.userId,
         dakotaTxId,
         txType: "withdrawal",
@@ -467,6 +488,7 @@ async function onOneOffTransaction(object: EventObject) {
       .select({
         id: transactions.id,
         status: transactions.status,
+        orgId: transactions.orgId,
         accountId: transactions.accountId,
         metadata: transactions.metadata,
       })
@@ -509,6 +531,7 @@ async function onOneOffTransaction(object: EventObject) {
         transactionId: locked.id,
         oldStatus: locked.status,
         newStatus,
+        orgId: locked.orgId,
         reason: (object.return_reason ?? object.failure_reason) as
           | string
           | undefined,
@@ -541,7 +564,7 @@ async function onWalletTransaction(object: EventObject) {
   if (!dakotaTxId || !newStatus) return;
 
   const [row] = await db
-    .select({ id: transactions.id, status: transactions.status })
+    .select({ id: transactions.id, status: transactions.status, orgId: transactions.orgId })
     .from(transactions)
     .where(eq(transactions.dakotaTxId, dakotaTxId))
     .limit(1);
@@ -565,6 +588,7 @@ async function onWalletTransaction(object: EventObject) {
     transactionId: row.id,
     oldStatus: row.status,
     newStatus,
+    orgId: row.orgId,
   });
 }
 
@@ -577,13 +601,14 @@ async function onWalletDeposit(object: EventObject, envelope: DakotaEventEnvelop
   if (!walletId) return;
 
   const [wallet] = await db
-    .select({ userId: wallets.userId })
+    .select({ userId: wallets.userId, orgId: wallets.orgId })
     .from(wallets)
     .where(eq(wallets.dakotaWalletId, walletId))
     .limit(1);
   if (!wallet) return;
 
   await logAudit({
+    orgId: wallet.orgId,
     actorType: "system",
     action: "wallet_deposit_received",
     resourceType: "wallet",

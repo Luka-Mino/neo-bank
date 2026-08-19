@@ -3,6 +3,7 @@ import { logger } from "@/lib/logger";
 import { auditLog } from "@/lib/db/schema";
 
 interface AuditParams {
+  orgId?: string | null;
   actorId?: string;
   actorType?: "user" | "admin" | "system";
   action: string;
@@ -15,6 +16,7 @@ interface AuditParams {
 export async function logAudit(params: AuditParams) {
   try {
     await db.insert(auditLog).values({
+      orgId: params.orgId ?? null,
       actorId: params.actorId,
       actorType: params.actorType || "system",
       action: params.action,
