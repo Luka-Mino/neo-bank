@@ -66,6 +66,11 @@ export async function provisionCustomer(userId: string): Promise<ProvisioningRes
       `provisioning: customer ${customer.dakotaCustomerId} is ${customer.kycStatus}, not active`
     );
   }
+  // The Dakota customer is org-owned; every record we provision inherits its org.
+  if (!customer.orgId) {
+    throw new Error(`provisioning: customer ${customer.dakotaCustomerId} has no org`);
+  }
+  const orgId = customer.orgId;
 
   const signerGroupId = requiredEnv("DAKOTA_SIGNER_GROUP_ID");
   const policyId = requiredEnv("DAKOTA_POLICY_ID");
@@ -93,6 +98,7 @@ export async function provisionCustomer(userId: string): Promise<ProvisioningRes
     [wallet] = await db
       .insert(wallets)
       .values({
+        orgId,
         userId,
         dakotaWalletId: dakotaWallet.id,
         family: dakotaWallet.family,
@@ -177,6 +183,7 @@ export async function provisionCustomer(userId: string): Promise<ProvisioningRes
     [onramp] = await db
       .insert(dakotaRails)
       .values({
+        orgId,
         userId,
         dakotaAccountId: account.id,
         accountType: "onramp",

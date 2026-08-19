@@ -4,11 +4,11 @@
 // POST /api/transactions is the `dakotaDestinationId` field.
 import { and, eq } from "drizzle-orm";
 import { apiHandler, ok } from "@/lib/api-handler";
-import { db } from "@/lib/db";
 import { destinations, recipients } from "@/lib/db/schema";
 
 export const GET = apiHandler({
-  handler: async ({ user, request }) => {
+  orgScoped: true,
+  handler: async ({ user, request, db }) => {
     const type = request.nextUrl.searchParams.get("type");
 
     const rows = await db
@@ -26,8 +26,8 @@ export const GET = apiHandler({
       .innerJoin(recipients, eq(destinations.recipientId, recipients.id))
       .where(
         type
-          ? and(eq(recipients.userId, user.id), eq(destinations.destinationType, type))
-          : eq(recipients.userId, user.id)
+          ? and(eq(recipients.orgId, user.orgId!), eq(destinations.destinationType, type))
+          : eq(recipients.orgId, user.orgId!)
       );
 
     // details holds the full validated create payload — mask account numbers

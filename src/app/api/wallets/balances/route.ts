@@ -7,11 +7,12 @@ import { getWalletBalances as fetchDakotaBalances } from "@/lib/dakota/wallets";
 
 export const GET = apiHandler({
   handler: async ({ user }) => {
-    // Get user's wallets
+    if (!user.orgId) return err("No active organization", 403);
+    // Get the org's wallets
     const userWallets = await db
       .select()
       .from(wallets)
-      .where(eq(wallets.userId, user.id));
+      .where(eq(wallets.orgId, user.orgId));
 
     if (userWallets.length === 0) {
       return ok({ wallets: [], totalUsd: "0" });

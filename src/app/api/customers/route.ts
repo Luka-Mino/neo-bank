@@ -1,16 +1,16 @@
 import { eq } from "drizzle-orm";
 import { logger } from "@/lib/logger";
 import { apiHandler, ok, err } from "@/lib/api-handler";
-import { db } from "@/lib/db";
 import { dakotaCustomers } from "@/lib/db/schema";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 
 export const GET = apiHandler({
-  handler: async ({ user }) => {
+  orgScoped: true,
+  handler: async ({ user, db }) => {
     const customer = await db
       .select()
       .from(dakotaCustomers)
-      .where(eq(dakotaCustomers.userId, user.id))
+      .where(eq(dakotaCustomers.orgId, user.orgId!))
       .limit(1);
 
     if (customer.length === 0) {
@@ -45,11 +45,12 @@ export const GET = apiHandler({
 // is safely retryable via its deterministic idempotency key).
 export const POST = apiHandler({
   rateLimit: { limit: 5, window: "1h" },
-  handler: async ({ user }) => {
+  handler: async ({ user, db }) => {
+    if (!user.orgId) return err("No active organization", 403);
     const [existing] = await db
       .select()
       .from(dakotaCustomers)
-      .where(eq(dakotaCustomers.userId, user.id))
+      .where(eq(dakotaCustomers.orgId, user.orgId))
       .limit(1);
 
     if (existing) {
@@ -74,6 +75,7 @@ export const POST = apiHandler({
       const [row] = await db
         .insert(dakotaCustomers)
         .values({
+          orgId: user.orgId,
           userId: user.id,
           dakotaCustomerId: dakotaCustomer.id,
           customerType: "individual",

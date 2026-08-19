@@ -3,20 +3,20 @@
 // for the user-facing concept (checking, savings, etc.).
 import { eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
-import { db } from "@/lib/db";
 import { dakotaRails, dakotaCustomers } from "@/lib/db/schema";
 import { createAccount as createDakotaAccount } from "@/lib/dakota/accounts";
 import { createRailSchema } from "@/lib/validators/rail";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 
 export const GET = apiHandler({
-  handler: async ({ user, request }) => {
+  orgScoped: true,
+  handler: async ({ user, request, db }) => {
     const type = request.nextUrl.searchParams.get("type");
 
     const rails = await db
       .select()
       .from(dakotaRails)
-      .where(eq(dakotaRails.userId, user.id));
+      .where(eq(dakotaRails.orgId, user.orgId!));
 
     const filtered = type ? rails.filter((r) => r.accountType === type) : rails;
 
@@ -24,13 +24,15 @@ export const GET = apiHandler({
   },
 });
 
+// Not orgScoped: makes a Dakota HTTP call. Explicit org predicates.
 export const POST = apiHandler({
   schema: createRailSchema,
-  handler: async ({ user, body }) => {
+  handler: async ({ user, body, db }) => {
+    if (!user.orgId) return err("No active organization", 403);
     const customer = await db
       .select()
       .from(dakotaCustomers)
-      .where(eq(dakotaCustomers.userId, user.id))
+      .where(eq(dakotaCustomers.orgId, user.orgId))
       .limit(1);
 
     if (
@@ -55,6 +57,7 @@ export const POST = apiHandler({
     const [rail] = await db
       .insert(dakotaRails)
       .values({
+        orgId: user.orgId,
         userId: user.id,
         dakotaAccountId: dakotaAccount.id,
         accountType: body.accountType,
