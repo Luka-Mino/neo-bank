@@ -62,6 +62,15 @@
 - [ ] Dakota MCP server in dev tooling (read-only sandbox inspection from Claude Code)
 - [ ] Adopt official @dakota-xyz/ts-sdk if our hand-rolled client drifts from their OpenAPI
 
+## Team / RBAC (post-PR-7 — see TEAM-RBAC-PLAN.md)
+- [ ] Custom-role builder (define roles + capability sets per org)
+- [ ] Per-account / per-department / cost-center access scoping (grant table `org_member_account_access` — keep account visibility composable now)
+- [ ] SCIM / HRIS auto-provisioning (Gusto/Deel/Rippling) — sync members + deprovision
+- [ ] Multi-entity: entity-scoped admins for orgs with multiple legal entities
+- [ ] Sequential named-approver chains + manager-chain routing (we ship flat M-of-N first)
+- [ ] Category/merchant-locked card spend policies
+- [ ] Advisor / accounting-firm external portal access
+
 ## Compliance & Legal
 - [ ] Terms of service
 - [ ] Privacy policy
