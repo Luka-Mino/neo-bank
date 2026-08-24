@@ -18,6 +18,8 @@ import {
   BarChart3,
   ChevronRight,
   Wallet,
+  Users2,
+  ClipboardCheck,
 } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { DEMO_MODE, DEMO_SESSION } from "@/lib/demo-data";
@@ -55,6 +57,13 @@ const navigationGroups = [
       { name: "Transactions", href: "/transactions", icon: History },
       { name: "Recipients", href: "/recipients", icon: Users },
       { name: "Insights", href: "/insights", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Organization",
+    items: [
+      { name: "Team", href: "/team", icon: Users2 },
+      { name: "Approvals", href: "/approvals", icon: ClipboardCheck },
     ],
   },
   {

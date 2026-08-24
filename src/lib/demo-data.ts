@@ -133,3 +133,18 @@ export const DEMO_BANK_DETAILS = {
 export const DEMO_SESSION = {
   user: { name: "Alex Demo", email: "alex@demo.com" },
 };
+
+// Team roster for the demo org — shows the full spread of role presets.
+export const DEMO_TEAM = [
+  { id: "m1", userId: "u1", name: "Alex Demo", email: "alex@demo.com", role: "owner", canApprove: true, canMoveMoney: true, canExport: true, status: "active", createdAt: "2026-01-14T09:00:00Z" },
+  { id: "m2", userId: "u2", name: "Jordan Lee", email: "jordan@demo.com", role: "admin", canApprove: true, canMoveMoney: true, canExport: true, status: "active", createdAt: "2026-02-02T09:00:00Z" },
+  { id: "m3", userId: "u3", name: "Sam Rivera", email: "sam@demo.com", role: "member", canApprove: false, canMoveMoney: true, canExport: false, status: "active", createdAt: "2026-03-18T09:00:00Z" },
+  { id: "m4", userId: "u4", name: "Priya Patel", email: "priya@demo.com", role: "member", canApprove: false, canMoveMoney: false, canExport: true, status: "active", createdAt: "2026-04-09T09:00:00Z" },
+  { id: "m5", userId: "u5", name: "Chris Wong", email: "chris@demo.com", role: "viewer", canApprove: false, canMoveMoney: false, canExport: false, status: "invited", createdAt: "2026-08-19T09:00:00Z" },
+];
+
+export const DEMO_APPROVALS = [
+  { id: "ar1", actionType: "transfer.internal", amount: "25000.00", asset: "USD", status: "pending", requiredApprovals: 2, approvalsCount: 1, requestedByName: "Sam Rivera", createdAt: "2026-08-23T14:10:00Z", note: "Q3 vendor float — Operating → Payroll" },
+  { id: "ar2", actionType: "transfer.external", amount: "8500.00", asset: "USD", status: "pending", requiredApprovals: 1, approvalsCount: 0, requestedByName: "Priya Patel", createdAt: "2026-08-24T08:30:00Z", note: "Supplier payout — Acme GmbH (SEPA)" },
+  { id: "ar3", actionType: "recipient.destination.change", amount: null, asset: null, status: "pending", requiredApprovals: 2, approvalsCount: 0, requestedByName: "Sam Rivera", createdAt: "2026-08-24T09:05:00Z", note: "New payout address for Contractor #4421" },
+];
