@@ -33,3 +33,31 @@ export async function assertEmailVerified(
   }
   return null;
 }
+
+/**
+ * Returns null if the user has a second factor enabled, or an { message, status }
+ * error otherwise. Money movement must never be reachable from a password-only
+ * session. Unlike email verification this is enforced unconditionally: TOTP
+ * (authenticator app) needs no external infrastructure to enroll, so there is no
+ * "inert until configured" window — a money-mover can always set up 2FA first.
+ */
+export async function assertMfaEnabled(
+  userId: string
+): Promise<{ message: string; status: number } | null> {
+  const [row] = await db
+    .select({
+      totpEnabledAt: users.totpEnabledAt,
+      emailOtpEnabled: users.emailOtpEnabled,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!row?.totpEnabledAt && !row?.emailOtpEnabled) {
+    return {
+      message:
+        "Turn on two-factor authentication before moving money. You can enable it in Settings.",
+      status: 403,
+    };
+  }
+  return null;
+}

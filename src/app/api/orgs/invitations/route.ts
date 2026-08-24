@@ -42,8 +42,10 @@ const schema = z.object({
   email: z.string().email(),
   role: z.enum(["admin", "member", "viewer"]).default("member"), // owners aren't invited
   canApprove: z.boolean().default(false),
-  canMoveMoney: z.boolean().default(true),
-  canExport: z.boolean().default(true),
+  // Default to NO powers — money/export authority must be granted deliberately,
+  // and (enforced below) only by an inviter who holds the same power themselves.
+  canMoveMoney: z.boolean().default(false),
+  canExport: z.boolean().default(false),
 });
 
 export const POST = apiHandler({
@@ -55,6 +57,21 @@ export const POST = apiHandler({
     if (ROLE_RANK[body.role] >= ROLE_RANK[user.role!]) {
       return err("You can't invite someone at or above your own role", 403);
     }
+
+    // Capabilities are clamped to the inviter's OWN — you can never hand out a
+    // power you don't hold. Without this, an admin with approve=off could mint a
+    // member with approve=on, manufacturing a second signer to defeat the
+    // maker/checker control.
+    if (body.canApprove && !user.canApprove) {
+      return err("You can't grant approval rights you don't have yourself", 403);
+    }
+    if (body.canMoveMoney && !user.canMoveMoney) {
+      return err("You can't grant money-movement rights you don't have yourself", 403);
+    }
+    if (body.canExport && !user.canExport) {
+      return err("You can't grant export rights you don't have yourself", 403);
+    }
+
     const email = body.email.toLowerCase();
 
     // Already an active member?

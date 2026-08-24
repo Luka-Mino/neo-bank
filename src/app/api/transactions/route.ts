@@ -38,7 +38,7 @@ import { logStatusChange } from "@/lib/transaction-history";
 import { createTransactionSchema } from "@/lib/validators/transaction";
 import { categorizeTransaction } from "@/lib/categorize";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
-import { assertEmailVerified } from "@/lib/auth/verification";
+import { assertEmailVerified, assertMfaEnabled } from "@/lib/auth/verification";
 import {
   assertAccountOwnership,
   assertDestinationOwnership,
@@ -109,6 +109,8 @@ export const POST = apiHandler({
 
     const unverified = await assertEmailVerified(user.id);
     if (unverified) return err(unverified.message, unverified.status);
+    const noMfa = await assertMfaEnabled(user.id);
+    if (noMfa) return err(noMfa.message, noMfa.status);
 
     // The org must own the account this tx will debit.
     let account;

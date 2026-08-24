@@ -195,8 +195,10 @@ function InviteDialog({
       });
     },
     onSuccess: () => {
+      // Email delivery isn't wired yet — don't claim an email was sent. The
+      // invite record exists; sharing the accept link is a follow-up.
       toast.success(
-        DEMO_MODE ? "Invite created (demo)" : `Invitation sent to ${email}`
+        DEMO_MODE ? "Invite created (demo)" : `Invite created for ${email}`
       );
       setEmail("");
       onInvited();

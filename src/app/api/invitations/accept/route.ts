@@ -7,6 +7,7 @@ import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { orgInvitations, orgMembers, users } from "@/lib/db/schema";
 import { hashInviteToken } from "@/lib/orgs";
+import { assertEmailVerified } from "@/lib/auth/verification";
 import { logAudit } from "@/lib/audit";
 
 const schema = z.object({ token: z.string().min(10) });
@@ -39,6 +40,19 @@ export const POST = apiHandler({
       .limit(1);
     if (!u || u.email.toLowerCase() !== inv.email.toLowerCase()) {
       return err("This invitation was sent to a different email address", 403);
+    }
+
+    // The invite is bound to the invited email, but that binding is only as good
+    // as our proof the accepter actually OWNS that address. Require a verified
+    // email before joining someone else's org (inert until email delivery is
+    // configured, exactly like the money-movement gate — so it can't lock anyone
+    // out today but activates automatically the moment email is live).
+    const unverified = await assertEmailVerified(user.id);
+    if (unverified) {
+      return err(
+        "Verify your email before joining an organization. Check your inbox for the link.",
+        unverified.status
+      );
     }
 
     try {

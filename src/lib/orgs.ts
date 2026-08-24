@@ -145,7 +145,11 @@ export async function createPersonalOrg(
     orgId: org.id,
     userId,
     role: "owner",
+    // Owners hold full authority over their own org, set EXPLICITLY here (never
+    // left to a column default) so tightening invite defaults can't strip it.
     canApprove: true,
+    canMoveMoney: true,
+    canExport: true,
     status: "active",
   });
   return org.id;
