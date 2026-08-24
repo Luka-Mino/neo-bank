@@ -88,6 +88,9 @@ export const POST = apiHandler({
   rateLimit: { limit: 30, window: "1h" },
   handler: async ({ user, body }) => {
     if (!user.orgId) return err("No active organization", 403);
+    if (!user.canMoveMoney) {
+      return err("You don't have permission to move money", 403);
+    }
     const orgId = user.orgId;
     const gdb = db as unknown as DbTx; // for ownership helpers (explicit org filter)
 

@@ -11,6 +11,8 @@ declare module "next-auth" {
       orgId?: string;
       role?: Role;
       canApprove?: boolean;
+      canMoveMoney?: boolean;
+      canExport?: boolean;
     } & DefaultSession["user"];
     kycStatus?: string;
   }
@@ -24,5 +26,7 @@ declare module "next-auth/jwt" {
     orgId?: string;
     role?: Role;
     canApprove?: boolean;
+    canMoveMoney?: boolean;
+    canExport?: boolean;
   }
 }

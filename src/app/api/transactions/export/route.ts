@@ -12,6 +12,7 @@ function csvField(value: unknown): string {
 
 export const GET = apiHandler({
   orgScoped: true,
+  requireExport: true,
   handler: async ({ user, request, db }) => {
     const accountId = request.nextUrl.searchParams.get("accountId");
     const from = request.nextUrl.searchParams.get("from");

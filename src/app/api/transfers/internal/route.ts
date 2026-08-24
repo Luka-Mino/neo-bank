@@ -16,6 +16,7 @@ import {
 
 export const POST = apiHandler({
   orgScoped: true,
+  requireMoveMoney: true,
   schema: internalTransferSchema,
   rateLimit: { limit: 60, window: "1h" },
   handler: async ({ user, body, db }) => {

@@ -57,6 +57,7 @@ const createSchema = z.object({
 
 export const POST = apiHandler({
   orgScoped: true,
+  requireMoveMoney: true,
   schema: createSchema,
   rateLimit: { limit: 30, window: "1h" },
   handler: async ({ user, body, db }) => {

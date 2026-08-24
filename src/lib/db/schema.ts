@@ -99,6 +99,11 @@ export const orgMembers = pgTable(
     // Orthogonal maker/checker capability (NOT a rank): a member can be an approver;
     // an admin who *makes* a payment still can't self-approve. Owners approve implicitly.
     canApprove: boolean("can_approve").notNull().default(false),
+    // Capability flags (orthogonal to rank) so the Accountant persona — sees all,
+    // exports, but cannot move money — is expressible; a linear role rank can't.
+    // Money routes gate on can_move_money, not on role. See TEAM-RBAC-PLAN.md.
+    canMoveMoney: boolean("can_move_money").notNull().default(true),
+    canExport: boolean("can_export").notNull().default(true),
     status: text("status").notNull().default("active"), // 'invited'|'active'|'suspended'|'removed'
     invitedBy: uuid("invited_by").references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -123,7 +128,11 @@ export const orgInvitations = pgTable(
       .references(() => organizations.id, { onDelete: "cascade" }),
     email: text("email").notNull(), // invitee's email (lowercased)
     role: text("role").notNull().default("member"),
+    // Capabilities set at invite time (mirror org_members) so scope is chosen
+    // in one click. Defaults suit an Initiator; Accountant sets money=false.
     canApprove: boolean("can_approve").notNull().default(false),
+    canMoveMoney: boolean("can_move_money").notNull().default(true),
+    canExport: boolean("can_export").notNull().default(true),
     tokenHash: text("token_hash").notNull().unique(),
     invitedBy: uuid("invited_by")
       .notNull()
@@ -175,10 +184,14 @@ export const approvalPolicies = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
+    // Includes threshold_amount so an org can define BANDS per action
+    // (e.g. >$5k → 1 approver, >$50k → 2). The resolver picks all matching
+    // bands and takes the max required_approvals. See TEAM-RBAC-PLAN.md.
     uniqueIndex("idx_approval_policies_unique").on(
       table.orgId,
       table.actionType,
-      table.thresholdAsset
+      table.thresholdAsset,
+      table.thresholdAmount
     ),
   ]
 );

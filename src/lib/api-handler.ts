@@ -20,6 +20,9 @@ interface AuthUser {
   orgId?: string;
   role?: Role;
   canApprove: boolean;
+  // Capability flags (orthogonal to role). Gate money movement + export.
+  canMoveMoney: boolean;
+  canExport: boolean;
 }
 
 interface RateLimitConfig {
@@ -62,6 +65,8 @@ interface ApiHandlerOptions<TBody, TParams> {
   orgScoped?: boolean;
   requiredRole?: Role; // minimum role (ranked)
   requireApprover?: boolean; // maker/checker capability
+  requireMoveMoney?: boolean; // can_move_money capability
+  requireExport?: boolean; // can_export capability
 }
 
 // ─── Response helpers ───────────────────────────────────────────────────────
@@ -90,6 +95,8 @@ export function apiHandler<TBody = unknown, TParams = Record<string, string>>(
     orgScoped = false,
     requiredRole,
     requireApprover,
+    requireMoveMoney,
+    requireExport,
   } = options;
 
   return (async (
@@ -111,6 +118,8 @@ export function apiHandler<TBody = unknown, TParams = Record<string, string>>(
           orgId: session.user.orgId,
           role: session.user.role,
           canApprove: session.user.canApprove ?? false,
+          canMoveMoney: session.user.canMoveMoney ?? false,
+          canExport: session.user.canExport ?? false,
         };
       }
 
@@ -196,6 +205,12 @@ export function apiHandler<TBody = unknown, TParams = Record<string, string>>(
         }
         if (requireApprover && !authedUser.canApprove) {
           return err("Approver capability required", 403);
+        }
+        if (requireMoveMoney && !authedUser.canMoveMoney) {
+          return err("You don't have permission to move money", 403);
+        }
+        if (requireExport && !authedUser.canExport) {
+          return err("You don't have permission to export", 403);
         }
         return await withOrg(authedUser.orgId, (tx) =>
           Promise.resolve(

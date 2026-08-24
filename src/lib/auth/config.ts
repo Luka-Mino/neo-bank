@@ -218,15 +218,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.orgId = m.orgId;
             token.role = m.role;
             token.canApprove = m.canApprove;
+            token.canMoveMoney = m.canMoveMoney;
+            token.canExport = m.canExport;
           } else {
             token.orgId = undefined;
             token.role = undefined;
             token.canApprove = false;
+            token.canMoveMoney = false;
+            token.canExport = false;
           }
         } catch {
           token.orgId = undefined;
           token.role = undefined;
           token.canApprove = false;
+          token.canMoveMoney = false;
+          token.canExport = false;
         }
 
         // KYC pivots to ORG level — the organization is the regulated entity.
@@ -256,6 +262,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.orgId = token.orgId as string | undefined;
         session.user.role = token.role as Role | undefined;
         session.user.canApprove = (token.canApprove as boolean | undefined) ?? false;
+        session.user.canMoveMoney = (token.canMoveMoney as boolean | undefined) ?? false;
+        session.user.canExport = (token.canExport as boolean | undefined) ?? false;
         session.kycStatus = token.kycStatus as string | undefined;
       }
       return session;

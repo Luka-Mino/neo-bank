@@ -24,6 +24,8 @@ export interface Membership {
   orgId: string;
   role: Role;
   canApprove: boolean;
+  canMoveMoney: boolean;
+  canExport: boolean;
 }
 
 /**
@@ -42,6 +44,8 @@ export async function resolveActiveMembership(
         orgId: orgMembers.orgId,
         role: orgMembers.role,
         canApprove: orgMembers.canApprove,
+        canMoveMoney: orgMembers.canMoveMoney,
+        canExport: orgMembers.canExport,
       })
       .from(orgMembers)
       .where(
@@ -52,7 +56,14 @@ export async function resolveActiveMembership(
         )
       )
       .limit(1);
-    if (m) return { orgId: m.orgId, role: m.role as Role, canApprove: m.canApprove };
+    if (m)
+      return {
+        orgId: m.orgId,
+        role: m.role as Role,
+        canApprove: m.canApprove,
+        canMoveMoney: m.canMoveMoney,
+        canExport: m.canExport,
+      };
   }
 
   // Fallback: the user's personal org (deterministic — one per user).
@@ -61,6 +72,8 @@ export async function resolveActiveMembership(
       orgId: orgMembers.orgId,
       role: orgMembers.role,
       canApprove: orgMembers.canApprove,
+      canMoveMoney: orgMembers.canMoveMoney,
+      canExport: orgMembers.canExport,
     })
     .from(orgMembers)
     .innerJoin(organizations, eq(organizations.id, orgMembers.orgId))
@@ -72,7 +85,15 @@ export async function resolveActiveMembership(
       )
     )
     .limit(1);
-  return pm ? { orgId: pm.orgId, role: pm.role as Role, canApprove: pm.canApprove } : null;
+  return pm
+    ? {
+        orgId: pm.orgId,
+        role: pm.role as Role,
+        canApprove: pm.canApprove,
+        canMoveMoney: pm.canMoveMoney,
+        canExport: pm.canExport,
+      }
+    : null;
 }
 
 /**
