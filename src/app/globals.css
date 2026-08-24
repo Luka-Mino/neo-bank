@@ -203,6 +203,38 @@
     .hero-seq > *, .hero-card { animation: none; }
   }
 
+  /* The hero's one deliberate motion: a payment settling. The rail fills once
+     on load — the "seconds" story, shown not told. Still under reduced-motion. */
+  @keyframes settle-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .settle-bar { transform-origin: left; animation: settle-fill 1.5s cubic-bezier(0.45, 0, 0.15, 1) 0.7s both; }
+  @keyframes settle-dot { 0%,55% { opacity: 0; transform: scale(0.4); } 70% { opacity: 1; transform: scale(1.15); } 100% { opacity: 1; transform: scale(1); } }
+  .settle-dot { animation: settle-dot 1.6s cubic-bezier(0.45, 0, 0.15, 1) 0.7s both; }
+  @media (prefers-reduced-motion: reduce) {
+    .settle-bar { animation: none; transform: none; }
+    .settle-dot { animation: none; opacity: 1; transform: none; }
+  }
+
+  /* Light-ground secondary action — hairline pill, forest ink. Pairs with
+     .cta-primary on the marketing page's light sections. */
+  .cta-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    height: 3rem;
+    padding: 0 1.6rem;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #122e2e;
+    box-shadow: 0 0 0 1px rgba(18, 46, 46, 0.12) inset;
+    transition: box-shadow 0.18s ease, background 0.18s ease;
+  }
+  .cta-ghost:hover {
+    background: rgba(18, 46, 46, 0.03);
+    box-shadow: 0 0 0 1px rgba(18, 46, 46, 0.24) inset;
+  }
+
   html {
     color-scheme: light;
   }

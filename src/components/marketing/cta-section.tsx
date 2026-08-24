@@ -1,46 +1,33 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-// Closing band: an everyday scene (market, real light) under a forest
-// grade — the product's promise is ordinary life with money handled.
+// Closing band — a clean, confident invitation on marble. No photography;
+// the whitespace and one lit CTA carry it.
 
 export function CtaSection() {
   return (
-    <section className="bg-[#0a1c1c] py-16 sm:py-24">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-3xl ring-1 ring-white/10">
-          <Image
-            src="/images/photos/cta-market.jpg"
-            alt="A couple shopping at a farmers market"
-            width={1600}
-            height={1067}
-            className="h-[420px] w-full object-cover saturate-[0.8] sm:h-[460px]"
-          />
+    <section className="bg-[#f6f6f6] py-20 sm:py-28">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-[28px] bg-white px-8 py-16 text-center shadow-[0_1px_2px_rgba(18,46,46,0.05),0_40px_80px_-40px_rgba(18,46,46,0.25)] ring-1 ring-[#122e2e]/[0.07] sm:px-14">
           <div
             aria-hidden
-            className="absolute inset-0 bg-gradient-to-r from-[#0a1c1c]/90 via-[#0a1c1c]/55 to-[#0a1c1c]/25"
+            className="pointer-events-none absolute left-1/2 top-[-30%] -z-0 h-[300px] w-[440px] -translate-x-1/2 rounded-full bg-[#4ac280]/[0.10] blur-[100px]"
           />
-          <div className="absolute inset-0 flex items-center">
-            <div className="max-w-md p-10 sm:p-14">
-              <h2 className="font-display text-3xl font-semibold tracking-tight text-white md:text-4xl">
-                Open your account in minutes
-              </h2>
-              <p className="mt-4 text-lg text-white/75">
-                No paperwork. No branch visits. Just you and your money &mdash;
-                moving in real time.
-              </p>
-              <div className="mt-8">
-                <Link
-                  href="/register"
-                  className="cta-primary"
-                >
-                  Get started &mdash; it&apos;s free
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
+          <div className="relative">
+            <h2 className="font-display text-3xl font-semibold tracking-tight text-[#122e2e] md:text-4xl">
+              Open your account in minutes
+            </h2>
+            <p className="mx-auto mt-4 max-w-md text-lg text-[#5b6b6b]">
+              No paperwork, no branch visits — just you and your money, moving in
+              real time.
+            </p>
+            <div className="mt-8 flex justify-center">
+              <Link href="/register" className="cta-primary">
+                Get started — it&apos;s free
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
         </div>
