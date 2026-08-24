@@ -10,6 +10,10 @@ import { internalTransferSchema } from "@/lib/validators/transfer";
 import { INSUFFICIENT_FUNDS, performInternalTransfer } from "@/lib/transfers";
 import { assertEmailVerified } from "@/lib/auth/verification";
 import {
+  resolveRequiredApprovals,
+  createApprovalRequest,
+} from "@/lib/approvals";
+import {
   assertAccountOwnership,
   ownershipErr,
 } from "@/lib/auth/ownership";
@@ -50,6 +54,47 @@ export const POST = apiHandler({
     }
     if (Number(from.balance) < Number(body.amount)) {
       return err("Insufficient balance", 402);
+    }
+
+    // Maker/checker: if a policy band is triggered, create a pending approval
+    // request instead of executing. An approver decides; the execute endpoint
+    // replays it. Below threshold (or no policy) → execute immediately.
+    const required = await resolveRequiredApprovals(
+      db,
+      user.orgId!,
+      "transfer.internal",
+      body.amount,
+      from.currency
+    );
+    if (required > 0) {
+      const req = await createApprovalRequest(db, {
+        orgId: user.orgId!,
+        actionType: "transfer.internal",
+        payload: {
+          fromAccountId: from.id,
+          toAccountId: to.id,
+          amount: body.amount,
+          note: body.note ?? null,
+          currency: from.currency,
+        },
+        amount: body.amount,
+        asset: from.currency,
+        requestedBy: user.id,
+        requiredApprovals: required,
+      });
+      await logAudit({
+        orgId: user.orgId,
+        actorType: "user",
+        actorId: user.id,
+        action: "approval_requested",
+        resourceType: "approval_request",
+        resourceId: req.id,
+        metadata: { actionType: "transfer.internal", amount: body.amount, requiredApprovals: required },
+      });
+      return ok(
+        { status: "pending_approval", approvalRequestId: req.id, requiredApprovals: required },
+        202
+      );
     }
 
     try {
