@@ -1,3 +1,4 @@
+import { createHmac, randomBytes } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import type { DbTx } from "@/lib/db/with-org";
@@ -94,6 +95,31 @@ export async function resolveActiveMembership(
         canExport: pm.canExport,
       }
     : null;
+}
+
+/** A ≥128-bit invite token; only its HMAC is stored (raw goes in the email link). */
+export function generateInviteToken(): string {
+  return randomBytes(32).toString("base64url");
+}
+export function hashInviteToken(token: string): string {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) throw new Error("AUTH_SECRET is not configured");
+  return createHmac("sha256", `${secret}:org-invite-v1`).update(token).digest("hex");
+}
+
+/** How many active owners the org has — used to enforce the ≥1-owner invariant. */
+export async function countActiveOwners(dbc: DbTx, orgId: string): Promise<number> {
+  const rows = await dbc
+    .select({ id: orgMembers.id })
+    .from(orgMembers)
+    .where(
+      and(
+        eq(orgMembers.orgId, orgId),
+        eq(orgMembers.role, "owner"),
+        eq(orgMembers.status, "active")
+      )
+    );
+  return rows.length;
 }
 
 /**
