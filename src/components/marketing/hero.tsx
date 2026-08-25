@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Lock, Zap, ArrowUpRight, Check } from "lucide-react";
 
@@ -10,12 +11,11 @@ interface HeroProps {
 export function Hero({ isAuthenticated }: HeroProps) {
   return (
     <section className="relative overflow-hidden bg-white">
-      {/* One faint brand wash, low and wide — never a blob-halo. */}
       <div
         aria-hidden
         className="pointer-events-none absolute right-[-8%] top-[-10%] -z-10 h-[520px] w-[620px] rounded-full bg-[#4ac280]/[0.06] blur-[130px]"
       />
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
         <div className="flex flex-col items-center gap-14 lg:flex-row lg:gap-16">
           {/* Left: the thesis */}
           <div className="hero-seq flex-1 text-center lg:text-left">
@@ -61,18 +61,27 @@ export function Hero({ isAuthenticated }: HeroProps) {
             </div>
           </div>
 
-          {/* Right: a payment settling in real time — the product, not a metaphor */}
+          {/* Right: a warm scene, with the product settling over it */}
           <div className="hero-card w-full flex-1">
-            <div className="relative mx-auto w-full max-w-[440px]">
-              {/* faint stacked card behind, for depth */}
-              <div
-                aria-hidden
-                className="absolute -right-3 -top-3 h-full w-full rounded-[22px] bg-[#122e2e]/[0.04] ring-1 ring-[#122e2e]/[0.05]"
-              />
-              <SettlementPanel />
-              <p className="mt-5 text-center text-xs text-[#122e2e]/40">
-                A payment settling on-chain, in real time.
-              </p>
+            <div className="relative mx-auto w-full max-w-[520px] pb-16 pl-4 sm:pb-10 sm:pl-0">
+              <div className="relative overflow-hidden rounded-[26px] shadow-[0_30px_70px_-32px_rgba(18,46,46,0.4)] ring-1 ring-[#122e2e]/[0.06]">
+                <Image
+                  src="/images/photos/trust-friends.jpg"
+                  alt="Two friends catching up over coffee, phone in hand"
+                  width={1600}
+                  height={1067}
+                  priority
+                  className="h-[380px] w-full object-cover object-center sm:h-[440px]"
+                />
+                {/* soft forest grade at the base so the floating card reads cleanly */}
+                <div
+                  aria-hidden
+                  className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#122e2e]/25 to-transparent"
+                />
+              </div>
+
+              {/* Fixed, compact settlement card — no gray stack, no edge badge */}
+              <SettledCard />
             </div>
           </div>
         </div>
@@ -81,61 +90,36 @@ export function Hero({ isAuthenticated }: HeroProps) {
   );
 }
 
-function SettlementPanel() {
+function SettledCard() {
   return (
-    <div className="relative rounded-[22px] bg-white p-6 shadow-[0_1px_2px_rgba(18,46,46,0.05),0_30px_60px_-30px_rgba(18,46,46,0.28)] ring-1 ring-[#122e2e]/[0.07]">
+    <div className="absolute bottom-0 left-0 w-[290px] rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(18,46,46,0.06),0_24px_48px_-24px_rgba(18,46,46,0.35)] ring-1 ring-[#122e2e]/[0.07] sm:left-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#122e2e] text-[#4ac280]">
             <ArrowUpRight className="h-4 w-4" />
           </span>
-          <span className="text-sm font-semibold text-[#122e2e]">Outbound payment</span>
+          <span className="text-sm font-semibold text-[#122e2e]">Payment settled</span>
         </div>
-        <span className="rounded-full bg-[#f6f6f6] px-2.5 py-1 text-[11px] font-semibold text-[#5b6b6b]">
-          SEPA · EUR
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#4ac280]/12 text-[#2f8f5c]">
+          <Check className="h-3 w-3" />
         </span>
       </div>
 
-      <p className="font-display mt-5 text-4xl font-semibold tabular-nums text-[#122e2e]">
+      <p className="font-display mt-4 text-[26px] font-semibold leading-none tabular-nums text-[#122e2e]">
         $250,000<span className="text-[#122e2e]/35">.00</span>
       </p>
-      <p className="mt-1 text-sm text-[#5b6b6b]">
-        To <span className="font-medium text-[#122e2e]">Acme GmbH</span> · verified beneficiary
+
+      <div className="mt-3 flex items-center justify-between text-[11px] font-medium">
+        <span className="tabular-nums text-[#5b6b6b]">Sent 14:22:07</span>
+        <span className="tabular-nums text-[#2f8f5c]">Settled 14:22:09</span>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#eef0ef]">
+        <div className="settle-bar h-full w-full rounded-full bg-gradient-to-r from-[#4ac280] to-[#2f8f5c]" />
+      </div>
+
+      <p className="mt-3 font-mono text-[11px] tabular-nums text-[#122e2e]/55">
+        1.8s · $0.00 fee · regulated rails
       </p>
-
-      {/* settlement rail — the one animated moment */}
-      <div className="mt-6">
-        <div className="flex items-center justify-between text-xs font-medium text-[#5b6b6b]">
-          <span className="tabular-nums">Sent 14:22:07</span>
-          <span className="tabular-nums text-[#2f8f5c]">Settled 14:22:09</span>
-        </div>
-        <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-[#eef0ef]">
-          <div className="settle-bar h-full w-full rounded-full bg-gradient-to-r from-[#4ac280] to-[#2f8f5c]" />
-        </div>
-      </div>
-
-      <div className="mt-6 grid grid-cols-3 gap-4 border-t border-[#122e2e]/[0.08] pt-5">
-        {[
-          { k: "Settlement", v: "1.8s" },
-          { k: "Network fee", v: "$0.00" },
-          { k: "Rails", v: "Regulated" },
-        ].map((s) => (
-          <div key={s.k}>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[#122e2e]/40">
-              {s.k}
-            </p>
-            <p className="mt-0.5 font-mono text-sm font-medium tabular-nums text-[#122e2e]">
-              {s.v}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* settled stamp */}
-      <div className="settle-dot absolute -right-3 top-16 flex items-center gap-1.5 rounded-full bg-[#122e2e] px-3 py-1.5 text-xs font-semibold text-white shadow-lg">
-        <Check className="h-3.5 w-3.5 text-[#4ac280]" />
-        Settled
-      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Wifi, SlidersHorizontal, Snowflake } from "lucide-react";
 import { MonetaCard } from "@/components/account/moneta-card";
 
@@ -55,14 +56,24 @@ export function CardShowcase() {
             </div>
           </div>
 
-          <div className="flex items-center justify-center">
-            <div className="relative w-full max-w-md">
-              {/* soft brand glow grounds the card on the light field */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 -z-10 mx-auto h-[70%] w-[80%] translate-y-6 rounded-full bg-[#4ac280]/[0.10] blur-[80px]"
-              />
-              <div className="drop-shadow-[0_30px_50px_rgba(18,46,46,0.22)]">
+          {/* A real tap-to-pay moment, with the card itself floating over it */}
+          <div className="flex justify-center">
+            <div className="relative w-full max-w-md pb-14">
+              <div className="relative overflow-hidden rounded-[26px] shadow-[0_30px_60px_-30px_rgba(18,46,46,0.35)] ring-1 ring-[#122e2e]/[0.06]">
+                <Image
+                  src="/images/photos/card-tap.jpg"
+                  alt="Paying by tapping a card at a café counter"
+                  width={1600}
+                  height={2000}
+                  className="h-[440px] w-full object-cover object-center"
+                />
+                <div
+                  aria-hidden
+                  className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[#0a1c1c]/55 to-transparent"
+                />
+              </div>
+              {/* the card, floating over the scene */}
+              <div className="absolute -bottom-2 left-1/2 w-[80%] max-w-[330px] -translate-x-1/2 drop-shadow-[0_24px_44px_rgba(18,46,46,0.4)]">
                 <MonetaCard
                   size="lg"
                   variant="forest"
