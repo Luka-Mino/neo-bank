@@ -8,9 +8,9 @@ interface NavbarProps {
 }
 
 const NAV_LINKS = [
-  { href: "/#features", label: "Product" },
+  { href: "/how-it-works", label: "How it works" },
+  { href: "/security", label: "Security" },
   { href: "/#card", label: "Card" },
-  { href: "/#trust", label: "Security" },
 ];
 
 export function Navbar({ isAuthenticated }: NavbarProps) {
