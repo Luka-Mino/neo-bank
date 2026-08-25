@@ -235,6 +235,44 @@
     box-shadow: 0 0 0 1px rgba(18, 46, 46, 0.24) inset;
   }
 
+  /* Smooth anchor scrolling (nav jumps glide). Off for reduced-motion. */
+  html {
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  /* Scroll-reveal: content rises + fades as it enters the viewport. An
+     IntersectionObserver on the landing page adds .is-visible. The hidden
+     start-state applies ONLY when scripting is enabled, so no-JS crawlers and
+     users see everything statically; reduced-motion shows it without animation.
+     Optional --reveal-delay staggers grouped items. */
+  @media (scripting: enabled) {
+    .reveal {
+      opacity: 0;
+      transform: translateY(26px);
+      transition:
+        opacity 0.7s cubic-bezier(0.2, 0.7, 0.3, 1),
+        transform 0.7s cubic-bezier(0.2, 0.7, 0.3, 1);
+      transition-delay: var(--reveal-delay, 0s);
+      will-change: opacity, transform;
+    }
+    .reveal.is-visible {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+
   html {
     color-scheme: light;
   }

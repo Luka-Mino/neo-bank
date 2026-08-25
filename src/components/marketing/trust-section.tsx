@@ -31,9 +31,9 @@ const marks = ["$250K pass-through", "256-bit AES", "KYC / AML", "24/7 monitorin
 
 export function TrustSection() {
   return (
-    <section id="trust" className="bg-[#122e2e] py-20 sm:py-28">
+    <section id="trust" className="scroll-mt-24 bg-[#122e2e] py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl">
+        <div className="reveal max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#4ac280]">
             Security &amp; compliance
           </p>
@@ -47,7 +47,7 @@ export function TrustSection() {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-px overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 sm:grid-cols-2">
+        <div className="reveal mt-12 grid gap-px overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 sm:grid-cols-2">
           {trustItems.map((item) => (
             <div key={item.title} className="flex gap-4 bg-[#122e2e] p-7">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#4ac280]/12 text-[#4ac280] ring-1 ring-[#4ac280]/20">

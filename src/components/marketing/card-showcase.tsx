@@ -24,9 +24,9 @@ const cardFeatures = [
 
 export function CardShowcase() {
   return (
-    <section id="card" className="relative overflow-hidden bg-white py-20 sm:py-28">
+    <section id="card" className="relative overflow-hidden scroll-mt-24 bg-white py-20 sm:py-28">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
+        <div className="reveal grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#2f8f5c]">
               Moneta card

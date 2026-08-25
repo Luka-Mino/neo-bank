@@ -156,7 +156,7 @@ const CHAPTERS = [
 
 export function ProductStory() {
   return (
-    <div id="features">
+    <div id="features" className="scroll-mt-24">
       {CHAPTERS.map((c, i) => (
         <section
           key={c.eyebrow}
@@ -165,7 +165,7 @@ export function ProductStory() {
           <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 md:py-28 lg:px-8">
             <div
               className={
-                "flex flex-col items-center gap-12 lg:gap-20 " +
+                "reveal flex flex-col items-center gap-12 lg:gap-20 " +
                 (i % 2 === 1 ? "lg:flex-row-reverse" : "lg:flex-row")
               }
             >
