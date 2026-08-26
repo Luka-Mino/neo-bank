@@ -32,7 +32,7 @@ const custody = [
   { icon: Coins, title: "Held as digital dollars", body: "Your balance is fully dollar-backed and redeemable 1:1 for US dollars — not a volatile asset." },
   { icon: Landmark, title: "On regulated rails", body: "Moneta runs on Dakota's regulated infrastructure; funds are held at established partner banks, not by us." },
   { icon: ShieldCheck, title: "FDIC pass-through", body: "Balances at partner banks are eligible for pass-through insurance up to $250,000." },
-  { icon: Scale, title: "Backed 1:1, always", body: "Every digital dollar is fully reserved and redeemable — no fractional games, no surprises." },
+  { icon: Scale, title: "Fully reserved", body: "Every dollar in your balance is backed by a real one at partner banks, and redeemable any time." },
 ];
 
 export default function SecurityPage() {

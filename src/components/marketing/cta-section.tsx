@@ -24,7 +24,7 @@ export function CtaSection() {
             </p>
             <div className="mt-8 flex justify-center">
               <Link href="/register" className="cta-primary">
-                Get started — it&apos;s free
+                Get started — free to open
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

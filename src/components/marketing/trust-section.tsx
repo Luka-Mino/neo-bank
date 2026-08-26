@@ -7,12 +7,12 @@ const trustItems = [
   {
     icon: ShieldCheck,
     title: "FDIC pass-through",
-    description: "Up to $250,000 in pass-through insurance via partner banks.",
+    description: "Eligible for FDIC pass-through insurance up to $250,000 via partner banks.",
   },
   {
     icon: Coins,
-    title: "Backed 1:1",
-    description: "Every digital dollar is redeemable for a real one, held at partner banks.",
+    title: "Fully reserved",
+    description: "Every dollar in your balance is backed by a real one held at partner banks.",
   },
   {
     icon: Lock,
@@ -22,11 +22,11 @@ const trustItems = [
   {
     icon: Scale,
     title: "Regulated & compliant",
-    description: "Licensed transmitter network, with full KYC / AML compliance.",
+    description: "Money movement through licensed, regulated partners, with full KYC / AML checks.",
   },
 ] as const;
 
-const marks = ["$250K pass-through", "256-bit AES", "KYC / AML", "24/7 monitoring"];
+const marks = ["Fully reserved", "256-bit AES", "KYC / AML", "24/7 monitoring"];
 
 export function TrustSection() {
   return (
@@ -40,8 +40,8 @@ export function TrustSection() {
             Security you don&apos;t have to think about
           </h2>
           <p className="mt-4 max-w-xl text-white/60">
-            Regulated partners, insured deposits, and enterprise-grade protection
-            built into every transaction — so trust is the default, not a feature
+            Regulated partners, funds held at established banks, and enterprise-grade
+            protection on every transaction — so trust is the default, not a feature
             you have to check.
           </p>
         </div>

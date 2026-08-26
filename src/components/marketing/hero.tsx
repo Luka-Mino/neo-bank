@@ -22,7 +22,7 @@ export function Hero({ isAuthenticated }: HeroProps) {
           <div className="hero-seq flex-1 text-center lg:text-left">
             <span className="inline-flex items-center gap-2 rounded-full bg-[#4ac280]/[0.12] px-3 py-1 text-xs font-medium text-[#4ac280] ring-1 ring-[#4ac280]/25">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#4ac280]" />
-              Stablecoin banking · regulated rails
+              Dollar banking · regulated rails
             </span>
 
             <h1 className="font-display mt-5 text-balance text-4xl font-semibold tracking-tight text-[#f6f6f6] md:text-5xl lg:text-[3.6rem] lg:leading-[1.04]">
@@ -31,8 +31,8 @@ export function Hero({ isAuthenticated }: HeroProps) {
             </h1>
 
             <p className="mx-auto mt-5 max-w-xl text-lg text-white/65 md:text-xl lg:mx-0">
-              Hold, send, and settle dollar-backed digital cash on-chain in
-              seconds — with the protection of regulated banking partners.
+              Hold, send, and settle dollar-backed digital cash in seconds —
+              with the protection of regulated banking partners.
             </p>
 
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
@@ -47,7 +47,7 @@ export function Hero({ isAuthenticated }: HeroProps) {
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 lg:justify-start">
               {[
-                { icon: ShieldCheck, label: "FDIC pass-through to $250K" },
+                { icon: ShieldCheck, label: "Funds held at partner banks" },
                 { icon: Lock, label: "Bank-grade encryption" },
                 { icon: Zap, label: "Settles in seconds" },
               ].map((chip) => (
@@ -105,7 +105,7 @@ function SettledCard() {
       </div>
 
       <p className="font-display mt-4 text-[26px] font-semibold leading-none tabular-nums text-[#f6f6f6]">
-        <CountUp value={250000} prefix="$" /><span className="text-white/35">.00</span>
+        <CountUp value={1200} prefix="$" /><span className="text-white/35">.00</span>
       </p>
 
       <div className="mt-3 flex items-center justify-between text-[11px] font-medium">
@@ -117,7 +117,7 @@ function SettledCard() {
       </div>
 
       <p className="mt-3 font-mono text-[11px] tabular-nums text-white/45">
-        1.8s · $0.00 fee · regulated rails
+        2s settlement · regulated rails
       </p>
     </div>
   );

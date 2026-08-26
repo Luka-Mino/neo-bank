@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const steps = [
   { n: "01", title: "Open your account", body: "Verify your identity in minutes and get real US account and routing numbers in your name — no branch, no paperwork." },
   { n: "02", title: "Add money", body: "Send a deposit to your details and it converts to digital dollars automatically — fully backed, and spendable the moment it settles." },
-  { n: "03", title: "Send, spend, settle", body: "Pay with the Moneta card or send on-chain. Transfers settle in seconds, any day, any hour — with the exact fee shown before you confirm." },
+  { n: "03", title: "Send, spend, settle", body: "Pay with the Moneta card or send money in seconds. Transfers settle any day, any hour — with the exact fee shown before you confirm." },
 ];
 
 const faster = [
@@ -87,7 +87,7 @@ export default function HowItWorksPage() {
             It&apos;s money, not a bet
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-white/65">
-            Your balance is dollars — backed 1:1, redeemable any time. Stablecoins
+            Your balance is dollars — fully reserved, redeemable any time. Stablecoins
             are just the rail underneath: no trading, no speculation, no watching a
             chart. The dollar you deposit is the dollar you spend.
           </p>

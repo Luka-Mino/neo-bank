@@ -104,7 +104,7 @@ function ReceiptVisual() {
   const lines = [
     ["Sent to your bank", "$1,000.00"],
     ["Transfer fee", "$1.20"],
-    ["Network fee", "$0.02"],
+    ["Processing fee", "$0.02"],
   ];
   return (
     <div className={CARD}>
@@ -138,14 +138,14 @@ function ReceiptVisual() {
 const CHAPTERS = [
   {
     eyebrow: "Get paid",
-    title: "Real account and routing numbers, minted for you",
+    title: "Real account and routing numbers, in your name",
     body: "The moment you’re verified, Moneta issues US bank details in your name. Point income at them once — deposits convert to digital dollars automatically and show up spendable.",
     visual: BankDetailsVisual,
   },
   {
     eyebrow: "Send",
     title: "Three seconds, not three business days",
-    body: "A transfer to another Moneta member settles on-chain while you watch. No cut-off times, no weekends, no “pending” limbo — the receipt shows the second it arrived.",
+    body: "A transfer to another Moneta member settles instantly while you watch. No cut-off times, no weekends, no “pending” limbo — the receipt shows the second it arrived.",
     visual: SendVisual,
   },
   {
