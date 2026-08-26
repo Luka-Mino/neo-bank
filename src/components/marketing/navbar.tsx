@@ -15,10 +15,10 @@ const NAV_LINKS = [
 
 export function Navbar({ isAuthenticated }: NavbarProps) {
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-[#122e2e]/[0.07] bg-white/80 backdrop-blur-xl">
+    <header className="fixed top-0 z-50 w-full border-b border-white/[0.07] bg-[#0a1c1c]/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center" aria-label="Moneta home">
-          <Logo variant="full" tone="forest" size={26} priority />
+          <Logo variant="full" tone="reverse" size={26} priority />
         </Link>
 
         <nav className="flex items-center gap-1 sm:gap-2">
@@ -26,7 +26,7 @@ export function Navbar({ isAuthenticated }: NavbarProps) {
             <Link
               key={l.href}
               href={l.href}
-              className="hidden rounded-full px-3 py-2 text-sm font-medium text-[#5b6b6b] transition-colors hover:text-[#122e2e] sm:block"
+              className="hidden rounded-full px-3 py-2 text-sm font-medium text-white/60 transition-colors hover:text-white sm:block"
             >
               {l.label}
             </Link>
@@ -43,7 +43,7 @@ export function Navbar({ isAuthenticated }: NavbarProps) {
             <>
               <Link
                 href="/login"
-                className="rounded-full px-3 py-2 text-sm font-medium text-[#122e2e] transition hover:bg-[#122e2e]/[0.04]"
+                className="rounded-full px-3 py-2 text-sm font-medium text-white/85 transition hover:bg-white/[0.06]"
               >
                 Log in
               </Link>

@@ -1,8 +1,7 @@
 import { ShieldCheck, Lock, Scale, Coins } from "lucide-react";
 
-// The one dark band on the page — deliberately. Trust is where a money product
-// earns gravitas, so the compliance proof gets the deep-forest ground and a
-// precise grid, no lifestyle photography.
+// Trust / compliance — the gravitas band. On a dark-first page it reads as a
+// defined, slightly-lifted panel with a precise credential grid.
 
 const trustItems = [
   {
@@ -31,7 +30,7 @@ const marks = ["$250K pass-through", "256-bit AES", "KYC / AML", "24/7 monitorin
 
 export function TrustSection() {
   return (
-    <section id="trust" className="scroll-mt-24 bg-[#122e2e] py-20 sm:py-28">
+    <section id="trust" className="scroll-mt-24 bg-[#0e2322] py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="reveal max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#4ac280]">
@@ -47,9 +46,9 @@ export function TrustSection() {
           </p>
         </div>
 
-        <div className="reveal mt-12 grid gap-px overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 sm:grid-cols-2">
+        <div className="reveal mt-12 grid gap-px overflow-hidden rounded-2xl bg-white/[0.08] ring-1 ring-white/[0.08] sm:grid-cols-2">
           {trustItems.map((item) => (
-            <div key={item.title} className="flex gap-4 bg-[#122e2e] p-7">
+            <div key={item.title} className="flex gap-4 bg-[#12302e] p-7">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#4ac280]/12 text-[#4ac280] ring-1 ring-[#4ac280]/20">
                 <item.icon className="h-5 w-5" />
               </div>
@@ -67,7 +66,7 @@ export function TrustSection() {
           {marks.map((m) => (
             <span
               key={m}
-              className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/70 ring-1 ring-white/10"
+              className="rounded-full bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-white/70 ring-1 ring-white/[0.08]"
             >
               {m}
             </span>

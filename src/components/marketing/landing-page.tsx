@@ -42,7 +42,7 @@ export function LandingPage({ isAuthenticated }: LandingPageProps) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white text-[#122e2e]">
+    <div className="min-h-screen bg-[#0a1c1c] text-[#eef3f1]">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-[#4ac280] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-[#122e2e]"

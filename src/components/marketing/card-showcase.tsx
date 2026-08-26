@@ -24,17 +24,17 @@ const cardFeatures = [
 
 export function CardShowcase() {
   return (
-    <section id="card" className="relative overflow-hidden scroll-mt-24 bg-white py-20 sm:py-28">
+    <section id="card" className="relative overflow-hidden scroll-mt-24 bg-[#0a1c1c] py-20 sm:py-28">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="reveal grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#2f8f5c]">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#4ac280]">
               Moneta card
             </p>
-            <h2 className="font-display mt-3 text-3xl font-semibold tracking-tight text-[#122e2e] md:text-4xl">
+            <h2 className="font-display mt-3 text-3xl font-semibold tracking-tight text-[#f6f6f6] md:text-4xl">
               Spend the balance directly
             </h2>
-            <p className="mt-3 max-w-md text-lg text-[#5b6b6b]">
+            <p className="mt-3 max-w-md text-lg text-white/65">
               Contactless, accepted everywhere Visa is. No annual fee, full
               control from the app.
             </p>
@@ -42,24 +42,27 @@ export function CardShowcase() {
             <div className="mt-8 flex flex-col gap-5">
               {cardFeatures.map((feature) => (
                 <div key={feature.title} className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4ac280]/10 text-[#2f8f5c] ring-1 ring-[#4ac280]/20">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#4ac280]/10 text-[#4ac280] ring-1 ring-[#4ac280]/20">
                     <feature.icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-[#122e2e]">
+                    <h3 className="text-sm font-semibold text-[#f6f6f6]">
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-[#5b6b6b]">{feature.description}</p>
+                    <p className="text-sm text-white/55">{feature.description}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* A real tap-to-pay moment, with the card itself floating over it */}
           <div className="flex justify-center">
             <div className="relative w-full max-w-md pb-14">
-              <div className="relative overflow-hidden rounded-[26px] shadow-[0_30px_60px_-30px_rgba(18,46,46,0.35)] ring-1 ring-[#122e2e]/[0.06]">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 -z-10 mx-auto h-[70%] w-[80%] translate-y-6 rounded-full bg-[#4ac280]/[0.16] blur-[90px]"
+              />
+              <div className="relative overflow-hidden rounded-[26px] shadow-[0_40px_70px_-32px_rgba(0,0,0,0.75)] ring-1 ring-white/[0.08]">
                 <Image
                   src="/images/photos/card-tap.jpg"
                   alt="Paying by tapping a card at a café counter"
@@ -69,11 +72,10 @@ export function CardShowcase() {
                 />
                 <div
                   aria-hidden
-                  className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[#0a1c1c]/55 to-transparent"
+                  className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[#0a1c1c]/70 to-transparent"
                 />
               </div>
-              {/* the card, floating over the scene */}
-              <div className="absolute -bottom-2 left-1/2 w-[80%] max-w-[330px] -translate-x-1/2 drop-shadow-[0_24px_44px_rgba(18,46,46,0.4)]">
+              <div className="absolute -bottom-2 left-1/2 w-[80%] max-w-[330px] -translate-x-1/2 drop-shadow-[0_28px_50px_rgba(0,0,0,0.6)]">
                 <MonetaCard
                   size="lg"
                   variant="forest"
