@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Wifi, SlidersHorizontal, Snowflake } from "lucide-react";
 import { MonetaCard } from "@/components/account/moneta-card";
+import { TiltCard } from "./tilt-card";
 
 const cardFeatures = [
   {
@@ -76,19 +77,21 @@ export function CardShowcase() {
                 />
               </div>
               <div className="absolute -bottom-2 left-1/2 w-[80%] max-w-[330px] -translate-x-1/2 drop-shadow-[0_28px_50px_rgba(0,0,0,0.6)]">
-                <MonetaCard
-                  size="lg"
-                  variant="forest"
-                  holder="Alex Morgan"
-                  card={{
-                    last4: "7891",
-                    cardType: "virtual",
-                    status: "active",
-                    expMonth: 12,
-                    expYear: 2028,
-                    network: "visa",
-                  }}
-                />
+                <TiltCard hint={false}>
+                  <MonetaCard
+                    size="lg"
+                    variant="forest"
+                    holder="Alex Morgan"
+                    card={{
+                      last4: "7891",
+                      cardType: "virtual",
+                      status: "active",
+                      expMonth: 12,
+                      expYear: 2028,
+                      network: "visa",
+                    }}
+                  />
+                </TiltCard>
               </div>
             </div>
           </div>

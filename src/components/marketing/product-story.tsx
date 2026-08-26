@@ -15,7 +15,7 @@ function SectionEyebrow({ children }: { children: React.ReactNode }) {
 }
 
 const CARD =
-  "mx-auto w-full max-w-md rounded-2xl bg-[#12302e] p-6 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.7)] ring-1 ring-white/[0.08]";
+  "hover-lift mx-auto w-full max-w-md rounded-2xl bg-[#12302e] p-6 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.7)] ring-1 ring-white/[0.08]";
 
 // ── Chapter 1 ───────────────────────────────────────────────────────────────
 

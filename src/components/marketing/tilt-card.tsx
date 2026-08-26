@@ -10,7 +10,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export function TiltCard({ children }: { children: React.ReactNode }) {
+export function TiltCard({
+  children,
+  hint = true,
+}: {
+  children: React.ReactNode;
+  hint?: boolean;
+}) {
   const frameRef = useRef<HTMLDivElement>(null);
   const raf = useRef<number>(0);
   const dragging = useRef(false);
@@ -135,9 +141,11 @@ export function TiltCard({ children }: { children: React.ReactNode }) {
         />
       </div>
       {/* Affordance hint */}
-      <p className="mt-3 text-center text-[11px] text-white/30">
-        Drag to spin
-      </p>
+      {hint && (
+        <p className="mt-3 text-center text-[11px] text-white/30">
+          Drag to spin
+        </p>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Lock, Zap, ArrowUpRight, Check } from "lucide-react";
+import { CountUp } from "./count-up";
 
 interface HeroProps {
   isAuthenticated?: boolean;
@@ -104,7 +105,7 @@ function SettledCard() {
       </div>
 
       <p className="font-display mt-4 text-[26px] font-semibold leading-none tabular-nums text-[#f6f6f6]">
-        $250,000<span className="text-white/35">.00</span>
+        <CountUp value={250000} prefix="$" /><span className="text-white/35">.00</span>
       </p>
 
       <div className="mt-3 flex items-center justify-between text-[11px] font-medium">

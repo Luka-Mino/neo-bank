@@ -41,9 +41,9 @@ export default function HowItWorksPage() {
 
       <section className="bg-[#0e2322] py-20 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="reveal grid gap-6 md:grid-cols-3">
             {steps.map((s) => (
-              <div key={s.n} className="rounded-2xl bg-[#12302e] p-7 ring-1 ring-white/[0.08]">
+              <div key={s.n} className="hover-lift rounded-2xl bg-[#12302e] p-7 ring-1 ring-white/[0.08]">
                 <span className="font-mono text-sm font-semibold tabular-nums text-[#4ac280]">
                   {s.n}
                 </span>
@@ -67,7 +67,7 @@ export default function HowItWorksPage() {
               Old rails wait for business hours. Ours don&apos;t.
             </h2>
           </div>
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
+          <div className="reveal mt-10 grid gap-5 sm:grid-cols-3">
             {faster.map((f) => (
               <div key={f.title}>
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#4ac280]/10 text-[#4ac280] ring-1 ring-[#4ac280]/20">

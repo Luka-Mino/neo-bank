@@ -233,6 +233,24 @@
     .ulink::after { transition: none; }
   }
 
+  /* Marquee strip — a duplicated row translated -50% loops seamlessly. Pauses
+     on hover; still under reduced-motion. */
+  @keyframes marquee-scroll { to { transform: translateX(-50%); } }
+  .marquee-track { animation: marquee-scroll 34s linear infinite; }
+  .marquee-wrap:hover .marquee-track { animation-play-state: paused; }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; }
+  }
+
+  /* Card lift on hover — subtle rise, calm. */
+  .hover-lift {
+    transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.25s ease;
+  }
+  .hover-lift:hover { transform: translateY(-4px); }
+  @media (prefers-reduced-motion: reduce) {
+    .hover-lift, .hover-lift:hover { transform: none; transition: none; }
+  }
+
   /* Light-ground secondary action — hairline pill, forest ink. Pairs with
      .cta-primary on the marketing page's light sections. */
   .cta-ghost {

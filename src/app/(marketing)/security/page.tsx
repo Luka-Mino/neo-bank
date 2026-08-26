@@ -59,9 +59,9 @@ export default function SecurityPage() {
           <h2 className="font-display text-2xl font-semibold tracking-tight text-[#f6f6f6] md:text-3xl">
             How we protect your account
           </h2>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="reveal mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {protections.map((p) => (
-              <div key={p.title} className="rounded-2xl bg-[#12302e] p-6 ring-1 ring-white/[0.08]">
+              <div key={p.title} className="hover-lift rounded-2xl bg-[#12302e] p-6 ring-1 ring-white/[0.08]">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#4ac280]/10 text-[#4ac280] ring-1 ring-[#4ac280]/20">
                   <p.icon className="h-5 w-5" />
                 </div>
@@ -89,9 +89,9 @@ export default function SecurityPage() {
             </p>
           </div>
 
-          <div className="mt-10 grid gap-5 sm:grid-cols-2">
+          <div className="reveal mt-10 grid gap-5 sm:grid-cols-2">
             {custody.map((c) => (
-              <div key={c.title} className="flex gap-4 rounded-2xl bg-[#12302e] p-6 ring-1 ring-white/[0.08]">
+              <div key={c.title} className="hover-lift flex gap-4 rounded-2xl bg-[#12302e] p-6 ring-1 ring-white/[0.08]">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#4ac280]/10 text-[#4ac280] ring-1 ring-[#4ac280]/20">
                   <c.icon className="h-5 w-5" />
                 </div>
