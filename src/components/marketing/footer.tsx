@@ -19,7 +19,7 @@ export function Footer() {
           </Link>
           <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-white/60">
             {links.map((l) => (
-              <Link key={l.href} href={l.href} className="transition-colors hover:text-white">
+              <Link key={l.href} href={l.href} className="ulink transition-colors hover:text-white">
                 {l.label}
               </Link>
             ))}

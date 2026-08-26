@@ -12,7 +12,7 @@ export default async function MarketingLayout({
 }) {
   const session = await auth();
   return (
-    <div className="min-h-screen bg-white text-[#122e2e]">
+    <div className="min-h-screen bg-[#0a1c1c] text-[#eef3f1]">
       <Navbar isAuthenticated={!!session} />
       <div className="h-16" aria-hidden />
       <main>{children}</main>

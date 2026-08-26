@@ -214,6 +214,25 @@
     .settle-dot { animation: none; opacity: 1; transform: none; }
   }
 
+  /* Underline that wipes in from the left on hover/focus — the calm-craft
+     workhorse for nav and footer links. Turquoise, respects reduced-motion. */
+  .ulink { position: relative; }
+  .ulink::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -2px;
+    height: 1.5px;
+    background: #4ac280;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.15, 1);
+  }
+  .ulink:hover::after,
+  .ulink:focus-visible::after { transform: scaleX(1); }
+  @media (prefers-reduced-motion: reduce) {
+    .ulink::after { transition: none; }
+  }
+
   /* Light-ground secondary action — hairline pill, forest ink. Pairs with
      .cta-primary on the marketing page's light sections. */
   .cta-ghost {

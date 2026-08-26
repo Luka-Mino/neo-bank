@@ -21,12 +21,12 @@ export function Navbar({ isAuthenticated }: NavbarProps) {
           <Logo variant="full" tone="reverse" size={26} priority />
         </Link>
 
-        <nav className="flex items-center gap-1 sm:gap-2">
+        <nav className="flex items-center gap-4 sm:gap-6">
           {NAV_LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className="hidden rounded-full px-3 py-2 text-sm font-medium text-white/60 transition-colors hover:text-white sm:block"
+              className="ulink hidden text-sm font-medium text-white/70 transition-colors hover:text-white sm:block"
             >
               {l.label}
             </Link>
