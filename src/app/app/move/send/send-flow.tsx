@@ -16,7 +16,7 @@ import { Avatar, Picker } from "@/components/app/picker";
 import { ReviewSheet } from "@/components/app/review-sheet";
 import { EmptyState, ErrorState, LoadingRows, Notice, SuccessState } from "@/components/app/states";
 import { postJson } from "@/components/app/api";
-import { useCustomer, useRecipients } from "@/components/app/data";
+import { shortAddress, useCustomer, usePayees, type Payee } from "@/components/app/data";
 import { Button, ButtonLink, TextLink } from "@/components/brand/button";
 import { checkAmount, formatUsd, parseAmount, toApiAmount } from "@/lib/money-input";
 import { queryKeys } from "@/lib/queries";
@@ -28,7 +28,7 @@ type Sent = { amount: number; fee: number | null; to: string; from: string; warn
 export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string | null }) {
   const qc = useQueryClient();
   const { verified, isLoading: customerLoading, isError: customerError, refetch: refetchCustomer } = useCustomer();
-  const { recipients, isLoading: recipientsLoading } = useRecipients(verified);
+  const { payees, isLoading: payeesLoading } = usePayees(verified);
   const { accounts } = useActiveAccounts();
 
   const [recipientId, setRecipientId] = useState(toId ?? "");
@@ -42,7 +42,7 @@ export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string
   useDefaultAccount(accountId, stableSetAccount, { preferId: fromId });
 
   const account = accounts.find((a) => a.id === accountId);
-  const recipient = recipients.find((r) => r.dakotaRecipientId === recipientId);
+  const recipient = payees.find((p) => p.destinationId === recipientId);
   const available = account ? Number(account.balance) : undefined;
   const amountCheck = checkAmount(amount, { available });
 
@@ -63,7 +63,10 @@ export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string
     } else {
       const res = await postJson<{ sendAmount?: string; warning?: string }>("/api/transactions", {
         amount: toApiAmount(amount),
-        destinationId: recipient.dakotaRecipientId,
+        // A saved wallet DESTINATION id (not the recipient id) — the server
+        // checks it against the org's destinations.
+        destinationId: recipient.destinationId,
+        ...(recipient.networkId ? { destinationNetworkId: recipient.networkId } : {}),
         accountId: account.id,
         sourceAsset: "USDC",
         destinationAsset: "USDC",
@@ -159,31 +162,26 @@ export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string
           }}
           className="space-y-6"
         >
-          <RecentRecipients
-            recipients={recipients.slice(0, 6)}
-            selected={recipientId}
-            onSelect={setRecipientId}
-            loading={recipientsLoading}
-          />
+          <RecentRecipients payees={payees.slice(0, 6)} selected={recipientId} onSelect={setRecipientId} loading={payeesLoading} />
 
           <Picker
             label="To"
             sheetTitle="Who are you paying?"
-            options={recipients.map((r) => ({ id: r.dakotaRecipientId, title: r.name, subtitle: "Arrives in seconds" }))}
+            options={payees.map((p) => ({ id: p.destinationId, title: p.name, subtitle: `USDC wallet ${shortAddress(p.address)}` }))}
             value={recipientId}
             onChange={setRecipientId}
             placeholder="Choose a recipient"
-            loading={recipientsLoading}
+            loading={payeesLoading}
             error={showErrors ? errors.recipient : undefined}
             empty={
               <>
-                You haven&apos;t saved anyone yet.
+                You haven&apos;t saved anyone to pay yet.
                 <div className="mt-3">
-                  <TextLink href="/recipients/new">Add a recipient</TextLink>
+                  <TextLink href="/app/move/recipients/new">Add someone</TextLink>
                 </div>
               </>
             }
-            footer={<TextLink href="/recipients/new" className="px-2 text-[14px]">Add someone new</TextLink>}
+            footer={<TextLink href="/app/move/recipients/new" className="px-2 text-[14px]">Add someone new</TextLink>}
           />
 
           <AccountPicker
@@ -224,6 +222,7 @@ export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string
           caption={<>to {recipient.name}</>}
           rows={[
             { label: "To", value: recipient.name },
+            { label: "Wallet", value: <span className="font-mono text-[13px]">{shortAddress(recipient.address)}</span> },
             { label: "From", value: `${accountName(account)} · ${formatUsd(Number(account.balance))}` },
             { label: "Arrives", value: "In seconds" },
           ]}
@@ -237,29 +236,29 @@ export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string
 }
 
 function RecentRecipients({
-  recipients,
+  payees,
   selected,
   onSelect,
   loading,
 }: {
-  recipients: { id: string; name: string; dakotaRecipientId: string }[];
+  payees: Payee[];
   selected: string;
   onSelect: (id: string) => void;
   loading: boolean;
 }) {
-  if (loading || recipients.length === 0) return null;
+  if (loading || payees.length === 0) return null;
   return (
     <div>
       <div className="mb-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/55">Recent</div>
       <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
-        {recipients.map((r) => {
-          const active = r.dakotaRecipientId === selected;
+        {payees.map((r) => {
+          const active = r.destinationId === selected;
           return (
             <button
-              key={r.id}
+              key={r.destinationId}
               type="button"
               aria-pressed={active}
-              onClick={() => onSelect(r.dakotaRecipientId)}
+              onClick={() => onSelect(r.destinationId)}
               className="flex w-16 shrink-0 flex-col items-center gap-1.5 rounded-[12px] py-1 outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_#4ac280]"
             >
               <span className={cn("rounded-full ring-2 ring-offset-2 transition", active ? "ring-turquoise" : "ring-transparent")}>
@@ -272,7 +271,7 @@ function RecentRecipients({
           );
         })}
         <Link
-          href="/recipients/new"
+          href="/app/move/recipients/new"
           className="flex w-16 shrink-0 flex-col items-center gap-1.5 rounded-[12px] py-1 outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_#4ac280]"
         >
           <span className="flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] border-dashed border-forest/25 text-forest/55">

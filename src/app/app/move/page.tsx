@@ -28,7 +28,7 @@ export default function AppMovePage() {
         {
           label: "Manage",
           items: [
-            { name: "Recipients", hint: "People and accounts you pay", href: "/recipients", icon: Users },
+            { name: "Recipients", hint: "People and accounts you pay", href: "/app/move/recipients", icon: Users },
           ],
         },
       ]}

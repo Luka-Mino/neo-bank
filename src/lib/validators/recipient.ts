@@ -63,8 +63,16 @@ export const createDestinationSchema = z
     };
 
     if (v.destinationType === "crypto") {
+      // networkId is optional: the route defaults it to the platform network
+      // (DAKOTA_NETWORK_ID), which the browser can't know and shouldn't pick.
       need("cryptoAddress", "Wallet address is required");
-      need("networkId", "Network is required");
+      if (v.cryptoAddress !== undefined && !/^0x[0-9a-fA-F]{40}$/.test(v.cryptoAddress)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["cryptoAddress"],
+          message: "Enter a valid wallet address (0x followed by 40 characters)",
+        });
+      }
     }
     if (v.destinationType === "fiat_us") {
       need("abaRoutingNumber", "Routing number is required");

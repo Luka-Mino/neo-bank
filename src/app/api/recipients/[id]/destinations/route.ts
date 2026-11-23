@@ -4,6 +4,7 @@ import { destinations } from "@/lib/db/schema";
 import {
   createDestination as createDakotaDestination,
 } from "@/lib/dakota/recipients";
+import { defaultNetworkId } from "@/lib/dakota/networks";
 import { createDestinationSchema } from "@/lib/validators/recipient";
 import {
   assertRecipientOwnership,
@@ -51,7 +52,8 @@ export const POST = apiHandler({
       destinationType: body.destinationType,
       name: body.name,
       cryptoAddress: body.cryptoAddress,
-      networkId: body.networkId,
+      networkId:
+        body.networkId ?? (body.destinationType === "crypto" ? defaultNetworkId() : undefined),
       assets: body.assets,
       abaRoutingNumber: body.abaRoutingNumber,
       abaWireRoutingNumber: body.abaWireRoutingNumber,
@@ -74,7 +76,10 @@ export const POST = apiHandler({
         dakotaDestinationId: dakotaDestination.id,
         destinationType: body.destinationType,
         label: body.name,
-        details: body as Record<string, unknown>,
+        details: {
+          ...body,
+          ...(body.destinationType === "crypto" && !body.networkId ? { networkId: defaultNetworkId() } : {}),
+        } as Record<string, unknown>,
       })
       .returning();
 

@@ -57,6 +57,16 @@ describe("createDestinationSchema", () => {
     ).toBe(false);
   });
 
+  it("defaults the crypto network server-side and rejects malformed addresses", () => {
+    const base = { destinationType: "crypto", name: "Alice's wallet" };
+    expect(
+      createDestinationSchema.safeParse({ ...base, cryptoAddress: "0x52908400098527886E0F7030069857D2E4169EE7" }).success
+    ).toBe(true);
+    for (const bad of ["0x1234", "52908400098527886E0F7030069857D2E4169EE7", "0xZZ908400098527886E0F7030069857D2E4169EE7", "0x52908400098527886E0F7030069857D2E4169EE7 "]) {
+      expect(createDestinationSchema.safeParse({ ...base, cryptoAddress: bad }).success, bad).toBe(false);
+    }
+  });
+
   it("requires the full IBAN shape including assets and capabilities", () => {
     const iban = {
       destinationType: "fiat_iban",

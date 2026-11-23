@@ -221,3 +221,51 @@ export function useRecipients(enabled = true) {
     refetch: q.refetch,
   };
 }
+
+// ── Payees: saved USDC wallet destinations (what Send can pay) ─────────────
+//
+// Send needs a DESTINATION id (a saved wallet), not a recipient id — the
+// server checks POST /api/transactions destinationId against destinations.
+// GET /api/destinations?type=crypto joins each wallet with its recipient.
+
+export type Payee = {
+  destinationId: string;
+  recipientId: string;
+  name: string;
+  address?: string;
+  networkId?: string;
+};
+
+export function shortAddress(a: string | undefined): string {
+  if (!a) return "USDC wallet";
+  return `${a.slice(0, 6)}…${a.slice(-4)}`;
+}
+
+export function usePayees(enabled = true) {
+  const q = useQuery({
+    queryKey: ["destinations", "crypto"],
+    queryFn: async () => {
+      const r = await fetch("/api/destinations?type=crypto");
+      if (!r.ok) throw new Error("destinations");
+      return r.json();
+    },
+    enabled: !DEMO_MODE && enabled,
+  });
+  const payees: Payee[] = DEMO_MODE
+    ? DEMO_RECIPIENTS.map((r, i) => ({
+        destinationId: r.dakotaRecipientId,
+        recipientId: r.id,
+        name: r.name,
+        address: `0x${String(i + 1).repeat(4)}a3f9c2b18e7d4c6f5a9b0e1d2c3b4a5f6e7d8${i}`.slice(0, 42),
+      }))
+    : (q.data?.data?.data ?? []).map(
+        (d: { dakotaDestinationId: string; recipientId: string; recipientName: string; details?: { cryptoAddress?: string; networkId?: string } }) => ({
+          destinationId: d.dakotaDestinationId,
+          recipientId: d.recipientId,
+          name: d.recipientName,
+          address: d.details?.cryptoAddress,
+          networkId: d.details?.networkId,
+        })
+      );
+  return { payees, isLoading: !DEMO_MODE && enabled && q.isLoading, isError: !DEMO_MODE && q.isError, refetch: q.refetch };
+}
