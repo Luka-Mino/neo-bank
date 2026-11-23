@@ -38,6 +38,27 @@ export async function rateLimit(
   return memoryRateLimit(ip, limit, windowMs);
 }
 
+/**
+ * Bucket key for API rate limits: client IP + the route, so each endpoint
+ * has its own budget. (Keying on IP alone made every limited endpoint share
+ * one counter — a few normal requests could exhaust a strict 5/15m endpoint
+ * like forgot-password.) ID-like path segments collapse to ":id" so varying
+ * an id in the URL can't mint fresh buckets.
+ */
+export function rateLimitKey(ip: string, pathname: string): string {
+  const route = pathname
+    .split("/")
+    .map((seg) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(seg) ||
+      /^[0-9A-Za-z]{20,}$/.test(seg) ||
+      /^\d+$/.test(seg)
+        ? ":id"
+        : seg
+    )
+    .join("/");
+  return `${ip}|${route}`;
+}
+
 export function getClientIp(request: Request): string {
   const realIp = request.headers.get("x-real-ip");
   if (realIp) return realIp.trim();

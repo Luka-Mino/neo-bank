@@ -63,9 +63,8 @@
 > - **nodemailer:** went to 10.6.1. A major, but a clean fit for our two-call SMTP usage.
 > - **Routing:** protected-by-default via `src/lib/route-access.ts` + `src/proxy.ts`, verified with demo mode off.
 > - **Sign-in:** lands on `/app`.
-> - **Still open:**
->   - The auth smoke test (password, magic link, 2FA) needs the local DB running.
->   - Read the Next 16.3–16.4 release notes.
+> - **Auth smoke test:** 15/15 pass (it found and fixed a shared rate-limit bucket).
+> - **Still open:** read the Next 16.3–16.4 release notes.
 
 ### 1.1 Commit and push today's work
 - [x] Review the diff by area (site, `/app`, cards backend, docs, migration).
@@ -98,7 +97,7 @@ Steps:
 - [x] `npm install -D shadcn@4.23.0`, then remove `shadcn` from `dependencies`.
 - [x] `npm audit --omit=dev`. Fix the remaining transitive issues with `npm audit fix` (never `--force`). Write any leftovers into this file with a reason.
 - [x] `npm run typecheck && npm run lint && npm test && npm run build`
-- [ ] Manual smoke test on the dev server:
+- [x] Manual smoke test on the dev server (2026-11-23: scripted, demo mode off, local DB — 15/15 pass: register, password, wrong password, 2FA setup/verify + backup codes, 2FA required/invalid/valid, magic link incl. 2FA enforcement + single-use + no replay, password reset, sign-out). It surfaced a rate-limit bug, now fixed (see 4.3):
   - password login
   - magic link
   - 2FA challenge
@@ -256,6 +255,12 @@ Per-screen checklist (copy into each PR):
 - [ ] After the 1.2 upgrade, review `src/lib/auth/config.ts` against the next-auth advisory: protected checks must **fail closed** on auth errors, never only test "session object exists".
 - [ ] Session lifetime and idle timeout appropriate for banking; logout everywhere on password change.
 - [ ] Rate limits on every auth endpoint; lockout/backoff on repeated failures.
+- [x] **Fixed 2026-11-23:** API rate limits were keyed on IP alone, so every limited endpoint
+      shared one counter and a few normal requests exhausted forgot-password's 5/15m budget.
+      Now keyed per IP + route via `rateLimitKey()` (ids collapse to `:id`).
+- [ ] **Rate-limit store is in-memory per server instance** (`src/lib/rate-limit.ts`). On Vercel,
+      the login brute-force guard and API limits reset per instance, so they are much weaker
+      than they look. Add a shared store (Upstash Redis via `REDIS_URL`) before real users.
 - [ ] Decide on passkeys (WebAuthn) as the phishing-resistant option (BACKLOG).
 
 ### 4.4 Deep security research (the request paused earlier)

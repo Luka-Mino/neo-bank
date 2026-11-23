@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { type ZodSchema } from "zod";
 import { auth } from "@/lib/auth/config";
-import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { rateLimit, rateLimitKey, getClientIp } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { withOrg, type DbTx } from "@/lib/db/with-org";
@@ -142,7 +142,11 @@ export function apiHandler<TBody = unknown, TParams = Record<string, string>>(
           };
           const ip = getClientIp(request);
           const windowMs = WINDOW_MS[config.window] || WINDOW_MS["1h"];
-          const rl = await rateLimit(ip, config.limit, windowMs);
+          const rl = await rateLimit(
+            rateLimitKey(ip, new URL(request.url).pathname),
+            config.limit,
+            windowMs
+          );
           if (!rl.allowed) {
             return err("Too many requests. Please try again later.", 429);
           }
