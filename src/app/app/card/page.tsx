@@ -121,7 +121,7 @@ export default function CardPage() {
         </div>
       </header>
 
-      <div className={cn(APP_CONTAINER, "-mt-24 lg:-mt-28 lg:grid lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)] lg:items-start lg:gap-10")}>
+      <div className={cn(APP_CONTAINER, "relative z-[1] -mt-24 lg:-mt-28 lg:grid lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)] lg:items-start lg:gap-10")}>
         {/* Card visual + switcher */}
         <div className="px-6 lg:px-0">
           {cardsQ.isLoading && !DEMO_MODE ? (

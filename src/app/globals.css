@@ -538,38 +538,28 @@ html:has(.app-shell) {
 .copper-fill {
   background: linear-gradient(135deg, #f0c99d 0%, #ad6a33 42%, #e6ab72 62%, #84491f 100%);
 }
-/* Three concentric copper hairlines, like the card's border. Set --r to the
-   element's radius; content needs >12px padding. */
+/* Two concentric copper hairlines, like the card's border. Set --r to the
+   element's radius; content needs >8px padding. */
 .engraved {
   --r: 22px;
   position: relative;
   border-radius: var(--r);
   box-shadow: inset 0 0 0 1px rgba(196, 128, 74, 0.6);
 }
-.engraved::before,
-.engraved::after {
+.engraved::before {
   content: "";
   position: absolute;
   pointer-events: none;
-  border: 1px solid;
-}
-.engraved::before {
   inset: 6px;
+  border: 1px solid rgba(196, 128, 74, 0.42);
   border-radius: calc(var(--r) - 6px);
-  border-color: rgba(196, 128, 74, 0.42);
 }
-.engraved::after {
-  inset: 10px;
-  border-radius: calc(var(--r) - 10px);
-  border-color: rgba(196, 128, 74, 0.24);
-}
-/* A horizontal engraved rule (three hairlines). */
+/* A horizontal engraved rule (two hairlines). */
 .rule-engraved {
-  height: 7px;
+  height: 5px;
   background:
     linear-gradient(rgba(196, 128, 74, 0.55), rgba(196, 128, 74, 0.55)) top / 100% 1px no-repeat,
-    linear-gradient(rgba(196, 128, 74, 0.36), rgba(196, 128, 74, 0.36)) center / 100% 1px no-repeat,
-    linear-gradient(rgba(196, 128, 74, 0.2), rgba(196, 128, 74, 0.2)) bottom / 100% 1px no-repeat;
+    linear-gradient(rgba(196, 128, 74, 0.3), rgba(196, 128, 74, 0.3)) bottom / 100% 1px no-repeat;
 }
 
 /* Hero entrance: the cards rise into place, then one sheen sweeps across.
@@ -619,11 +609,10 @@ html:has(.app-shell) {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 7px;
+  height: 5px;
   pointer-events: none;
   opacity: 0.75;
   background:
     linear-gradient(rgba(196, 128, 74, 0.55), rgba(196, 128, 74, 0.55)) top / 100% 1px no-repeat,
-    linear-gradient(rgba(196, 128, 74, 0.36), rgba(196, 128, 74, 0.36)) center / 100% 1px no-repeat,
-    linear-gradient(rgba(196, 128, 74, 0.2), rgba(196, 128, 74, 0.2)) bottom / 100% 1px no-repeat;
+    linear-gradient(rgba(196, 128, 74, 0.3), rgba(196, 128, 74, 0.3)) bottom / 100% 1px no-repeat;
 }

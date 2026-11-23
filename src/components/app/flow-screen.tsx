@@ -42,7 +42,9 @@ export function FlowScreen({
         </div>
       </header>
 
-      <div className={cn(APP_CONTAINER, "-mt-10 lg:-mt-12 lg:grid lg:grid-cols-[minmax(0,600px)_minmax(0,1fr)] lg:items-start lg:gap-8")}>
+      {/* relative z-[1]: the header band is a positioned layer, so content
+          pulled up over it must be positioned too or it renders underneath. */}
+      <div className={cn(APP_CONTAINER, "relative z-[1] -mt-10 lg:-mt-12 lg:grid lg:grid-cols-[minmax(0,600px)_minmax(0,1fr)] lg:items-start lg:gap-8")}>
         <section className="mx-3 rounded-[22px] bg-white p-5 shadow-[0_1px_0_rgba(18,46,46,0.04),0_10px_30px_-16px_rgba(18,46,46,0.25)] sm:mx-4 lg:mx-0 lg:p-8">
           {children}
         </section>
