@@ -42,13 +42,13 @@ export default function AppMorePage() {
             {
               name: "Team members",
               hint: "Invite people and set permissions",
-              href: "/team",
+              href: "/app/more/team",
               icon: Users2,
             },
             {
               name: "Approvals",
               hint: "Payments waiting for sign-off",
-              href: "/approvals",
+              href: "/app/more/approvals",
               icon: ClipboardCheck,
             },
           ],

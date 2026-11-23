@@ -157,7 +157,7 @@ export default function TransferPage() {
             ]}
             actions={
               <>
-                <ButtonLink href="/approvals" block>
+                <ButtonLink href="/app/more/approvals" block>
                   View approvals
                 </ButtonLink>
                 <Button variant="secondary" block onClick={reset}>

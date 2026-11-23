@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAccountsQuery } from "@/components/account/use-accounts";
+import { AccountManage } from "@/components/app/account-manage";
 import { ActivityRow } from "@/components/app/activity-row";
 import {
   accountTypeLabel,
@@ -199,6 +200,7 @@ export default function AppAccountPage({
               Account details
             </h2>
             <DetailsList account={account} />
+            <AccountManage account={account} />
           </div>
         </div>
       </div>

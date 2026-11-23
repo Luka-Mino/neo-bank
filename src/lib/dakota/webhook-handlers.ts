@@ -108,7 +108,7 @@ export async function onCardEvent(object: EventObject) {
       type: "card_update",
       title: "Your Moneta card is ready",
       body: "Your virtual card is active. Open Card to see its details.",
-      actionUrl: "/card",
+      actionUrl: "/app/card",
     });
   }
 }

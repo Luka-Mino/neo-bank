@@ -29,6 +29,7 @@ import {
   useTransactions,
 } from "@/components/app/data";
 import { NotificationBell } from "@/components/app/notification-bell";
+import { OpenAccountButton } from "@/components/app/account-manage";
 import { APP_CONTAINER } from "@/components/app/app-shell";
 import { ActivityRow } from "@/components/app/activity-row";
 import { cn } from "@/lib/utils";
@@ -171,6 +172,9 @@ export default function AppHomePage() {
                 ))
               )}
             </Section>
+            <div className="mx-4 mt-3 flex justify-end lg:mx-0">
+              <OpenAccountButton />
+            </div>
 
             {/* ── Cards ───────────────────────────────────────────────────── */}
             {cards.length > 0 && (
@@ -348,7 +352,7 @@ function CardListRow({
       : kind;
   return (
     <Link
-      href="/card"
+      href="/app/card"
       className="flex items-center gap-3 border-b border-forest/[0.06] px-4 py-4 transition-colors last:border-b-0 hover:bg-forest/[0.02] active:bg-forest/[0.04]"
     >
       <span
