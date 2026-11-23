@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CircleHelp, LayoutGrid, Lock, Menu, ShieldCheck, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { cn } from "@/lib/utils";
 import { SectionLink } from "./section-link";
+import { ButtonLink } from "@/components/brand/button";
+import { Icon } from "@/components/brand/icon";
 
 const PRODUCT_NAV = [
   { label: "Accounts", href: "/#accounts" },
@@ -45,11 +47,11 @@ export function SiteHeader({
           </nav>
           <div className="flex items-center gap-4">
             <Link href="/security" className="hidden items-center gap-1.5 hover:text-white sm:flex">
-              <ShieldCheck className="h-3.5 w-3.5" />
+              <Icon name="protection" size={15} className="[--icon-signal:#4ac280]" />
               Security centre
             </Link>
             <SectionLink href="/#help" className="flex items-center gap-1.5 hover:text-white">
-              <CircleHelp className="h-3.5 w-3.5" />
+              <Icon name="support" size={15} className="[--icon-signal:#4ac280]" />
               Help
             </SectionLink>
           </div>
@@ -64,13 +66,10 @@ export function SiteHeader({
 
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
-            <Link
-              href="/app"
-              className="flex items-center gap-2 rounded-full bg-forest px-5 py-2.5 text-[14px] font-semibold text-white transition hover:bg-forest-700"
-            >
-              <LayoutGrid className="h-4 w-4" />
+            <ButtonLink href="/app" size="sm">
+              <Icon name="accounts" size={18} className="[--icon-signal:#4ac280]" />
               Your accounts
-            </Link>
+            </ButtonLink>
           ) : (
             <>
               <Link
@@ -81,13 +80,10 @@ export function SiteHeader({
                 <br />
                 <span className="font-semibold text-turquoise-700">Open an account</span>
               </Link>
-              <Link
-                href="/login"
-                className="flex items-center gap-2 rounded-full bg-forest px-5 py-2.5 text-[14px] font-semibold text-white transition hover:bg-forest-700"
-              >
-                <Lock className="h-4 w-4" />
+              <ButtonLink href="/login" size="sm">
+                <Icon name="security" size={18} className="[--icon-signal:#4ac280]" />
                 Sign in
-              </Link>
+              </ButtonLink>
             </>
           )}
           <button

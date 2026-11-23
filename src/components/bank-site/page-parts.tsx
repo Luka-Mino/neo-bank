@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { ButtonLink } from "@/components/brand/button";
+import { IconDisc, type IconName } from "@/components/brand/icon";
 import { auth } from "@/lib/auth/config";
 import { SiteHeader } from "./site-header";
 import { SiteFooter } from "./site-footer";
@@ -142,25 +144,22 @@ export function ClosingCta({
           </h2>
           <p className="mt-2 max-w-[60ch] text-[15px] text-forest/65">{body}</p>
         </div>
-        <Link
-          href={cta.href}
-          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-forest px-6 py-3 text-[15px] font-semibold text-white transition hover:bg-forest-700"
-        >
-          {cta.label} <ArrowRight className="h-4 w-4" />
-        </Link>
+        <ButtonLink href={cta.href} size="lg" arrow className="shrink-0">
+          {cta.label}
+        </ButtonLink>
       </div>
     </section>
   );
 }
 
-/** White card with a turquoise icon disc — the standard feature tile. */
+/** White card with a brand icon disc (style A) — the standard feature tile. */
 export function IconCard({
-  icon: Icon,
+  icon,
   title,
   children,
   className,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: IconName;
   title: string;
   children: React.ReactNode;
   className?: string;
@@ -172,9 +171,7 @@ export function IconCard({
         className
       )}
     >
-      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-turquoise-50 text-turquoise-700 ring-1 ring-turquoise/25">
-        <Icon className="h-5 w-5" />
-      </span>
+      <IconDisc name={icon} size={48} />
       <h3 className="mt-4 text-[17px] font-semibold">{title}</h3>
       <p className="mt-1.5 text-[14px] leading-relaxed text-forest/65">{children}</p>
     </div>

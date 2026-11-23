@@ -27,11 +27,20 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Moneta — Stablecoin Banking, Done Right",
-  description: "Moneta is a stablecoin neobank — send, receive, and hold across networks on regulated rails.",
-  icons: {
-    icon: "/images/brand/moneta-icon-turquoise.svg",
+  // Absolute URLs for Open Graph / Twitter images and canonical links.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  title: "Moneta | Personal banking",
+  description:
+    "Checking, savings and a debit card in one place, built on regulated infrastructure.",
+  applicationName: "Moneta",
+  openGraph: {
+    type: "website",
+    siteName: "Moneta",
+    locale: "en_US",
   },
+  twitter: { card: "summary_large_image" },
+  // favicon.ico, icon.svg and apple-icon.png in src/app are picked up by
+  // Next's file conventions.
 };
 
 export default function RootLayout({

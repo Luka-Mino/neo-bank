@@ -218,9 +218,18 @@ Per-screen checklist (copy into each PR):
 > **For counsel (D6):** Terms §5 said balances "may be eligible for FDIC pass-through insurance". It now carries the site-wide USDC disclosure, marked `COUNSEL REVIEW` in `src/app/(public)/terms/page.tsx`. Please confirm the wording.
 
 ### 3.2 Apply brand assets (D2)
-- [ ] Icons style A on: Why Moneta, the security tiles, the help tiles, the product tiles.
-- [ ] Buttons style C site-wide: header Sign in, every CTA, the closing CTA band.
-- [ ] Use the shared components from 2.0 so site and app match.
+- [x] Icons style A on: Why Moneta, the security tiles, the help tiles, the product tiles.
+- [x] Buttons style C site-wide: header Sign in, every CTA, the closing CTA band.
+- [x] Use the shared components from 2.0 so site and app match.
+
+> **3.2 done 2026-11-23.** `IconCard`, the homepage, `/security` and `/how-it-works` use the style A disc and brand glyphs. The header, hero, quick links, security band, closing CTA and report panel use the style C `Button`/`ButtonLink`.
+>
+> **Card on the site (2026-11-23):** the approved **Smoked forest** card (the middle of the team showcase) is now a component, `src/components/brand/moneta-card-art.tsx`. It renders front, back and the showcase pair from the board's own CSS and coin art, so it stays sharp at any size. It appears in three places on the homepage:
+> - the hero, as the front-over-back pair;
+> - the card-controls tile;
+> - a new "The Moneta card" band (`#card-design`) showing front and back.
+> It's labelled as a design preview, with a note that the card is virtual at launch.
+> - [ ] Replace the "VISA" text stand-in with Visa's official artwork from the card program before launch.
 
 ### 3.3 Fill placeholders (D5)
 
@@ -241,17 +250,34 @@ Per-screen checklist (copy into each PR):
   - "redeemable 1:1"
 
   Today's build holds **USDC in Dakota wallets**. Rewrite accurately, e.g. "fully reserved by its issuer", and have counsel approve.
-- [ ] Confirm the FDIC correction (balances are **not** FDIC-insured) is consistent everywhere.
-- [ ] Remove "from the app" phrasing: there is no native app.
-- [ ] Verify every claim on `/security` is true in code, or remove it:
+- [x] Confirm the FDIC correction (balances are **not** FDIC-insured) is consistent everywhere.
+- [x] Remove "from the app" phrasing: there is no native app.
+- [x] Verify every claim on `/security` is true in code, or remove it:
   - two-factor "required again before any money moves"
   - "new sign-in alerts"
   - "brute-force protection"
   - "256-bit encryption at rest"
   - "verified email before you can transact"
 
+> **3.4 progress 2026-11-23.** I checked the claims against the code and rewrote the copy. The old custody wording is gone from the code: "with regulated partner banks", "held at established partner banks, not by us", "backed by a real one at partner banks", "redeemable 1:1" and "redeemable any time". It now says USDC is fully reserved by its issuer, held in a wallet for the account on Dakota's regulated infrastructure. This is marked `COUNSEL REVIEW` in `security/page.tsx` and **still needs counsel to approve it**.
+>
+> Other claims fixed:
+> - **2FA:** "required again before any money moves" is now "no money can move until two-step sign-in is on" (the code only requires 2FA to be enabled).
+> - **Card:** "set spending limits" and "report it lost or stolen" are removed. Neither exists yet.
+> - **Fees:** "exact fee before you confirm" now says fees are itemised on the receipt. Restore the original promise once the 2.x quote step ships.
+> - **Accounts:** "Account details in your name" is now "Your own deposit details". The account holder name comes from Dakota and may be Moneta's.
+> - **Cross-border:** "money across the world" is removed. We don't offer international transfers.
+> - **"From the app":** removed.
+>
+> **Verified email:** enforcement only looked at `RESEND_API_KEY`, so an SMTP-only setup skipped it. It now follows `isEmailDeliverable()` (Resend or SMTP), with tests.
+
 ### 3.5 Quality pass
-- [ ] Metadata and Open Graph images per page; favicon set; `sitemap.xml`, `robots.txt`.
+- [x] Metadata and Open Graph images per page; favicon set; `sitemap.xml`, `robots.txt`.
+  Done 2026-11-23:
+  - **Social image:** `src/app/opengraph-image.png` and `twitter-image.png` (1200×630, with the card), rendered from `/design/og`.
+  - **Icons:** Moneta `favicon.ico`, `icon.png` and `apple-icon.png`, rendered from `/design/app-icon`. They replace the stock Next.js favicon.
+  - **Metadata:** `metadataBase` plus canonicals.
+  - **Crawlers:** `robots.ts` keeps signed-in areas and the API out of search, and `/app` is `noindex`. `sitemap.ts` lists the public pages.
 - [ ] Lighthouse (performance / accessibility / SEO ≥ 90) on `/`, `/security`, `/login`.
 - [ ] Real-phone check (iOS Safari, Android Chrome).
 

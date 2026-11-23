@@ -46,8 +46,8 @@ export function SiteFooter() {
           <div>
             <Logo variant="full" tone="reverse" size={26} />
             <p className="mt-4 max-w-[30ch] text-[13px] leading-relaxed text-white/55">
-              Everyday banking built on regulated infrastructure, with funds
-              held at partner banks.
+              Everyday banking on regulated infrastructure, with your balance
+              held as fully reserved digital dollars.
             </p>
           </div>
           {COLUMNS.map((col) => (

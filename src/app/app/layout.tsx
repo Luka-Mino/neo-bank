@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Moneta",
+  // Signed-in area: never index.
+  robots: { index: false, follow: false },
 };
 
 export default function MobileAppLayout({

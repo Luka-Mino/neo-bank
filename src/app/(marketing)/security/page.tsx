@@ -1,18 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import {
-  ShieldCheck,
-  Lock,
-  Snowflake,
-  BellRing,
-  ShieldAlert,
-  UserCheck,
-  Coins,
-  Landmark,
-  Scale,
-  ChevronRight,
-  KeyRound,
-} from "lucide-react";
 import {
   ClosingCta,
   IconCard,
@@ -20,33 +6,43 @@ import {
   SectionHeading,
 } from "@/components/bank-site/page-parts";
 import { Ph } from "@/components/bank-site/placeholder";
+import { Icon, IconDisc, type IconName } from "@/components/brand/icon";
+import { ButtonLink } from "@/components/brand/button";
 
 export const metadata: Metadata = {
   title: "Security & trust — Moneta",
   description:
-    "How Moneta protects your account and where your money is actually held — regulated infrastructure, fully-backed digital dollars, and safeguards on from day one.",
+    "How Moneta protects your account and where your money is actually held: regulated infrastructure, fully reserved digital dollars, and safeguards you can see.",
+  alternates: { canonical: "/security" },
 };
 
-const protections = [
-  { icon: UserCheck, title: "Two-factor authentication", body: "An authenticator-app code on sign-in, and required again before any money moves." },
-  { icon: Snowflake, title: "Freeze in one tap", body: "Lock your card instantly from the app the moment something feels off." },
-  { icon: Lock, title: "Encrypted end to end", body: "256-bit encryption in transit and at rest — secrets are never stored in the clear." },
-  { icon: BellRing, title: "New sign-in alerts", body: "We flag logins from unfamiliar devices, so you always know who's in." },
-  { icon: ShieldAlert, title: "Brute-force protection", body: "Automated rate-limiting stops password-guessing before it can start." },
-  { icon: ShieldCheck, title: "Verified identity", body: "Full identity checks on every account, and a verified email before you can transact." },
+// Every claim below is checked against the code (LAUNCH-READINESS-PLAN 3.4):
+//  2FA gate → lib/auth/verification.ts assertMfaEnabled; encryption →
+//  lib/crypto/field.ts + lib/auth/totp.ts (AES-256-GCM), bcrypt passwords;
+//  sign-in alerts → lib/auth/login-devices.ts; rate limits → lib/rate-limit.ts;
+//  verified email → assertEmailVerified (enforced whenever email is configured).
+const protections: { icon: IconName; title: string; body: string }[] = [
+  { icon: "two-step", title: "Two-step sign-in", body: "A code from your authenticator app or email at sign-in. No money can move until two-step sign-in is on." },
+  { icon: "freeze", title: "Freeze in one tap", body: "Lock your card from your account the moment something feels off, and unlock it when you're ready." },
+  { icon: "security", title: "Encrypted in transit and at rest", body: "Every connection is encrypted. Sensitive details like your two-step secret are encrypted with AES-256 before they're stored, and passwords are only ever stored as a secure hash." },
+  { icon: "alerts", title: "New sign-in alerts", body: "We let you know when your account is signed in from a new device, so you always know who's in." },
+  { icon: "protection", title: "Brute-force protection", body: "Sign-in attempts are rate-limited, so repeated password guesses get locked out." },
+  { icon: "accounts", title: "Verified identity", body: "Full identity checks before any money can move, and a verified email address before you can transact." },
 ];
 
-const custody = [
-  { icon: Coins, title: "Held as digital dollars", body: "Your balance is fully dollar-backed and redeemable 1:1 for US dollars — not a volatile asset." },
-  { icon: Landmark, title: "On regulated rails", body: "Moneta runs on Dakota's regulated infrastructure; funds are held at established partner banks, not by us." },
-  { icon: ShieldCheck, title: "Plainly disclosed", body: "Your balance is USDC, fully reserved with cash and short-term US government securities. It isn't a bank deposit, so it isn't FDIC-insured — and we'll always say so." },
-  { icon: Scale, title: "Fully reserved", body: "Every dollar in your balance is backed by a real one at partner banks, and redeemable any time." },
+// COUNSEL REVIEW (D6): custody wording rewritten to match what the build does
+// (USDC in a Dakota wallet for the account). Approve before launch.
+const custody: { icon: IconName; title: string; body: string }[] = [
+  { icon: "reserve", title: "Held as digital dollars", body: "Your balance is USDC, a stablecoin designed to hold a steady value of one US dollar. It isn't a volatile asset." },
+  { icon: "transfer", title: "On regulated rails", body: "Deposits, withdrawals and transfers run on Dakota's regulated infrastructure and its banking partners." },
+  { icon: "protection", title: "Plainly disclosed", body: "USDC isn't a bank deposit, so it isn't FDIC-insured. We'll always say so plainly." },
+  { icon: "fees", title: "Fully reserved", body: "USDC is backed by cash and short-term US government securities held by its issuer, and you can withdraw to your bank whenever you like." },
 ];
 
-const yourPart = [
-  { icon: KeyRound, title: "Turn on two-factor sign-in", body: "It takes a minute in Settings and is the single best thing you can do." },
-  { icon: ShieldAlert, title: "Never share a code", body: "Moneta will never ask for your password or one-time codes by phone, text or email." },
-  { icon: Snowflake, title: "Freeze first, ask later", body: "If your card goes missing, freeze it straight away — you can unfreeze it any time." },
+const yourPart: { icon: IconName; title: string; body: string }[] = [
+  { icon: "two-step", title: "Turn on two-step sign-in", body: "It takes a minute in Settings and is the single best thing you can do." },
+  { icon: "protection", title: "Never share a code", body: "Moneta will never ask for your password or one-time codes by phone, text or email." },
+  { icon: "freeze", title: "Freeze first, ask later", body: "If your card goes missing, freeze it straight away. You can unfreeze it any time." },
 ];
 
 export default function SecurityPage() {
@@ -56,7 +52,7 @@ export default function SecurityPage() {
         crumb="Security centre"
         eyebrow="Security & trust"
         title="Your money, protected by default"
-        lead="Moneta runs on regulated infrastructure, your balance is held as fully-backed digital dollars, and every safeguard is on from the moment you open an account."
+        lead="Moneta runs on regulated infrastructure, your balance is held as fully reserved digital dollars, and no money can move until two-step sign-in is on."
         aside={<ReportPanel />}
       />
 
@@ -80,12 +76,13 @@ export default function SecurityPage() {
           <SectionHeading
             tone="dark"
             eyebrow="Where your money actually sits"
-            title="Not with us — with regulated partner banks"
+            title="Held as USDC, on regulated infrastructure"
             lead={
               <>
-                &ldquo;Digital dollars&rdquo; isn&apos;t a metaphor. Your balance
-                is a fully-reserved claim on real US dollars, held on regulated
-                rails and redeemable at any time.
+                Your balance is held as USDC, a digital dollar fully reserved
+                by its issuer with cash and short-term US government
+                securities, in a wallet for your account on Dakota&apos;s
+                regulated infrastructure.
               </>
             }
           />
@@ -95,9 +92,7 @@ export default function SecurityPage() {
                 key={c.title}
                 className="flex gap-4 rounded-[18px] border border-white/10 bg-white/[0.05] p-6"
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-turquoise/15 text-turquoise ring-1 ring-turquoise/30">
-                  <c.icon className="h-5 w-5" />
-                </span>
+                <IconDisc name={c.icon} size={44} className="ring-1 ring-turquoise/30" />
                 <div>
                   <h3 className="text-[17px] font-semibold">{c.title}</h3>
                   <p className="mt-1 text-[14px] leading-relaxed text-white/70">{c.body}</p>
@@ -106,8 +101,8 @@ export default function SecurityPage() {
             ))}
           </div>
           <p className="mt-8 max-w-2xl text-[14px] leading-relaxed text-white/65">
-            If something ever looks wrong, you can freeze your card instantly from
-            the app and reach our support team — no waiting on hold.
+            If something ever looks wrong, freeze your card straight away from
+            your account, then contact our support team.
           </p>
         </div>
       </section>
@@ -139,8 +134,8 @@ export default function SecurityPage() {
 function ReportPanel() {
   return (
     <aside className="rounded-[20px] bg-forest p-6 text-white shadow-[0_20px_50px_-30px_rgba(18,46,46,0.6)]">
-      <div className="flex items-center gap-2 text-[13px] font-semibold text-turquoise">
-        <ShieldAlert className="h-4 w-4" />
+      <div className="flex items-center gap-2 text-[13px] font-semibold text-turquoise [--icon-signal:#4ac280]">
+        <Icon name="protection" size={17} className="text-white" />
         Think you&apos;ve been targeted?
       </div>
       <ol className="mt-4 space-y-3 text-[14px] text-white/80">
@@ -155,18 +150,13 @@ function ReportPanel() {
         <li className="flex gap-3">
           <span className="font-mono text-turquoise">3</span>
           <span>
-            Contact us: <Ph className="text-[12px]">24/7 fraud line</Ph>
+            Contact us: <Ph className="text-[12px]">fraud contact (email, and hours)</Ph>
           </span>
         </li>
       </ol>
-      <Link
-        href="/login"
-        className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-turquoise px-4 py-2 text-[13px] font-semibold text-forest-900 transition hover:bg-turquoise-600"
-      >
-        <Snowflake className="h-3.5 w-3.5" />
+      <ButtonLink href="/login" variant="on-dark" size="sm" arrow className="mt-5">
         Sign in to freeze your card
-        <ChevronRight className="h-3.5 w-3.5" />
-      </Link>
+      </ButtonLink>
     </aside>
   );
 }

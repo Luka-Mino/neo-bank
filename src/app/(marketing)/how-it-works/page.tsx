@@ -1,28 +1,29 @@
 import type { Metadata } from "next";
-import { Clock, Globe, Receipt } from "lucide-react";
 import {
   ClosingCta,
   IconCard,
   PageHero,
   SectionHeading,
 } from "@/components/bank-site/page-parts";
+import type { IconName } from "@/components/brand/icon";
 
 export const metadata: Metadata = {
   title: "How it works — Moneta",
   description:
-    "How Moneta works: open an account, add money that converts to fully-backed digital dollars, and send or spend it — settling on regulated rails in seconds.",
+    "How Moneta works: open an account, add money that converts to fully reserved digital dollars, and send it to people you know in seconds.",
+  alternates: { canonical: "/how-it-works" },
 };
 
 const steps = [
-  { n: "01", title: "Open your account", body: "Verify your identity in minutes and get real US account and routing numbers in your name — no branch, no paperwork." },
-  { n: "02", title: "Add money", body: "Send a deposit to your details and it converts to digital dollars automatically — fully backed, and spendable the moment it settles." },
-  { n: "03", title: "Send, spend, settle", body: "Pay with the Moneta card or send money in seconds. Transfers settle any day, any hour — with the exact fee shown before you confirm." },
+  { n: "01", title: "Open your account", body: "Verify your identity in minutes and get your own US account and routing numbers for deposits — no branch, no paperwork." },
+  { n: "02", title: "Add money", body: "Send a deposit to your details and it converts to digital dollars automatically — fully reserved, and ready to use the moment it settles." },
+  { n: "03", title: "Send and spend", body: "Send money to people you've saved in seconds, any day of the week, or pay online with your virtual Moneta card. Every fee is itemised on your receipt." },
 ];
 
-const faster = [
-  { icon: Clock, title: "Seconds, not days", body: "No cut-off times, no weekends, no “pending” limbo. Payments settle while you watch." },
-  { icon: Globe, title: "Borders don't slow it down", body: "The same rails move money across the world as fast as across town." },
-  { icon: Receipt, title: "The cost is on the receipt", body: "No spread hidden in the exchange rate — you see the exact total before and after." },
+const faster: { icon: IconName; title: string; body: string }[] = [
+  { icon: "send", title: "Seconds, not days", body: "Payments to people you've saved settle in seconds. No cut-off times, and no waiting for Monday." },
+  { icon: "transfer", title: "Instant between your accounts", body: "Move money between your own Moneta accounts instantly, any time, for free." },
+  { icon: "fees", title: "The cost is on the receipt", body: "No spread hidden in an exchange rate. Every fee is itemised on your receipt." },
 ];
 
 export default function HowItWorksPage() {
@@ -84,7 +85,7 @@ export default function HowItWorksPage() {
           <SectionHeading
             tone="dark"
             title="It's money, not a bet"
-            lead="Your balance is dollars — fully reserved, redeemable any time. Stablecoins are just the rail underneath: no trading, no speculation, no watching a chart. The dollar you deposit is the dollar you spend."
+            lead="Your balance is held as USDC, a digital dollar fully reserved by its issuer. Stablecoins are just the rail underneath: no trading, no speculation, no watching a chart."
           />
         </div>
       </section>
