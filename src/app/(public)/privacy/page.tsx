@@ -1,22 +1,16 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { PageHero } from "@/components/bank-site/page-parts";
 
 export default function PrivacyPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back
-      </Link>
+    <>
+      <PageHero
+        crumb="Privacy policy"
+        title="Privacy Policy"
+        lead={<>Last updated: July 14, 2026</>}
+      />
+      <div className="mx-auto max-w-[1200px] px-4 py-12 lg:px-8 lg:py-16">
 
-      <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-      <p className="text-sm text-muted-foreground mb-8">
-        Last updated: July 14, 2026
-      </p>
-
-      <div className="prose prose-sm max-w-none space-y-6 text-foreground/80">
+      <div className="prose prose-sm max-w-3xl space-y-6 text-[15px] leading-relaxed text-forest/75 [&_h2]:text-[18px] [&_h2]:text-forest">
         <section>
           <h2 className="text-lg font-semibold text-foreground">1. Information We Collect</h2>
           <p>We collect information you provide directly:</p>
@@ -93,6 +87,7 @@ export default function PrivacyPage() {
           </p>
         </section>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

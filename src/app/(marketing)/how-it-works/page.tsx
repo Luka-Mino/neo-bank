@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight, Clock, Globe, Receipt } from "lucide-react";
+import { Clock, Globe, Receipt } from "lucide-react";
+import {
+  ClosingCta,
+  IconCard,
+  PageHero,
+  SectionHeading,
+} from "@/components/bank-site/page-parts";
 
 export const metadata: Metadata = {
   title: "How it works — Moneta",
@@ -23,93 +28,71 @@ const faster = [
 export default function HowItWorksPage() {
   return (
     <>
-      <section className="bg-[#0a1c1c]">
-        <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 sm:py-24 lg:px-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#4ac280]">
-            How it works
-          </p>
-          <h1 className="font-display mt-4 text-balance text-4xl font-semibold tracking-tight text-[#f6f6f6] md:text-5xl">
-            Digital dollars that move at internet speed
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-lg text-white/65">
-            Moneta holds your money as fully-backed digital dollars and moves it on
-            regulated rails — so sending money feels less like a bank transfer and
-            more like sending a message.
-          </p>
-        </div>
+      <PageHero
+        crumb="How it works"
+        eyebrow="How it works"
+        title="Digital dollars that move at internet speed"
+        lead="Moneta holds your money as fully-backed digital dollars and moves it on regulated rails — so sending money feels less like a bank transfer and more like sending a message."
+      />
+
+      <section className="mx-auto max-w-[1200px] px-4 py-16 lg:px-8 lg:py-20">
+        <SectionHeading eyebrow="Three steps" title="From sign-up to first payment" />
+        <ol className="mt-10 grid gap-5 md:grid-cols-3">
+          {steps.map((s, i) => (
+            <li
+              key={s.n}
+              className="relative rounded-[18px] border border-forest/[0.08] bg-white p-7 shadow-[0_1px_0_rgba(18,46,46,0.04),0_10px_30px_-24px_rgba(18,46,46,0.3)]"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-forest font-mono text-[14px] font-semibold text-turquoise">
+                {s.n}
+              </span>
+              <h3 className="mt-4 font-display text-[21px] font-semibold">{s.title}</h3>
+              <p className="mt-2 text-[14px] leading-relaxed text-forest/65">{s.body}</p>
+              {i < steps.length - 1 && (
+                <span
+                  aria-hidden
+                  className="absolute -right-3 top-12 hidden h-px w-6 bg-turquoise/50 md:block"
+                />
+              )}
+            </li>
+          ))}
+        </ol>
       </section>
 
-      <section className="bg-[#0e2322] py-20 sm:py-24">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="reveal grid gap-6 md:grid-cols-3">
-            {steps.map((s) => (
-              <div key={s.n} className="hover-lift rounded-2xl bg-[#12302e] p-7 ring-1 ring-white/[0.08]">
-                <span className="font-mono text-sm font-semibold tabular-nums text-[#4ac280]">
-                  {s.n}
-                </span>
-                <h3 className="font-display mt-3 text-xl font-semibold text-[#f6f6f6]">
-                  {s.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/60">{s.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-[#0a1c1c] py-20 sm:py-24">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#4ac280]">
-              Why it&apos;s faster
-            </p>
-            <h2 className="font-display mt-3 text-2xl font-semibold tracking-tight text-[#f6f6f6] md:text-3xl">
-              Old rails wait for business hours. Ours don&apos;t.
-            </h2>
-          </div>
-          <div className="reveal mt-10 grid gap-5 sm:grid-cols-3">
+      <section className="bg-marble">
+        <div className="mx-auto max-w-[1200px] px-4 py-16 lg:px-8 lg:py-20">
+          <SectionHeading
+            eyebrow="Why it's faster"
+            title="Old rails wait for business hours. Ours don't."
+          />
+          <div className="mt-10 grid gap-5 sm:grid-cols-3">
             {faster.map((f) => (
-              <div key={f.title}>
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#4ac280]/10 text-[#4ac280] ring-1 ring-[#4ac280]/20">
-                  <f.icon className="h-5 w-5" />
-                </div>
-                <h3 className="mt-4 text-base font-semibold text-[#f6f6f6]">{f.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-white/60">{f.body}</p>
-              </div>
+              <IconCard key={f.title} icon={f.icon} title={f.title}>
+                {f.body}
+              </IconCard>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-[#12302e] py-16 sm:py-20">
-        <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-          <h2 className="font-display text-2xl font-semibold tracking-tight text-white md:text-3xl">
-            It&apos;s money, not a bet
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-white/65">
-            Your balance is dollars — fully reserved, redeemable any time. Stablecoins
-            are just the rail underneath: no trading, no speculation, no watching a
-            chart. The dollar you deposit is the dollar you spend.
-          </p>
+      <section className="relative overflow-hidden bg-forest text-white">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-20 top-0 h-80 w-80 rounded-full bg-turquoise/20 blur-3xl"
+        />
+        <div className="relative mx-auto max-w-[1200px] px-4 py-16 lg:px-8 lg:py-20">
+          <SectionHeading
+            tone="dark"
+            title="It's money, not a bet"
+            lead="Your balance is dollars — fully reserved, redeemable any time. Stablecoins are just the rail underneath: no trading, no speculation, no watching a chart. The dollar you deposit is the dollar you spend."
+          />
         </div>
       </section>
 
-      <section className="bg-[#0a1c1c] py-20 sm:py-24">
-        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
-          <h2 className="font-display text-3xl font-semibold tracking-tight text-[#f6f6f6] md:text-4xl">
-            Try it with your first dollar
-          </h2>
-          <p className="mx-auto mt-4 max-w-md text-lg text-white/65">
-            Open an account in minutes and send your first payment the same day.
-          </p>
-          <div className="mt-8 flex justify-center">
-            <Link href="/register" className="cta-primary">
-              Open an account
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <ClosingCta
+        title="Try it with your first dollar"
+        body="Open an account in minutes and send your first payment the same day."
+      />
     </>
   );
 }
