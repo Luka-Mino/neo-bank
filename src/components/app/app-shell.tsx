@@ -50,7 +50,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="app-shell flex min-h-0 flex-1 flex-col bg-[#f3f5f4]">
+    <div
+      className="app-shell flex min-h-0 flex-1 flex-col bg-[#f3f5f4]"
+      // Contour texture for the .app-band header bands (see globals.css).
+      style={{ "--app-band-topo": "url(/images/patterns/topo-white.svg)" } as React.CSSProperties}
+    >
       <DesktopNav pathname={pathname} />
 
       {/* overscroll-none: no rubber-band, so pulling past the top never
@@ -157,7 +161,7 @@ function DesktopNav({ pathname }: { pathname: string }) {
           </Link>
         </div>
       </div>
-      <div className="h-px bg-white/[0.07]" />
+      <div className="h-px bg-copper-line/25" />
     </header>
   );
 }

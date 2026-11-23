@@ -23,7 +23,7 @@ export function HubScreen({
 }) {
   return (
     <div className="pb-8 lg:pb-14">
-      <header className="bg-forest text-white">
+      <header className="app-band text-white">
         <div
           className={cn(
             APP_CONTAINER,

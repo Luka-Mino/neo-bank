@@ -91,7 +91,7 @@ export default function AppAccountPage({
   return (
     <div className="pb-8 lg:pb-14">
       {/* ── Header band ─────────────────────────────────────────────── */}
-      <header className="relative bg-forest text-white">
+      <header className="app-band text-white">
         <div
           className={cn(
             APP_CONTAINER,

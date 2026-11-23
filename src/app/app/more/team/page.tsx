@@ -72,7 +72,7 @@ export default function TeamPage() {
 
   return (
     <div className="pb-10 lg:pb-16">
-      <header className="bg-forest text-white">
+      <header className="app-band text-white">
         <div className={cn(APP_CONTAINER, "px-5 pb-6 pt-[max(1.1rem,env(safe-area-inset-top))] lg:pb-10 lg:pt-8")}>
           <Link href="/app/more" className="-ml-1 inline-flex items-center gap-1 rounded-md px-1 py-0.5 text-[13.5px] font-medium text-white/70 hover:text-white">
             <svg viewBox="0 0 24 24" width={16} height={16} aria-hidden>

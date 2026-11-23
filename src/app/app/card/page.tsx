@@ -114,7 +114,7 @@ export default function CardPage() {
 
   return (
     <div className="pb-10 lg:pb-16">
-      <header className="bg-forest text-white">
+      <header className="app-band text-white">
         <div className={cn(APP_CONTAINER, "px-5 pb-28 pt-[max(1.5rem,env(safe-area-inset-top))] lg:pb-32 lg:pt-10")}>
           <h1 className="font-display text-[26px] font-semibold tracking-[-0.01em] lg:text-[32px]">Card</h1>
           <p className="mt-1 text-[14px] text-white/65">Your virtual Visa debit card.</p>

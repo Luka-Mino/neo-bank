@@ -100,7 +100,7 @@ export function ActivityList({ accountId }: { accountId: string | null }) {
 
   return (
     <div className="pb-10 lg:pb-16">
-      <header className="bg-forest text-white">
+      <header className="app-band text-white">
         <div className={cn(APP_CONTAINER, "px-5 pb-6 pt-[max(1.5rem,env(safe-area-inset-top))] lg:pb-10 lg:pt-10")}>
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0">

@@ -3,17 +3,10 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ArrowDownToLine,
-  ArrowLeftRight,
-  ArrowUpFromLine,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  PiggyBank,
-  Send,
-  Wallet,
-} from "lucide-react";
+import { ChevronRight, Eye, EyeOff } from "lucide-react";
+import { IconDisc, type IconName } from "@/components/brand/icon";
+import { MonetaCardArt } from "@/components/brand/moneta-card-art";
+import { GlyphBadge } from "@/components/app/states";
 import { Logo } from "@/components/shared/logo";
 import {
   useAccountsQuery,
@@ -35,11 +28,11 @@ import { ActivityRow } from "@/components/app/activity-row";
 import { cn } from "@/lib/utils";
 
 const ACTIONS = [
-  { name: "Send", href: "/app/move/send", icon: Send },
-  { name: "Transfer", href: "/app/move/transfer", icon: ArrowLeftRight },
-  { name: "Deposit", href: "/app/move/deposit", icon: ArrowDownToLine },
-  { name: "Withdraw", href: "/app/move/withdraw", icon: ArrowUpFromLine },
-] as const;
+  { name: "Send", href: "/app/move/send", glyph: "send" },
+  { name: "Transfer", href: "/app/move/transfer", glyph: "transfer" },
+  { name: "Deposit", href: "/app/move/deposit", glyph: "deposit" },
+  { name: "Withdraw", href: "/app/move/withdraw", glyph: "withdraw" },
+] as const satisfies readonly { name: string; href: string; glyph: IconName }[];
 
 export default function AppHomePage() {
   const { firstName, initials } = useDisplayName();
@@ -61,19 +54,14 @@ export default function AppHomePage() {
   return (
     <div className="pb-8 lg:pb-14">
       {/* ── Header band ─────────────────────────────────────────────── */}
-      <header className="relative overflow-hidden bg-forest text-white">
+      <header className="app-band overflow-hidden text-white">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage: "url(/images/patterns/topo-white.svg)",
-            backgroundSize: "900px",
-            backgroundPosition: "center top",
-          }}
+          className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-turquoise/20 blur-3xl lg:right-[10%] lg:h-96 lg:w-96"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-turquoise/25 blur-3xl lg:right-[10%] lg:h-96 lg:w-96"
+          className="pointer-events-none absolute -bottom-32 left-[8%] hidden h-72 w-72 rounded-full bg-copper-line/10 blur-3xl lg:block"
         />
 
         <div
@@ -82,6 +70,17 @@ export default function AppHomePage() {
             "relative px-5 pb-20 pt-[max(1.25rem,env(safe-area-inset-top))] lg:pb-28 lg:pt-10",
           )}
         >
+          {/* Desktop: your card, in the space the phone layout uses for the top row. */}
+          {cards[0] && (
+            <Link
+              href="/app/card"
+              aria-label="Your Moneta card"
+              className="absolute right-8 top-5 hidden w-[270px] -rotate-6 transition-transform duration-500 hover:-rotate-3 lg:block xl:w-[295px]"
+            >
+              <MonetaCardArt side="front" tint="smoked" last4={cards[0].last4 ?? "••••"} holder={firstName.toUpperCase()} />
+            </Link>
+          )}
+
           {/* Mobile-only top row — desktop has these in the top bar. */}
           <div className="relative flex items-center justify-between lg:hidden">
             <Logo variant="full" tone="reverse" size={24} priority />
@@ -105,7 +104,7 @@ export default function AppHomePage() {
           </p>
 
           <div className="relative mt-5">
-            <div className="flex items-center gap-2 text-[13px] text-white/65">
+            <div className="eyebrow flex items-center gap-2 text-[10.5px] text-copper-light">
               Total in your accounts
               <button
                 type="button"
@@ -137,7 +136,7 @@ export default function AppHomePage() {
         {/* ── Quick actions (overlaps the band) ───────────────────────── */}
         <section
           aria-label="Quick actions"
-          className="relative z-10 mx-4 -mt-12 grid grid-cols-4 rounded-[20px] bg-white px-2 py-4 shadow-[0_10px_30px_-12px_rgba(10,28,28,0.25)] lg:mx-0 lg:-mt-16 lg:divide-x lg:divide-forest/[0.07] lg:px-0 lg:py-3"
+          className="engraved relative z-10 mx-4 -mt-12 grid grid-cols-4 bg-white px-3 py-5 shadow-[0_18px_40px_-18px_rgba(10,28,28,0.35)] [--r:22px] lg:mx-0 lg:-mt-16 lg:px-4 lg:py-4"
         >
           {ACTIONS.map((a) => (
             <Link
@@ -145,9 +144,7 @@ export default function AppHomePage() {
               href={a.href}
               className="group flex flex-col items-center gap-2 rounded-xl py-1 lg:flex-row lg:justify-center lg:gap-3 lg:rounded-none lg:py-3"
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-turquoise-50 text-turquoise-700 ring-1 ring-turquoise/25 transition group-hover:bg-turquoise group-hover:text-white group-active:scale-95">
-                <a.icon className="h-[20px] w-[20px]" strokeWidth={2} />
-              </span>
+              <IconDisc name={a.glyph} size={48} className="transition group-hover:-translate-y-0.5 group-active:scale-95" />
               <span className="text-[12px] font-medium text-forest/80 lg:text-[15px] lg:font-semibold lg:text-forest">
                 {a.name}
               </span>
@@ -254,8 +251,8 @@ export default function AppHomePage() {
         </div>
 
         <p className="mx-6 mt-8 text-center text-[11px] leading-relaxed text-forest/45 lg:mt-12">
-          Built on Dakota&apos;s regulated infrastructure · funds held at
-          partner banks
+          Built on Dakota&apos;s regulated infrastructure · Your balance is
+          held as USDC and isn&apos;t FDIC-insured
         </p>
       </div>
     </div>
@@ -278,7 +275,7 @@ function Section({
   return (
     <section className={cn("mx-4 mt-6 lg:mx-0 lg:mt-8", className)}>
       <div className="mb-2 flex items-baseline justify-between px-1">
-        <h2 className="text-[15px] font-semibold text-forest">{title}</h2>
+        <h2 className="eyebrow text-[10.5px] text-copper">{title}</h2>
         {typeof aside === "string" ? (
           <span className="font-mono text-[13px] font-medium text-forest/60 tabular">
             {aside}
@@ -301,15 +298,12 @@ function AccountListRow({
   account: AccountRow;
   shown: boolean;
 }) {
-  const Icon = account.accountType === "savings" ? PiggyBank : Wallet;
   return (
     <Link
       href={`/app/accounts/${account.id}`}
       className="flex items-center gap-3 border-b border-forest/[0.06] px-4 py-4 transition-colors last:border-b-0 hover:bg-forest/[0.02] active:bg-forest/[0.04]"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-forest/[0.06] text-forest">
-        <Icon className="h-[18px] w-[18px]" />
-      </span>
+      <GlyphBadge name={account.accountType === "savings" ? "goals" : "accounts"} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="truncate text-[15px] font-semibold text-forest">
@@ -355,17 +349,8 @@ function CardListRow({
       href="/app/card"
       className="flex items-center gap-3 border-b border-forest/[0.06] px-4 py-4 transition-colors last:border-b-0 hover:bg-forest/[0.02] active:bg-forest/[0.04]"
     >
-      <span
-        aria-hidden
-        className={cn(
-          "relative flex h-9 w-14 shrink-0 items-end justify-end overflow-hidden rounded-md p-1",
-          frozen ? "bg-forest/40" : "moneta-hero-bg",
-        )}
-      >
-        <span className="absolute left-1.5 top-1.5 h-2 w-2.5 rounded-[2px] bg-[#d9c48a]/90" />
-        <span className="font-mono text-[8px] font-semibold text-white/85">
-          {card.last4}
-        </span>
+      <span aria-hidden className={cn("w-16 shrink-0", frozen && "opacity-60 grayscale-[0.6]")}>
+        <MonetaCardArt side="front" tint="smoked" last4={card.last4 ?? "••••"} label="" />
       </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-[15px] font-semibold text-forest">

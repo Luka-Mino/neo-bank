@@ -592,3 +592,38 @@ html:has(.app-shell) {
 @media (prefers-reduced-motion: reduce) {
   .anim-sheen { display: none; }
 }
+
+/* /app header bands: smoked glass + faint contours + an engraved copper rule
+   along the bottom edge, so every app screen opens like the card. */
+.app-band {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(135deg, #12302e 0%, #0e2725 45%, #0a1f1e 100%);
+}
+/* The faint contour layer comes from the --app-band-topo custom property
+   (set inline by the page) so this stylesheet has no url() to resolve. */
+.app-band::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--app-band-topo, none);
+  background-position: center top;
+  background-size: 900px;
+  opacity: 0.06;
+}
+.app-band::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 7px;
+  pointer-events: none;
+  opacity: 0.75;
+  background:
+    linear-gradient(rgba(196, 128, 74, 0.55), rgba(196, 128, 74, 0.55)) top / 100% 1px no-repeat,
+    linear-gradient(rgba(196, 128, 74, 0.36), rgba(196, 128, 74, 0.36)) center / 100% 1px no-repeat,
+    linear-gradient(rgba(196, 128, 74, 0.2), rgba(196, 128, 74, 0.2)) bottom / 100% 1px no-repeat;
+}

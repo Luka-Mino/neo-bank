@@ -24,7 +24,7 @@ export function FlowScreen({
 }) {
   return (
     <div className="pb-10 lg:pb-16">
-      <header className="bg-forest text-white">
+      <header className="app-band text-white">
         <div className={cn(APP_CONTAINER, "px-5 pb-16 pt-[max(1.1rem,env(safe-area-inset-top))] lg:pb-20 lg:pt-8")}>
           {back && (
             <Link

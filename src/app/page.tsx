@@ -62,11 +62,8 @@ function Hero() {
       />
       <div className="relative mx-auto grid max-w-[1200px] items-center gap-8 px-4 py-10 lg:grid-cols-[1.1fr_1fr] lg:gap-12 lg:px-8 lg:py-16">
         <div className="engraved bg-white/90 p-8 shadow-[0_24px_60px_-34px_rgba(18,46,46,0.45)] backdrop-blur-sm [--r:24px] lg:p-11">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-forest px-3 py-1 text-[12px] font-semibold text-white ring-1 ring-copper-line/60 ring-offset-2 ring-offset-white">
-            <Icon name="protection" size={15} className="text-white [--icon-signal:#4ac280]" />
-            Built on Dakota&apos;s regulated rails
-          </span>
-          <h1 className="mt-5 font-display text-[34px] font-semibold leading-[1.08] tracking-[-0.015em] lg:text-[46px]">
+          <p className="eyebrow text-copper">Personal banking</p>
+          <h1 className="mt-4 font-display text-[34px] font-semibold leading-[1.08] tracking-[-0.015em] lg:text-[46px]">
             Banking that keeps up with you
           </h1>
           <p className="mt-4 max-w-[46ch] text-[16px] leading-relaxed text-forest/70">
@@ -121,7 +118,7 @@ function Welcome() {
   return (
     <section className="mx-auto max-w-[1200px] px-4 py-16 lg:px-8 lg:py-20">
       <div className="text-center">
-        <p className="eyebrow text-copper">Moneta personal banking</p>
+        <p className="eyebrow text-copper">Everyday banking</p>
         <h2 className="mt-3 font-display text-[30px] font-semibold tracking-[-0.01em] lg:text-[38px]">
           Your money, in one clear place
         </h2>
@@ -488,11 +485,14 @@ function SecurityBand() {
             </div>
           ))}
         </div>
-        <p className="mt-8 flex items-center gap-2 text-[13px] text-white/70">
-          <Icon name="protection" size={17} className="text-white/80" />
-          Moneta will never ask for your password or one-time codes by phone,
-          text or email.
-        </p>
+        <div className="mt-8 flex flex-col gap-3 text-[13px] text-white/70 md:flex-row md:items-center md:justify-between">
+          <p className="flex items-center gap-2">
+            <Icon name="protection" size={17} className="text-white/80" />
+            Moneta will never ask for your password or one-time codes by phone,
+            text or email.
+          </p>
+          <p className="text-white/50">Built on Dakota&apos;s regulated infrastructure</p>
+        </div>
       </div>
     </section>
   );
