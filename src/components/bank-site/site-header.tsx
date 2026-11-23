@@ -8,10 +8,10 @@ import { cn } from "@/lib/utils";
 import { SectionLink } from "./section-link";
 
 const PRODUCT_NAV = [
-  { label: "Accounts", href: "/personal#accounts" },
-  { label: "Cards", href: "/personal#cards" },
-  { label: "Send & transfer", href: "/personal#transfers" },
-  { label: "Insights", href: "/personal#insights" },
+  { label: "Accounts", href: "/#accounts" },
+  { label: "Cards", href: "/#cards" },
+  { label: "Send & transfer", href: "/#transfers" },
+  { label: "Insights", href: "/#insights" },
   { label: "Security", href: "/security" },
   { label: "How it works", href: "/how-it-works" },
 ];
@@ -30,7 +30,7 @@ export function SiteHeader({
         <div className="mx-auto flex h-9 max-w-[1200px] items-center justify-between px-4 lg:px-8">
           <nav aria-label="Audience" className="flex h-full items-stretch">
             <Link
-              href="/personal"
+              href="/"
               aria-current="page"
               className="flex items-center bg-white/10 px-3 font-semibold text-white"
             >
@@ -48,7 +48,7 @@ export function SiteHeader({
               <ShieldCheck className="h-3.5 w-3.5" />
               Security centre
             </Link>
-            <SectionLink href="/personal#help" className="flex items-center gap-1.5 hover:text-white">
+            <SectionLink href="/#help" className="flex items-center gap-1.5 hover:text-white">
               <CircleHelp className="h-3.5 w-3.5" />
               Help
             </SectionLink>
@@ -58,7 +58,7 @@ export function SiteHeader({
 
       {/* Main bar */}
       <div className="mx-auto flex h-[72px] max-w-[1200px] items-center justify-between px-4 lg:px-8">
-        <Link href="/personal" aria-label="Moneta personal banking home">
+        <Link href="/" aria-label="Moneta personal banking home">
           <Logo variant="full" tone="forest" size={30} priority />
         </Link>
 

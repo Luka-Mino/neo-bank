@@ -6,10 +6,10 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Banking",
     links: [
-      { label: "Checking & savings", href: "/personal#accounts" },
-      { label: "Debit cards", href: "/personal#cards" },
-      { label: "Send & transfer", href: "/personal#transfers" },
-      { label: "Spending insights", href: "/personal#insights" },
+      { label: "Checking & savings", href: "/#accounts" },
+      { label: "Debit cards", href: "/#cards" },
+      { label: "Send & transfer", href: "/#transfers" },
+      { label: "Spending insights", href: "/#insights" },
     ],
   },
   {
@@ -17,14 +17,14 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     links: [
       { label: "How it works", href: "/how-it-works" },
       { label: "Security centre", href: "/security" },
-      { label: "Fees & limits", href: "/personal#help" },
+      { label: "Fees & limits", href: "/#help" },
     ],
   },
   {
     title: "Support",
     links: [
-      { label: "Help & FAQ", href: "/personal#help" },
-      { label: "Report fraud", href: "/personal#help" },
+      { label: "Help & FAQ", href: "/#help" },
+      { label: "Report fraud", href: "/#help" },
       { label: "Sign in", href: "/login" },
       { label: "Open an account", href: "/register" },
     ],

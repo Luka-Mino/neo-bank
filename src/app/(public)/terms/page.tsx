@@ -50,11 +50,16 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-foreground">5. Deposits and FDIC Insurance</h2>
+          {/* COUNSEL REVIEW (D6): replaced an FDIC pass-through claim that
+              doesn't apply to USDC balances. Wording matches the site-wide
+              disclosure in components/bank-site/site-footer.tsx. */}
+          <h2 className="text-lg font-semibold text-foreground">5. How Your Balance Is Held</h2>
           <p>
-            Deposits may be eligible for FDIC pass-through insurance up to
-            $250,000 per depositor through our partner banks, subject to
-            applicable requirements. Moneta itself is not FDIC-insured.
+            Your balance is held as USDC, a dollar-backed digital currency
+            fully reserved by its issuer with cash and short-term US government
+            securities. It is not a bank deposit and is not insured by the FDIC
+            or any government agency. Moneta is a financial technology company,
+            not a bank.
           </p>
         </section>
 

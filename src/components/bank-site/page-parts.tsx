@@ -54,7 +54,7 @@ export function PageHero({
       >
         <div>
           <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-[13px] text-forest/60">
-            <Link href="/personal" className="hover:text-forest hover:underline">
+            <Link href="/" className="hover:text-forest hover:underline">
               Personal banking
             </Link>
             <ChevronRight className="h-3.5 w-3.5" />

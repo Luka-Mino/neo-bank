@@ -77,7 +77,7 @@ function VariantB() {
             Open an account <ArrowRight className="h-4 w-4" />
           </Link>
           <span className="text-sm text-white/45">
-            FDIC pass-through · Bank-grade encryption · No hidden fees
+            Bank-grade encryption · No hidden fees
           </span>
         </div>
       </div>

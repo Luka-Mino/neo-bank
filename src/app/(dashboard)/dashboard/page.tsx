@@ -197,7 +197,7 @@ export default function DashboardPage() {
         >
           <ShieldCheck className="h-3.5 w-3.5" />
           <span className="text-[12px] font-medium">
-            Bank-grade · FDIC pass-through
+            Bank-grade security
           </span>
         </div>
       </div>

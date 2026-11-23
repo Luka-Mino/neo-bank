@@ -170,7 +170,7 @@ export default function DepositPage() {
                 </p>
               </div>
               <div className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
-                Held at FDIC partner banks
+                Held as USDC · not FDIC-insured
               </div>
             </div>
           </div>
@@ -288,10 +288,11 @@ export default function DepositPage() {
           <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
             <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <div>
-              <p className="text-sm font-medium">Your funds are protected</p>
+              <p className="text-sm font-medium">Where your money is held</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Deposits are held at FDIC-insured partner banks, eligible for
-                pass-through insurance up to $250,000 per depositor.
+                Your balance is held as USDC, a dollar-backed digital currency
+                fully reserved by its issuer. It is not a bank deposit and is not
+                insured by the FDIC.
               </p>
             </div>
           </div>
