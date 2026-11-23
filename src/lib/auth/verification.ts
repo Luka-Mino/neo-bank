@@ -1,15 +1,16 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
+import { isEmailDeliverable } from "@/lib/email";
 
 /**
  * Whether money-movement should require a verified email. Only enforced when
- * email is actually deliverable (RESEND_API_KEY set) — otherwise users can't
- * verify and we'd lock everyone out. So this activates automatically the
- * moment real email delivery is configured, and is inert before then.
+ * email is actually deliverable (Resend OR SMTP configured) — otherwise users
+ * can't verify and we'd lock everyone out. Previously this only checked
+ * RESEND_API_KEY, so an SMTP-only setup silently skipped the check.
  */
 function verificationEnforced(): boolean {
-  return Boolean(process.env.RESEND_API_KEY);
+  return isEmailDeliverable();
 }
 
 /**

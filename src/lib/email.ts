@@ -17,6 +17,16 @@ interface SendEmailParams {
 //   none set               → dev dry-run (logs, never sends)
 type Transport = (p: SendEmailParams) => Promise<void>;
 
+/**
+ * True when a real email transport is configured (same rule as
+ * resolveTransport below). Email verification is enforced exactly when this
+ * is true, so it covers SMTP as well as Resend.
+ */
+export function isEmailDeliverable(env: Record<string, string | undefined> = process.env): boolean {
+  const provider = env.EMAIL_PROVIDER ?? (env.SMTP_URL ? "smtp" : "resend");
+  return Boolean((provider === "smtp" && env.SMTP_URL) || env.RESEND_API_KEY);
+}
+
 function resolveTransport(): { name: string; send: Transport } | null {
   const provider =
     process.env.EMAIL_PROVIDER ?? (process.env.SMTP_URL ? "smtp" : "resend");
