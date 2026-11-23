@@ -9,6 +9,14 @@
       (also prototyped + reverted with the above; revive once real fees are set with Dakota)
 - [ ] Business accounts — drive 67% of neobank revenue globally
 - [ ] Developer fee (basis points) on Dakota transactions
+- [ ] Rewards on balances via Dakota's RD (Treasury-backed stablecoin) — raised by
+      our Dakota contact 2026-11-23 as "earning on customer deposits".
+      **This is a legal and business decision before it is a feature:**
+      - who receives the rewards (Moneta as float revenue, or users)
+      - state restrictions (our DAKOTA-PLAN notes RD is state-restricted)
+      - how consumer interest-like rewards are treated
+      - the site's "no rewards/investments" rule
+      Ask Dakota how it works for a consumer app before scoping.
 
 ## Growth & Acquisition
 - [ ] Referral/invite system — organic growth is 70%+ for top neobanks
@@ -24,6 +32,12 @@
 - [ ] Multi-currency support
 - [ ] Swap (crypto-to-crypto) flow in the UI
 - [ ] Balance history chart (Recharts on dashboard)
+- [ ] Physical Moneta card. The clear green "struck coin" designs are on the
+      brand-assets board. Dakota Cards docs describe **virtual** cards only;
+      ask Dakota about physical/custom printing, then pick a manufacturer and
+      order tinted-plastic samples.
+- [ ] Apple Pay / Google Pay. Needs Dakota support; digital card art must keep
+      the Visa mark top corner and the lower-left clear.
 
 ## Trust & Security
 - [ ] FDIC insurance badge + fund protection explainer

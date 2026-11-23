@@ -1,6 +1,39 @@
 # Card Issuing Plan — making Moneta's card real
 
-> Research date: 2026-07-15. Sources are current Stripe/Lithic/Marqeta docs
+> ## 2026-11-23 update — Dakota Cards is now the lead option
+>
+> Dakota launched **Dakota Platform**: one contract and one compliance program
+> covering accounts, payouts, treasury **and card programs**. Our Dakota contact
+> raised it directly as relevant to Moneta. Per Dakota's public docs
+> (docs.dakota.xyz → Cards), cards are **virtual Visa debit cards that spend
+> straight from the customer's Dakota wallet**. That is the wallet Moneta
+> already provisions per user, so the "funding fork" below (Stripe + Bridge vs.
+> JIT postfunding) disappears: Dakota decides authorizations against the wallet
+> balance itself.
+>
+> What it takes, at a high level (exact calls in `DAKOTA-CARDS-SPEC.md`):
+> 1. Dakota activates our account for Cards; each customer accepts the Cards terms.
+> 2. Create a **cardholder** for the customer and wait for approval.
+> 3. One-time **wallet card enablement** per wallet. This lets Dakota recover settled card spend.
+> 4. **Issue** the card, then freeze / unfreeze / close / rename / limit it.
+> 5. Show the card number, expiry and CVV with **Cards.js**. Card data never
+>    touches our servers, which keeps us out of PCI scope.
+> 6. Card events arrive on the **same webhook stream** we already consume.
+>
+> **Implications.** No separate issuer, no Stripe Issuing application, and no
+> 2-second authorization webhook of our own. `ISSUING_PROVIDER=dakota` selects
+> the new `DakotaCardProvider` in `src/lib/card-issuer.ts`. The Stripe Issuing
+> path below stays as the documented **fallback**.
+>
+> **Open questions for Dakota:**
+> - Physical cards. The docs describe virtual only, and our card designs are physical.
+> - Custom card art.
+> - Apple Pay / Google Pay.
+> - Fees and BIN sponsor.
+>
+> ---
+>
+> Original research (Stripe-led), kept for reference — Research date: 2026-07-15. Sources are current Stripe/Lithic/Marqeta docs
 > (linked at bottom). Today the card is a **visual mock** (`src/lib/cards.ts`
 > — "no real issuer call"). This plan turns it into a real card that spends
 > against a user's stablecoin balance. **Not being built end-to-end yet:**

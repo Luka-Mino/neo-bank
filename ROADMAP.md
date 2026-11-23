@@ -5,6 +5,11 @@
 > Deep Dakota reference: `DAKOTA-PLAN.md`. Parked ideas: `BACKLOG.md`.
 > Session context for future work: `HANDOFF.md`.
 
+> **Current execution plan (2026-11-23): [`LAUNCH-READINESS-PLAN.md`](LAUNCH-READINESS-PLAN.md).**
+> A detailed, tick-as-you-go list across five phases: secure the base, finish
+> the logged-in app, finish the public site, security hardening, and Dakota
+> go-live. This file stays the milestone view.
+
 ## The goal — what "achieved" looks like
 
 A stranger with no help from us can: visit the site → open an account →
@@ -133,6 +138,13 @@ rail → deposit page shows real virtual account numbers →
 `send_amount` fee accounting on the receipt) → simulated ACH return claws
 back with notification. ($2/txn sandbox cap.)
 
+**Cards drill (added 2026-11-23, Dakota Cards; see `DAKOTA-CARDS-SPEC.md`).**
+1. With `ISSUING_PROVIDER=dakota`: customer accepts Cards terms → cardholder approved → wallet enabled for cards → issue a virtual card.
+2. Cards.js reveals the number in the UI.
+3. Simulate an authorization: the hold lands on the wallet, it clears, and the ledger matches.
+4. Freeze, try another authorization, and check it is declined. Unfreeze.
+5. Refund.
+
 ## M3 — Production readiness  (after M2)
 
 **How / items:**
@@ -162,9 +174,12 @@ end-to-end for at least one person who isn't us.
 ## M5 — Post-launch growth (parked — see BACKLOG.md)
 
 Revenue (`developer_fee_bps`, premium tiers), real transaction
-categorization for Insights, savings APY (treasury partner), card issuing
-partner (Lithic/Marqeta/Stripe Issuing — separate integration), referrals,
-passkey-endorsed transactions, external crypto sends, multi-currency.
+categorization for Insights, savings APY or rewards (Dakota RD treasury: a
+legal and business decision first, see BACKLOG), referrals, passkey-endorsed
+transactions, external crypto sends, multi-currency.
+
+(Card issuing left this list on 2026-11-23. Dakota Cards replaces the separate
+issuer partner and is now part of M2, above.)
 
 ---
 
@@ -176,11 +191,17 @@ passkey-endorsed transactions, external crypto sends, multi-currency.
   dedupe replays, clawback exactly once, holds refund exactly once.
 - Unused ideas go to BACKLOG.md, not into scope.
 
-## Blockers needing YOU (as of 2026-07-14)
+## Blockers needing YOU (as of 2026-11-23)
 
-1. **Dakota sandbox credentials** — email was expected ~2026-07-09; now ~5
-   days overdue, chase sales. Gates M2 (and everything after). This is the
-   single blocker between "everything we can build is built" and going live.
+1. **Dakota sandbox credentials.** Still the single blocker for M2 and
+   everything after it.
+   - **New route (2026-11-23):** our Dakota contact reached out directly on
+     Telegram about Dakota Platform (cards + treasury + one compliance program).
+     Reply there rather than through the sales form.
+   - **What to ask for:** a sandbox dashboard account plus API key, and Cards
+     activation for our account.
+   - **Open card questions:** physical/custom cards, card art, Apple/Google Pay, fees.
+   - **Once the key arrives:** it goes into `.env.local` (never into chat).
 2. ~~Supabase decision~~ **RESOLVED 2026-07-10**: the "neo bank" project
    was paused, not deleted — resumed via the dashboard (Pro org; compute
    bills while running). Migrated to 0013, drizzle bookkeeping seeded,

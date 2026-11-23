@@ -3,6 +3,23 @@
 > Written 2026-07-08 from a full read of docs.dakota.xyz (all guide pages + API reference)
 > plus a survey of our current code. This is the roadmap for taking Moneta from
 > demo-mode to running on real Dakota rails.
+>
+> **2026-11-23 update — Dakota Platform.** Dakota now sells one platform: one
+> contract, one compliance program, and flows that run under Dakota's licences.
+> It covers:
+> - USD accounts with US account details
+> - cross-border payouts
+> - **treasury**: RD, Dakota's Treasury-backed stablecoin, redeemable 1:1, with rewards on balances
+> - **card programs**: virtual Visa debit cards spending from the Dakota wallet; spec in `DAKOTA-CARDS-SPEC.md`
+>
+> Their one-pager also lists FinCEN registration, state money-transmitter
+> licences, SOC 2, an OCC charter application filed July 2026, and partner banks
+> including Lead Bank and BMO.
+>
+> Effect on this plan:
+> - Cards move from "separate issuer later" into the Dakota integration (see CARD-ISSUING-PLAN.md).
+> - RD rewards are a backlog decision, not scope. We stay **USDC-only** for balances until that's decided.
+> - Our contact reached out directly, so that is now the sandbox route (see ROADMAP blockers).
 
 ---
 
