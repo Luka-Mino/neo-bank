@@ -283,6 +283,12 @@ Per-screen checklist (copy into each PR):
 
 ---
 
+### Deploys (found 2026-11-23)
+- [x] Vercel deploys had failed on every push since 2026-07-14 (8f46534). That commit added `vercel.json` crons running every 10 minutes (reconcile) and hourly (recurring transfers), and the Hobby plan only allows daily crons, so it rejects the whole deployment. All three crons are now daily.
+- [ ] Before real users: move to Vercel Pro and restore `*/10 * * * *` for `/api/dakota/reconcile` and `0 * * * *` for `/api/transfers/recurring/run`. Alternatively, call them from an external scheduler with `CRON_SECRET`.
+
+---
+
 ## Phase 4 — Security hardening (parallel; all before real users) 🟥
 
 ### 4.1 Org isolation: finish the RLS enforce step (`ORG-FOUNDATION-SPEC.md`)

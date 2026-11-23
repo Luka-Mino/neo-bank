@@ -3,11 +3,11 @@
   "crons": [
     {
       "path": "/api/dakota/reconcile",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 4 * * *"
     },
     {
       "path": "/api/transfers/recurring/run",
-      "schedule": "0 * * * *"
+      "schedule": "0 5 * * *"
     },
     {
       "path": "/api/maintenance/cleanup",
