@@ -4,10 +4,10 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { ClosingCta, SiteShell } from "@/components/bank-site/page-parts";
 import { SectionLink } from "@/components/bank-site/section-link";
-import { Ph, PhotoPlaceholder } from "@/components/bank-site/placeholder";
+import { Ph } from "@/components/bank-site/placeholder";
 import { ButtonLink } from "@/components/brand/button";
 import { Icon, IconDisc, type IconName } from "@/components/brand/icon";
-import { MonetaCardArt, MonetaCardPair } from "@/components/brand/moneta-card-art";
+import { CoinSeal, MonetaCardArt, MonetaCardPair } from "@/components/brand/moneta-card-art";
 
 export const metadata: Metadata = {
   title: "Moneta | Personal banking",
@@ -48,10 +48,10 @@ export default function PersonalBankingPage() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-turquoise-50">
+    <section className="bg-stone-field relative overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.09]"
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
         style={{
           // Seamless tile (generated from a periodic height field), so
           // repeats line up with no visible seams.
@@ -61,8 +61,8 @@ function Hero() {
         }}
       />
       <div className="relative mx-auto grid max-w-[1200px] items-center gap-8 px-4 py-10 lg:grid-cols-[1.1fr_1fr] lg:gap-12 lg:px-8 lg:py-16">
-        <div className="rounded-[20px] bg-white p-7 shadow-[0_20px_50px_-30px_rgba(18,46,46,0.35)] lg:p-10">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-forest px-3 py-1 text-[12px] font-semibold text-white">
+        <div className="engraved bg-white/90 p-8 shadow-[0_24px_60px_-34px_rgba(18,46,46,0.45)] backdrop-blur-sm [--r:24px] lg:p-11">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-forest px-3 py-1 text-[12px] font-semibold text-white ring-1 ring-copper-line/60 ring-offset-2 ring-offset-white">
             <Icon name="protection" size={15} className="text-white [--icon-signal:#4ac280]" />
             Built on Dakota&apos;s regulated rails
           </span>
@@ -84,8 +84,8 @@ function Hero() {
         </div>
 
         <figure className="relative mx-auto w-full max-w-[460px] py-2">
-          <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-turquoise/30 blur-3xl" />
-          <MonetaCardPair tint="smoked" className="relative" />
+          <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-turquoise/25 blur-3xl" />
+          <MonetaCardPair tint="smoked" animate className="relative" />
           <figcaption className="relative -mt-2 text-center text-[12px] text-forest/55">
             The Moneta card · Smoked forest · design preview
           </figcaption>
@@ -97,7 +97,8 @@ function Hero() {
 
 function NoticeStrip() {
   return (
-    <div className="border-y border-forest/[0.08] bg-marble">
+    <div className="bg-white">
+      <div aria-hidden className="rule-engraved" />
       <p className="mx-auto max-w-[1200px] px-4 py-3 text-center text-[13px] text-forest/75 lg:px-8">
         <span className="font-semibold text-forest">How your money moves:</span>{" "}
         deposits arrive by ACH or wire through Dakota&apos;s regulated rails and
@@ -120,7 +121,7 @@ function Welcome() {
   return (
     <section className="mx-auto max-w-[1200px] px-4 py-16 lg:px-8 lg:py-20">
       <div className="text-center">
-        <p className="eyebrow text-turquoise-700">Moneta personal banking</p>
+        <p className="eyebrow text-copper">Moneta personal banking</p>
         <h2 className="mt-3 font-display text-[30px] font-semibold tracking-[-0.01em] lg:text-[38px]">
           Your money, in one clear place
         </h2>
@@ -275,33 +276,40 @@ const PRODUCTS: {
 
 function Products() {
   return (
-    <section className="bg-marble">
-      <div className="mx-auto max-w-[1200px] px-4 py-16 lg:px-8 lg:py-20">
+    <section className="bg-smoke relative overflow-hidden text-white [--icon-signal:#4ac280]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        style={{ backgroundImage: "url(/images/patterns/topo-white.svg)", backgroundSize: "900px", backgroundPosition: "center top" }}
+      />
+      <div className="relative mx-auto max-w-[1200px] px-4 py-16 lg:px-8 lg:py-24">
         <div className="max-w-[60ch]">
-          <p className="eyebrow text-turquoise-700">Banking with Moneta</p>
+          <p className="eyebrow text-copper-light">Banking with Moneta</p>
           <h2 className="mt-3 font-display text-[30px] font-semibold tracking-[-0.01em] lg:text-[38px]">
             Everything for everyday banking
           </h2>
-          <p className="mt-3 text-[16px] leading-relaxed text-forest/65">
+          <p className="mt-3 text-[16px] leading-relaxed text-white/65">
             No mortgages, loans or investment products — just the accounts,
             cards and tools you use every day, done well.
           </p>
         </div>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-2">
+        <div className="mt-12 grid gap-5 md:grid-cols-2">
           {PRODUCTS.map((p) => (
             <article
               key={p.id}
               id={p.id}
-              className="scroll-mt-40 rounded-[18px] bg-white p-7 shadow-[0_1px_0_rgba(18,46,46,0.04),0_10px_30px_-22px_rgba(18,46,46,0.3)]"
+              className="group relative scroll-mt-40 overflow-hidden rounded-[18px] bg-white/[0.045] p-7 ring-1 ring-white/10 backdrop-blur-sm transition hover:bg-white/[0.07] lg:p-8"
             >
-              <IconDisc name={p.icon} size={48} />
-              <h3 className="mt-4 text-[21px] font-semibold">{p.title}</h3>
-              <p className="mt-1 text-[15px] text-forest/65">{p.lead}</p>
+              {/* Copper hairline, like the edge of the card */}
+              <span aria-hidden className="absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-copper-line/70 to-transparent" />
+              <Icon name={p.icon} size={30} className="text-white" />
+              <h3 className="mt-5 text-[21px] font-semibold">{p.title}</h3>
+              <p className="mt-1 text-[15px] text-white/60">{p.lead}</p>
               <ul className="mt-5 space-y-2.5">
                 {p.points.map((pt, i) => (
-                  <li key={i} className="flex gap-2.5 text-[14px] leading-relaxed">
-                    <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-turquoise" />
+                  <li key={i} className="flex gap-2.5 text-[14px] leading-relaxed text-white/85">
+                    <span className="mt-[8px] h-1.5 w-1.5 shrink-0 rotate-45 bg-copper-light" />
                     <span>{pt}</span>
                   </li>
                 ))}
@@ -326,7 +334,7 @@ function CardDesign() {
       />
       <div className="relative mx-auto grid max-w-[1200px] items-center gap-10 px-4 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:px-8 lg:py-24">
         <div>
-          <p className="eyebrow text-turquoise-700">The Moneta card</p>
+          <p className="eyebrow text-copper">The Moneta card</p>
           <h2 className="mt-3 font-display text-[30px] font-semibold tracking-[-0.01em] lg:text-[38px]">
             Struck like a coin, smoked like glass
           </h2>
@@ -417,10 +425,19 @@ function WhyMoneta() {
           ))}
         </ul>
       </div>
-      <PhotoPlaceholder
-        label="Warm lifestyle photo — someone at home checking their account on a phone"
-        className="aspect-[4/5] w-full rounded-[24px] lg:aspect-[4/4.6]"
-      />
+      <figure className="bg-smoke engraved relative flex aspect-[4/4.4] w-full flex-col items-center justify-center overflow-hidden [--r:28px]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          style={{ backgroundImage: "url(/images/patterns/topo-white.svg)", backgroundSize: "700px", backgroundPosition: "center" }}
+        />
+        <div aria-hidden className="absolute h-72 w-72 rounded-full bg-copper-line/20 blur-3xl" />
+        <CoinSeal size={250} className="relative" />
+        <figcaption className="relative mt-8 text-center">
+          <span className="block font-mono text-[12px] font-medium tracking-[0.32em] text-copper-light">MONETA · FIDES · MMXXVI</span>
+          <span className="mt-2 block text-[13px] text-white/55">Fides is Latin for trust. It&apos;s struck into the Moneta coin.</span>
+        </figcaption>
+      </figure>
     </section>
   );
 }
@@ -447,12 +464,12 @@ const SECURITY: { icon: IconName; title: string; body: React.ReactNode }[] = [
 
 function SecurityBand() {
   return (
-    <section className="relative overflow-hidden bg-forest text-white [--icon-signal:#4ac280]">
+    <section className="bg-smoke relative overflow-hidden text-white [--icon-signal:#4ac280]">
       <div aria-hidden className="pointer-events-none absolute -left-20 top-0 h-80 w-80 rounded-full bg-turquoise/20 blur-3xl" />
       <div className="relative mx-auto max-w-[1200px] px-4 py-16 lg:px-8 lg:py-20">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-[52ch]">
-            <p className="eyebrow text-turquoise">Security centre</p>
+            <p className="eyebrow text-copper-light">Security centre</p>
             <h2 className="mt-3 font-display text-[30px] font-semibold tracking-[-0.01em] lg:text-[38px]">
               Protecting your money comes first
             </h2>
@@ -461,9 +478,10 @@ function SecurityBand() {
             Visit the Security centre
           </ButtonLink>
         </div>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
+        <div className="rule-engraved mt-10 opacity-70" aria-hidden />
+        <div className="grid divide-y divide-copper-line/25 md:grid-cols-3 md:divide-x md:divide-y-0">
           {SECURITY.map((s) => (
-            <div key={s.title} className="rounded-[18px] border border-white/10 bg-white/[0.05] p-6">
+            <div key={s.title} className="py-7 md:px-8 md:py-9 md:first:pl-0 md:last:pr-0">
               <Icon name={s.icon} size={28} className="text-white" />
               <h3 className="mt-4 text-[17px] font-semibold">{s.title}</h3>
               <p className="mt-1.5 text-[14px] leading-relaxed text-white/70">{s.body}</p>
@@ -511,7 +529,7 @@ const HELP: { icon: IconName; title: string; body: React.ReactNode; href: string
 
 function Help() {
   return (
-    <section id="help" className="scroll-mt-40 bg-marble">
+    <section id="help" className="bg-stone-field scroll-mt-40">
       <div className="mx-auto max-w-[1200px] px-4 py-16 lg:px-8 lg:py-20">
         <h2 className="font-display text-[30px] font-semibold tracking-[-0.01em] lg:text-[38px]">
           How can we help?

@@ -44,7 +44,7 @@ export default function HowItWorksPage() {
               key={s.n}
               className="relative rounded-[18px] border border-forest/[0.08] bg-white p-7 shadow-[0_1px_0_rgba(18,46,46,0.04),0_10px_30px_-24px_rgba(18,46,46,0.3)]"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-forest font-mono text-[14px] font-semibold text-turquoise">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-forest font-mono text-[14px] font-semibold text-copper-light">
                 {s.n}
               </span>
               <h3 className="mt-4 font-display text-[21px] font-semibold">{s.title}</h3>
@@ -76,7 +76,7 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-forest text-white">
+      <section className="bg-smoke relative overflow-hidden text-white">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-20 top-0 h-80 w-80 rounded-full bg-turquoise/20 blur-3xl"

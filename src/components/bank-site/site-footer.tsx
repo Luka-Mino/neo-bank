@@ -32,7 +32,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Legal",
     links: [
-      { label: "Terms of service", href: "/terms" },
+      { label: "Terms of use", href: "/terms" },
       { label: "Privacy policy", href: "/privacy" },
     ],
   },
@@ -41,6 +41,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
 export function SiteFooter() {
   return (
     <footer className="bg-forest-900 text-white/70">
+      <div aria-hidden className="rule-engraved opacity-80" />
       <div className="mx-auto max-w-[1200px] px-4 py-14 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-[1.2fr_repeat(4,1fr)]">
           <div>

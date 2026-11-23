@@ -67,7 +67,7 @@ export default function SecurityPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-forest text-white">
+      <section className="bg-smoke relative overflow-hidden text-white">
         <div
           aria-hidden
           className="pointer-events-none absolute -left-20 top-0 h-80 w-80 rounded-full bg-turquoise/20 blur-3xl"

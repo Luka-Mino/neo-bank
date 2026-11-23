@@ -126,6 +126,7 @@ export function MonetaCardArt({
   holder = "ALEX MORGAN",
   last4 = "4821",
   label,
+  sweep = false,
   className,
 }: {
   side?: "front" | "back";
@@ -134,6 +135,8 @@ export function MonetaCardArt({
   last4?: string;
   /** Accessible description; defaults to "<tint> Moneta card, <side>". */
   label?: string;
+  /** One sheen sweep across the plastic on mount (skipped for reduced motion). */
+  sweep?: boolean;
   className?: string;
 }) {
   const t = CARD_TINTS[tint];
@@ -229,6 +232,13 @@ export function MonetaCardArt({
           </>
         )}
         <div aria-hidden className="absolute inset-0" style={SHEEN} />
+        {sweep && (
+          <div
+            aria-hidden
+            className="anim-sheen absolute inset-y-0 left-0 w-1/2 -translate-x-[130%]"
+            style={{ background: "linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.32) 50%, rgba(255,255,255,0) 100%)" }}
+          />
+        )}
       </div>
     </div>
   );
@@ -240,9 +250,12 @@ export function MonetaCardArt({
  */
 export function MonetaCardPair({
   tint = "smoked",
+  animate = false,
   className,
 }: {
   tint?: CardTint;
+  /** Hero entrance: cards rise into place, then a sheen sweeps the front. */
+  animate?: boolean;
   className?: string;
 }) {
   const t = CARD_TINTS[tint];
@@ -262,11 +275,25 @@ export function MonetaCardPair({
         }}
       />
       <div className="absolute" style={{ left: pct(34, 560), top: pct(40, 540), width: pct(430, 560), transform: "rotate(-11deg) scale(0.9)" }}>
-        <MonetaCardArt side="back" tint={tint} />
+        <div className={animate ? "anim-rise" : undefined}>
+          <MonetaCardArt side="back" tint={tint} />
+        </div>
       </div>
       <div className="absolute" style={{ left: pct(75, 560), top: pct(172, 540), width: pct(430, 560), transform: "rotate(-3deg) scale(1.1)" }}>
-        <MonetaCardArt side="front" tint={tint} />
+        <div className={animate ? "anim-rise-late" : undefined}>
+          <MonetaCardArt side="front" tint={tint} sweep={animate} />
+        </div>
       </div>
+    </div>
+  );
+}
+
+/** The struck Moneta coin in copper, as on the card. Decorative. The shadow
+ *  sits on a wrapper because a mask would clip a filter on the same element. */
+export function CoinSeal({ size = 220, className }: { size?: number; className?: string }) {
+  return (
+    <div aria-hidden className={cn("shrink-0", className)} style={{ width: size, height: size, filter: "drop-shadow(0 14px 22px rgba(0,0,0,0.35))" }}>
+      <div className="h-full w-full" style={COPPER} />
     </div>
   );
 }

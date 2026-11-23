@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { ButtonLink } from "@/components/brand/button";
 import { IconDisc, type IconName } from "@/components/brand/icon";
+import { CoinSeal } from "@/components/brand/moneta-card-art";
 import { auth } from "@/lib/auth/config";
 import { SiteHeader } from "./site-header";
 import { SiteFooter } from "./site-footer";
@@ -36,7 +37,7 @@ export function PageHero({
   aside?: React.ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden border-b border-forest/[0.08] bg-turquoise-50">
+    <section className="bg-stone-field relative overflow-hidden">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.09]"
@@ -64,7 +65,7 @@ export function PageHero({
               {crumb}
             </span>
           </nav>
-          {eyebrow && <p className="eyebrow mt-6 text-turquoise-700">{eyebrow}</p>}
+          {eyebrow && <p className="eyebrow mt-6 text-copper">{eyebrow}</p>}
           <h1
             className={cn(
               "font-display text-[34px] font-semibold leading-[1.1] tracking-[-0.015em] lg:text-[44px]",
@@ -100,7 +101,7 @@ export function SectionHeading({
   return (
     <div className="max-w-[60ch]">
       {eyebrow && (
-        <p className={cn("eyebrow", dark ? "text-turquoise" : "text-turquoise-700")}>
+        <p className={cn("eyebrow", dark ? "text-copper-light" : "text-copper")}>
           {eyebrow}
         </p>
       )}
@@ -137,12 +138,15 @@ export function ClosingCta({
 }) {
   return (
     <section className="mx-auto max-w-[1200px] px-4 py-16 lg:px-8 lg:py-20">
-      <div className="flex flex-col items-start gap-6 rounded-[24px] bg-turquoise-50 p-8 ring-1 ring-turquoise/25 lg:flex-row lg:items-center lg:justify-between lg:p-12">
-        <div>
-          <h2 className="font-display text-[28px] font-semibold tracking-[-0.01em] lg:text-[34px]">
-            {title}
-          </h2>
-          <p className="mt-2 max-w-[60ch] text-[15px] text-forest/65">{body}</p>
+      <div className="engraved bg-stone-field flex flex-col items-start gap-6 p-9 [--r:28px] lg:flex-row lg:items-center lg:justify-between lg:p-14">
+        <div className="flex items-center gap-6">
+          <CoinSeal size={92} className="hidden sm:block" />
+          <div>
+            <h2 className="font-display text-[28px] font-semibold tracking-[-0.01em] lg:text-[34px]">
+              {title}
+            </h2>
+            <p className="mt-2 max-w-[60ch] text-[15px] text-forest/65">{body}</p>
+          </div>
         </div>
         <ButtonLink href={cta.href} size="lg" arrow className="shrink-0">
           {cta.label}

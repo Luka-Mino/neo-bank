@@ -51,6 +51,13 @@
   --color-forest: #122e2e;
   --color-forest-700: #1f4040;
   --color-forest-900: #0a1c1c;
+  /* Mint & smoke — material from the Moneta card (copper engraving, stone,
+     smoked glass). Copper = fine detail and labels; turquoise = actions. */
+  --color-copper: #9a5a2b;
+  --color-copper-light: #e6ab72;
+  --color-copper-line: #c4804a;
+  --color-stone: #eef2f0;
+  --color-stone-deep: #dce4e0;
   --color-noir: #212020;
 
   --color-cat-blue: #2f80ed;
@@ -516,4 +523,72 @@ html:has(.site-shell) {
 html:has(.app-shell) {
   background-color: #122e2e;
   overscroll-behavior: none;
+}
+
+/* ── Mint & smoke: the card's material language on the site ───────────────
+   Stone ground (the showcase backdrop), smoked-glass bands, and copper
+   engraving taken from the card's border rings. Use .engraved sparingly:
+   it's the hallmark, not a default card style. */
+.bg-stone-field {
+  background: radial-gradient(ellipse 85% 75% at 55% 45%, #f8faf9 0%, #e9eeeb 62%, #dce4e0 100%);
+}
+.bg-smoke {
+  background: linear-gradient(135deg, #12302e 0%, #0e2725 45%, #0a1f1e 100%);
+}
+.copper-fill {
+  background: linear-gradient(135deg, #f0c99d 0%, #ad6a33 42%, #e6ab72 62%, #84491f 100%);
+}
+/* Three concentric copper hairlines, like the card's border. Set --r to the
+   element's radius; content needs >12px padding. */
+.engraved {
+  --r: 22px;
+  position: relative;
+  border-radius: var(--r);
+  box-shadow: inset 0 0 0 1px rgba(196, 128, 74, 0.6);
+}
+.engraved::before,
+.engraved::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border: 1px solid;
+}
+.engraved::before {
+  inset: 6px;
+  border-radius: calc(var(--r) - 6px);
+  border-color: rgba(196, 128, 74, 0.42);
+}
+.engraved::after {
+  inset: 10px;
+  border-radius: calc(var(--r) - 10px);
+  border-color: rgba(196, 128, 74, 0.24);
+}
+/* A horizontal engraved rule (three hairlines). */
+.rule-engraved {
+  height: 7px;
+  background:
+    linear-gradient(rgba(196, 128, 74, 0.55), rgba(196, 128, 74, 0.55)) top / 100% 1px no-repeat,
+    linear-gradient(rgba(196, 128, 74, 0.36), rgba(196, 128, 74, 0.36)) center / 100% 1px no-repeat,
+    linear-gradient(rgba(196, 128, 74, 0.2), rgba(196, 128, 74, 0.2)) bottom / 100% 1px no-repeat;
+}
+
+/* Hero entrance: the cards rise into place, then one sheen sweeps across.
+   Nothing moves for reduced-motion users. */
+@keyframes card-rise {
+  from { opacity: 0; transform: translateY(26px) rotate(2deg); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sheen-sweep {
+  from { transform: translateX(-130%) skewX(-12deg); }
+  to { transform: translateX(130%) skewX(-12deg); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .anim-rise { animation: card-rise 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .anim-rise-late { animation: card-rise 900ms 160ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .anim-sheen {
+    animation: sheen-sweep 1500ms 950ms ease-in-out both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .anim-sheen { display: none; }
 }
