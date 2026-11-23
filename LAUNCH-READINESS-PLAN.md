@@ -162,6 +162,18 @@ Today's list is an allowlist of *protected* paths, so every new page is public u
 > - Transaction detail had no demo mode.
 > - A 202 "confirmation pending" response was shown as done.
 
+> **P1 screens done 2026-11-23:**
+> - 2.6 Card (`/app/card`)
+> - 2.7 Account management, on the account page plus "Open an account" on home
+> - 2.8 Recipients (`/app/move/recipients`)
+> - 2.10 Settings (`/app/more/settings`)
+> - 2.11 Team and Approvals (`/app/more/team`, `/app/more/approvals`)
+>
+> All P0 and P1 screens now exist in `/app`, each checked in demo mode at phone and desktop width. **The real-mode browser check of these five is still pending:** the local Postgres stopped at 13:14 while an `ssh` tunnel holds port 54321. Bugs found and fixed while porting:
+> - **Send was broken in real mode.** It passed the recipient id as `destinationId`, and nothing ever created a destination. Send now pays saved USDC wallet destinations, and Recipients → Add creates one.
+> - **Team and Approvals were broken in real mode.** They treated `fetchApi`'s whole body as the list.
+> - **Email-code 2FA could be turned off with just a session.** That now needs the password.
+
 ### 2.x Follow-ups found during the port
 - [ ] **Exact fee before confirm (quote step).** Today the server learns `send_amount` (fees included) only by creating the Dakota one-off inside `POST /api/transactions`. So the Send and Withdraw review sheets say the fee is "set when the transfer is created", and the receipt shows the exact fee. To show the fee before confirm:
   - split the endpoint into `POST /api/transactions/quote`, which creates the one-off (no money moves) and stores it against the org with an expiry;
@@ -169,7 +181,11 @@ Today's list is an allowlist of *protected* paths, so every new page is public u
   - cancel quotes that expire.
   Needs the Dakota sandbox to verify (Phase 5).
 - [ ] Restyle `LinkBankDialog` (still shadcn) into an `AppSheet` with 2.8 Recipients.
-- [ ] New screens still link to old routes until those ports land: `/recipients/new` (2.8), `/settings` for 2FA and email (2.10), `/approvals` (2.11), `/card` (2.6).
+- [x] New screens no longer link to old routes. Exceptions: Insights (2.9, P2, not ported) and the "Classic dashboard" comparison link, which stays until cut-over.
+- [ ] **Product decision: how to pay people.** Send pays a recipient's **USDC wallet on Base**, the only payee type the current API supports. To pay someone's *bank account* (third-party ACH/wire), or to make instant Moneta-to-Moneta transfers between users, we need a decision, plus a compliance check on third-party payouts.
+- [ ] Recipients: the API has no delete or edit, so people can't be removed yet. Add `DELETE /api/recipients/[id]`, which also removes the Dakota recipient.
+- [ ] 2.9 Insights (P2) is still on the old screen.
+- [ ] **2.14 Cut-over is ready to decide.** All P0 and P1 screens exist. Doing it removes the old dashboard, and with it the side-by-side comparison. It needs your go-ahead.
 
 ### 2.1–2.13 Screen inventory (old → new)
 
