@@ -14,7 +14,7 @@ Audience: the engineer implementing a Dakota card provider next to the existing 
 5. **Codebase conflicts found** (read-only check of this repo):
    - `src/lib/dakota/provisioning.ts` attaches the one shared `DAKOTA_POLICY_ID` to every wallet. Card enablement needs **exactly one customer policy attached to that wallet only**, so enablement will fail with `409 card-enablement-precondition` / `customer_policy_shared`. See §2.3.
    - Wallets are funded with **USDC on Base**, but the default spend option is **RD on Base**. USDC deposits will not fund cards unless the account is allowed a USDC-on-Base spend option. The docs' only USDC example is `ethereum-mainnet`. See §8.
-   - `src/middleware.ts` CSP has no `frame-src`, so `default-src 'self'` will block the Lithic reveal frames. See §6.4.
+   - `src/proxy.ts` CSP has no `frame-src`, so `default-src 'self'` will block the Lithic reveal frames. See §6.4.
    - The project `.npmrc` maps the `@dakota-xyz` scope to `https://npm.pkg.github.com`, but Cards.js is published on public npm. `npm i @dakota-xyz/cards-js` currently fails with 401 from this repo. See §6.1.
    - `IssuedCard` in `src/lib/card-issuer.ts` requires `expMonth`, `expYear` and `panToken` synchronously. Dakota returns none of these (only `last4`, possibly `null` at create). The interface needs a pending/async shape.
    - The webhook target is registered with `global: true` (`scripts/dakota-bootstrap.ts`), so card events arrive with no target change. Unknown types must keep being ignored safely.
@@ -686,7 +686,7 @@ Both values are confirmed in the bundled `lithic-embed@0.1.0-beta.0`. Dakota war
 - **`img-src` must include `data:`** for the default stylesheet. Ours already does.
 - If using the 0.2.0 `art` option, `img-src` must also allow the card-art image host. Its host isn't documented; the example is `https://card-art.dakota.xyz/...`.
 - `frame-ancestors`: Dakota recommends `'self'` or `'none'` on the reveal page. Ours is `'none'`, which is fine.
-- **Action in `src/middleware.ts`:** add `frame-src https://sandbox.lithic.com` (sandbox) or `https://api.lithic.com` (prod), selected by env.
+- **Action in `src/proxy.ts`:** add `frame-src https://sandbox.lithic.com` (sandbox) or `https://api.lithic.com` (prod), selected by env.
 - **HTTPS is mandatory**, including local dev: the frames don't work in an insecure context, and `http://localhost` origins are rejected by the API. Use `next dev --experimental-https` or a TLS tunnel, and keep the `origin` that is sent consistent with it.
 - The frame URLs carry `session` as a query parameter. Configure Sentry, session replay and RUM to **drop or redact `session`** for those origins.
 

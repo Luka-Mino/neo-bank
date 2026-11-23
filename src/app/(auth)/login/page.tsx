@@ -110,7 +110,7 @@ export default function LoginPage() {
         setError(`Sign in failed: ${result.error}`);
       }
     } else if (result?.ok) {
-      router.push("/dashboard");
+      router.push("/app");
       router.refresh();
     } else {
       setError("Sign in failed. Please try again.");

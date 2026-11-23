@@ -40,7 +40,7 @@ function MagicConsume() {
     setBusy(false);
 
     if (res?.ok) {
-      router.push("/dashboard");
+      router.push("/app");
       router.refresh();
       return;
     }

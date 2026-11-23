@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  POST_SIGN_IN_PATH,
+  isAuthEntryPath,
+  isPublicPath,
+} from "@/lib/route-access";
 
-// Protected pages that require auth
-const protectedPaths = [
-  "/dashboard",
-  "/deposit",
-  "/transfer-out",
-  "/send",
-  "/loans",
-  "/card",
-  "/insights",
-  "/transactions",
-  "/recipients",
-  "/settings",
-  "/onboarding",
-  "/app",
-];
+// Next.js 16 "Proxy" (formerly middleware). Runs on the Node.js runtime.
+// Two jobs: a per-request Content-Security-Policy, and page-level auth
+// redirects. Pages are PROTECTED BY DEFAULT — only the paths in
+// src/lib/route-access.ts are reachable signed out.
 
 // Content-Security-Policy. Per-request nonce for scripts (+ strict-dynamic,
 // so only our nonce'd bootstrap and what it loads can run — the strongest
@@ -49,7 +43,7 @@ function buildCsp(nonce: string): string {
   ].join("; ");
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
   // CSP applies to document responses only (not API or static assets, which
@@ -78,19 +72,13 @@ export async function middleware(req: NextRequest) {
       req.cookies.get("authjs.session-token") ||
       req.cookies.get("__Secure-authjs.session-token");
     const isLoggedIn = !!sessionCookie;
-    const isPublicAuthPage =
-      pathname.startsWith("/login") || pathname.startsWith("/register");
-    // Segment-boundary match, so "/app" protects /app and /app/* without
-    // also swallowing unrelated paths like /approvals.
-    const isProtected = protectedPaths.some(
-      (p) => pathname === p || pathname.startsWith(p + "/")
-    );
 
-    if (isPublicAuthPage && isLoggedIn) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+    if (isAuthEntryPath(pathname) && isLoggedIn) {
+      return NextResponse.redirect(new URL(POST_SIGN_IN_PATH, req.url));
     }
-    if (isProtected && !isLoggedIn) {
-      return NextResponse.redirect(new URL("/login", req.url));
+    if (!isPublicPath(pathname) && !isLoggedIn) {
+      const login = new URL("/login", req.url);
+      return NextResponse.redirect(login);
     }
   }
 

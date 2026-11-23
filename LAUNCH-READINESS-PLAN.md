@@ -55,17 +55,27 @@
 
 ---
 
-## Phase 1 — Secure the base (start now, ~1 day)
+## Phase 1 — Secure the base ✅ done 2026-11-23 (two follow-ups open)
+
+> **Result:**
+> - **Committed and pushed:** today's work, in four logical commits.
+> - **Vulnerabilities:** 31 → 5 moderate (0 critical, 0 high). Residual: Sentry's build-time bundler plugins (`glob`/`minimatch`), fixable only by `@sentry/nextjs` 11 (major); it doesn't ship in the app.
+> - **nodemailer:** went to 10.6.1. A major, but a clean fit for our two-call SMTP usage.
+> - **Routing:** protected-by-default via `src/lib/route-access.ts` + `src/proxy.ts`, verified with demo mode off.
+> - **Sign-in:** lands on `/app`.
+> - **Still open:**
+>   - The auth smoke test (password, magic link, 2FA) needs the local DB running.
+>   - Read the Next 16.3–16.4 release notes.
 
 ### 1.1 Commit and push today's work
-- [ ] Review the diff by area (site, `/app`, cards backend, docs, migration).
-- [ ] Commit in logical chunks:
+- [x] Review the diff by area (site, `/app`, cards backend, docs, migration).
+- [x] Commit in logical chunks:
   - site redesign
   - `/app` shell
   - Dakota cards groundwork (provider, webhooks, reveal route, CSP, client, tests)
   - docs
-- [ ] Push to `main` (staging auto-deploys). Confirm the Vercel build is green and these load: `/personal`, `/security`, `/login`, `/app`.
-- [ ] Do **not** run migration `0019` on staging/prod yet; it waits for 5.2.
+- [x] Push to `main` (staging auto-deploys). Confirm the Vercel build is green and these load: `/personal`, `/security`, `/login`, `/app`.
+- [x] Do **not** run migration `0019` on staging/prod yet; it waits for 5.2.
 
 **Done when:** staging shows the new site and `/app`, and the build is green.
 
@@ -84,10 +94,10 @@ Targets are the newest versions **within the current major**, so no breaking-cha
 | `shadcn` | 4.1.2 | 4.23.0, **and move to `devDependencies`** | It's a CLI. Moving it removes its MCP SDK / body-parser chain from production |
 
 Steps:
-- [ ] `npm install next@16.4.6 next-auth@5.0.0-beta.32 @sentry/nextjs@10.78.0 nodemailer@9.1.1 zod@4.6.7 react@19.3.1 react-dom@19.3.1 drizzle-orm@0.45.4`
-- [ ] `npm install -D shadcn@4.23.0`, then remove `shadcn` from `dependencies`.
-- [ ] `npm audit --omit=dev`. Fix the remaining transitive issues with `npm audit fix` (never `--force`). Write any leftovers into this file with a reason.
-- [ ] `npm run typecheck && npm run lint && npm test && npm run build`
+- [x] `npm install next@16.4.6 next-auth@5.0.0-beta.32 @sentry/nextjs@10.78.0 nodemailer@9.1.1 zod@4.6.7 react@19.3.1 react-dom@19.3.1 drizzle-orm@0.45.4`
+- [x] `npm install -D shadcn@4.23.0`, then remove `shadcn` from `dependencies`.
+- [x] `npm audit --omit=dev`. Fix the remaining transitive issues with `npm audit fix` (never `--force`). Write any leftovers into this file with a reason.
+- [x] `npm run typecheck && npm run lint && npm test && npm run build`
 - [ ] Manual smoke test on the dev server:
   - password login
   - magic link
@@ -102,26 +112,26 @@ Steps:
 
 ### 1.3 Protect every logged-in page 🟥
 Today's list is an allowlist of *protected* paths, so every new page is public until someone remembers to add it. Flip it to protected-by-default.
-- [ ] In `src/middleware.ts` (→ `proxy.ts` after 1.4), define `PUBLIC_PATHS`:
+- [x] In `src/middleware.ts` (→ `proxy.ts` after 1.4), define `PUBLIC_PATHS`:
   - `/`, `/personal`, `/security`, `/how-it-works`, `/privacy`, `/terms`
   - `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`, `/magic`
   - Next.js and static asset paths, `/api/*` (API auth is enforced per route)
 
   Everything else requires a session.
-- [ ] Decide `/design/*` (dev-only hero page): gate behind `NODE_ENV !== "production"` or delete.
-- [ ] Unit-test the path matcher: public ones pass; `/accounts`, `/team`, `/approvals`, `/transfer-internal`, `/app/*` and an unknown `/foo` all redirect when signed out.
+- [x] Decide `/design/*` (dev-only hero page): gate behind `NODE_ENV !== "production"` or delete.
+- [x] Unit-test the path matcher: public ones pass; `/accounts`, `/team`, `/approvals`, `/transfer-internal`, `/app/*` and an unknown `/foo` all redirect when signed out.
 
 **Done when:** signed out, every non-public page redirects to `/login`, proven by tests.
 
 ### 1.4 Rename middleware → proxy
-- [ ] `npx @next/codemod@canary middleware-to-proxy .` (per `node_modules/next/dist/docs/.../proxy.md`).
-- [ ] Re-check CSP headers (nonce, the conditional `frame-src`) and auth redirects in the browser.
+- [x] `npx @next/codemod@canary middleware-to-proxy .` (per `node_modules/next/dist/docs/.../proxy.md`).
+- [x] Re-check CSP headers (nonce, the conditional `frame-src`) and auth redirects in the browser.
 
 **Done when:** no deprecation warning on boot, and CSP plus redirects behave as before.
 
 ### 1.5 Sign-in destination → `/app` (after D3)
-- [ ] Change the redirects in `src/middleware.ts` (logged-in user hitting `/login`), `src/app/(auth)/login/page.tsx:113` and `src/app/(auth)/magic/page.tsx:43`.
-- [ ] Keep `/dashboard` reachable until Phase 2 cut-over.
+- [x] Change the redirects in `src/middleware.ts` (logged-in user hitting `/login`), `src/app/(auth)/login/page.tsx:113` and `src/app/(auth)/magic/page.tsx:43`.
+- [x] Keep `/dashboard` reachable until Phase 2 cut-over.
 
 ---
 
