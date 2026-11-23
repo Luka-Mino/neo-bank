@@ -12,7 +12,7 @@ import {
   ownershipErr,
 } from "@/lib/auth/ownership";
 import { defaultCardNickname } from "@/lib/cards";
-import { getIssuerProvider } from "@/lib/card-issuer";
+import { CardIssuerNotReadyError, getIssuerProvider } from "@/lib/card-issuer";
 
 export const GET = apiHandler({
   orgScoped: true,
@@ -44,14 +44,26 @@ export const POST = apiHandler({
       return err("Cannot issue a card on a non-active account", 409);
     }
 
-    // Issue through the swappable provider (mock today; Stripe Issuing once
-    // we incorporate). See CARD-ISSUING-PLAN.md.
-    const issued = await getIssuerProvider().issueCard({
-      userId: user.id,
-      accountId: body.accountId,
-      cardType: body.cardType,
-      cardholder: { name: user.name ?? "", email: user.email ?? "" },
-    });
+    // Issue through the swappable provider (mock by default; Dakota Cards when
+    // ISSUING_PROVIDER=dakota). See CARD-ISSUING-PLAN.md.
+    const nickname = body.nickname ?? defaultCardNickname(body.cardType);
+    let issued;
+    try {
+      issued = await getIssuerProvider().issueCard({
+        userId: user.id,
+        accountId: body.accountId,
+        cardType: body.cardType,
+        nickname,
+        cardholder: { name: user.name ?? "", email: user.email ?? "" },
+      });
+    } catch (e) {
+      // A prerequisite isn't met yet (terms, cardholder review, wallet
+      // enablement). The message is written to be shown to the user.
+      if (e instanceof CardIssuerNotReadyError) {
+        return err(e.message, 409, { reason: e.reason });
+      }
+      throw e;
+    }
 
     const [row] = await db
       .insert(cards)
@@ -61,12 +73,14 @@ export const POST = apiHandler({
         accountId: body.accountId,
         cardType: body.cardType,
         last4: issued.last4,
-        nickname: body.nickname ?? defaultCardNickname(body.cardType),
+        nickname,
+        status: issued.status,
         expMonth: issued.expMonth,
         expYear: issued.expYear,
         network: issued.network,
         panToken: issued.panToken,
         externalCardId: issued.externalCardId,
+        issuerVersion: issued.issuerVersion,
       })
       .returning();
 

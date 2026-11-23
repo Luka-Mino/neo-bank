@@ -13,6 +13,7 @@ const protectedPaths = [
   "/recipients",
   "/settings",
   "/onboarding",
+  "/app",
 ];
 
 // Content-Security-Policy. Per-request nonce for scripts (+ strict-dynamic,
@@ -22,6 +23,14 @@ const protectedPaths = [
 // risk than script injection). Dev needs 'unsafe-eval' for Turbopack HMR.
 function buildCsp(nonce: string): string {
   const dev = process.env.NODE_ENV !== "production";
+  // Dakota Cards.js shows card number/CVV/expiry in Lithic-hosted frames.
+  // Only allowed when Dakota cards are switched on (DAKOTA-CARDS-SPEC.md §6.4).
+  const cardFrames =
+    process.env.ISSUING_PROVIDER === "dakota"
+      ? process.env.DAKOTA_ENV === "production"
+        ? "https://api.lithic.com"
+        : "https://sandbox.lithic.com"
+      : null;
   return [
     `default-src 'self'`,
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
@@ -31,6 +40,7 @@ function buildCsp(nonce: string): string {
     // 'self' for our APIs; ws: for dev HMR sockets. Sentry/Dakota hosts get
     // added here when their env vars are set (M3).
     `connect-src 'self'${dev ? " ws:" : ""}`,
+    ...(cardFrames ? [`frame-src ${cardFrames}`] : []),
     `frame-ancestors 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,
@@ -70,7 +80,11 @@ export async function middleware(req: NextRequest) {
     const isLoggedIn = !!sessionCookie;
     const isPublicAuthPage =
       pathname.startsWith("/login") || pathname.startsWith("/register");
-    const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
+    // Segment-boundary match, so "/app" protects /app and /app/* without
+    // also swallowing unrelated paths like /approvals.
+    const isProtected = protectedPaths.some(
+      (p) => pathname === p || pathname.startsWith(p + "/")
+    );
 
     if (isPublicAuthPage && isLoggedIn) {
       return NextResponse.redirect(new URL("/dashboard", req.url));

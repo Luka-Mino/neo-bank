@@ -311,6 +311,8 @@ export const dakotaCustomers = pgTable(
     // own wallet — the target for onramp deposits.
     selfRecipientId: text("self_recipient_id"),
     selfDestinationId: text("self_destination_id"),
+    // Dakota Cards: this customer's cardholder (created on first card request).
+    dakotaCardholderId: text("dakota_cardholder_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -444,7 +446,8 @@ export const cards = pgTable(
       .notNull()
       .references(() => accounts.id, { onDelete: "restrict" }),
     cardType: text("card_type").notNull(), // 'debit' | 'credit' | 'virtual' | 'physical'
-    last4: text("last4").notNull(),
+    // Null while a Dakota card is still `pending` (filled on activation).
+    last4: text("last4"),
     status: text("status").notNull().default("active"), // 'active' | 'frozen' | 'replaced' | 'canceled'
     nickname: text("nickname"),
     expMonth: smallint("exp_month"),
@@ -454,6 +457,9 @@ export const cards = pgTable(
     // Issuer's own card id (e.g. Stripe `ic_...`). Null for mock-issued cards.
     // The auth webhook maps an incoming authorization back to our card by this.
     externalCardId: text("external_card_id"),
+    // Issuer's monotonically increasing card version (Dakota `version`); events
+    // with a version <= this are stale and ignored. Null for mock cards.
+    issuerVersion: integer("issuer_version"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

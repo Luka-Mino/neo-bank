@@ -1,7 +1,8 @@
-import { and, eq, ne, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, ne, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   accounts,
+  cards,
   dakotaCustomers,
   dakotaRails,
   transactions,
@@ -18,6 +19,7 @@ import {
   ledgerTxType,
 } from "./transaction-transitions";
 import { categorizeTransaction } from "@/lib/categorize";
+import { mapDakotaCardStatus, type DakotaCardStatus } from "./cards";
 
 type EventObject = Record<string, unknown>;
 type Handler = (object: EventObject, envelope: DakotaEventEnvelope) => Promise<void>;
@@ -42,7 +44,74 @@ export const handlers: Record<string, Handler> = {
   "wallet.deposit": onWalletDeposit,
   "auto_account.created": onAutoAccount,
   "auto_account.updated": onAutoAccount,
+  // Dakota Cards (DAKOTA-CARDS-SPEC.md §5). card_transaction.* is deliberately
+  // NOT handled yet: ledger posting waits on Dakota confirming the spend asset
+  // (cards default to RD; our wallets hold USDC). Unhandled = acknowledged no-op.
+  "card.created": onCardEvent,
+  "card.updated": onCardEvent,
 };
+
+// ─── Cards ───────────────────────────────────────────────────────────────────
+
+const DAKOTA_CARD_STATUSES = new Set<DakotaCardStatus>([
+  "pending",
+  "active",
+  "frozen",
+  "overdrawn",
+  "closed",
+]);
+
+/**
+ * card.created / card.updated → mirror status and last4 onto our row.
+ * Events arrive out of order, so apply only when the event's `version` is
+ * greater than the stored one (version is +1 on every Dakota card change).
+ * A card we don't know yet (event beat our insert) is skipped; the issue
+ * response already stored its version, and later events will land.
+ */
+export async function onCardEvent(object: EventObject) {
+  const cardId = object.id as string | undefined;
+  const version = Number(object.version);
+  const status = object.status as DakotaCardStatus | undefined;
+  if (!cardId || !Number.isFinite(version) || !status || !DAKOTA_CARD_STATUSES.has(status)) {
+    return;
+  }
+
+  const [before] = await db
+    .select({ id: cards.id, status: cards.status, userId: cards.userId })
+    .from(cards)
+    .where(eq(cards.externalCardId, cardId))
+    .limit(1);
+  if (!before) return;
+
+  const mapped = mapDakotaCardStatus(status);
+  const set: Partial<typeof cards.$inferInsert> = {
+    status: mapped,
+    issuerVersion: version,
+    updatedAt: new Date(),
+  };
+  if (typeof object.last4 === "string" && object.last4) set.last4 = object.last4;
+
+  const updated = await db
+    .update(cards)
+    .set(set)
+    .where(
+      and(
+        eq(cards.id, before.id),
+        or(isNull(cards.issuerVersion), lt(cards.issuerVersion, version))
+      )
+    )
+    .returning({ id: cards.id });
+
+  if (updated.length > 0 && before.status === "pending" && mapped === "active") {
+    await createNotification({
+      userId: before.userId,
+      type: "card_update",
+      title: "Your Moneta card is ready",
+      body: "Your virtual card is active. Open Card to see its details.",
+      actionUrl: "/card",
+    });
+  }
+}
 
 // ─── KYC / KYB ───────────────────────────────────────────────────────────────
 

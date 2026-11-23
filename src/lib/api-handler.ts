@@ -75,9 +75,14 @@ export function ok<T>(data: T, status = 200) {
   return NextResponse.json({ success: true, data }, { status });
 }
 
-export function err(message: string, status = 400) {
+export function err(
+  message: string,
+  status = 400,
+  // Optional machine-readable extras, e.g. { reason: "terms_required" }.
+  details?: Record<string, unknown>
+) {
   return NextResponse.json(
-    { success: false, error: { message } },
+    { success: false, error: { message, ...details } },
     { status }
   );
 }

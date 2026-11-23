@@ -4,6 +4,8 @@ export const CARD_TYPES = ["debit", "credit", "virtual", "physical"] as const;
 export type CardType = (typeof CARD_TYPES)[number];
 
 export const CARD_STATUSES = [
+  // Issuer created it but hasn't activated it yet (Dakota cards start here).
+  "pending",
   "active",
   "frozen",
   "replaced",

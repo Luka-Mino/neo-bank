@@ -47,11 +47,17 @@ const limiter = new SlidingWindowLimiter(REQUESTS_PER_MINUTE, 60_000);
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 interface RequestOptions {
-  method: "GET" | "POST" | "PATCH" | "DELETE";
+  method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   path: string;
   params?: Record<string, string>;
   body?: unknown;
   idempotencyKey?: string;
+  /**
+   * "none" suppresses the automatic POST idempotency key. Needed for
+   * POST /cards/{id}/reveal_session, which must never carry one (every call
+   * mints a fresh single-use session). See DAKOTA-CARDS-SPEC.md §3.7.
+   */
+  idempotency?: "none";
   /**
    * Which failures to retry. POSTs carry an idempotency key (Dakota replays
    * the cached response), so a repeat is always safe. PATCH/DELETE have no
@@ -71,10 +77,13 @@ async function request<T>(
   }
 
   const headers: Record<string, string> = { "x-api-key": getApiKey() };
-  if (opts.method === "POST") {
+  if (opts.method === "POST" && opts.idempotency !== "none") {
     // Generated ONCE per logical call, not per attempt — retries must reuse
     // the key so Dakota replays instead of creating duplicate resources.
     headers["x-idempotency-key"] = opts.idempotencyKey ?? uuidv4();
+  } else if ((opts.method === "PATCH" || opts.method === "PUT") && opts.idempotencyKey) {
+    // Cards endpoints accept (and expect) a key on PATCH/PUT too.
+    headers["x-idempotency-key"] = opts.idempotencyKey;
   }
   if (opts.body !== undefined) headers["Content-Type"] = "application/json";
 
@@ -140,19 +149,46 @@ export const dakota = {
   async post<T>(
     path: string,
     body?: unknown,
-    opts?: { idempotencyKey?: string }
+    opts?: { idempotencyKey?: string; idempotency?: "none" }
   ): Promise<T> {
     return request<T>({
       method: "POST",
       path,
       body,
       idempotencyKey: opts?.idempotencyKey,
-      retryOn: "retryable",
+      idempotency: opts?.idempotency,
+      // Without an idempotency key a repeat could mint a second resource, so
+      // only retry when Dakota definitely didn't execute (429).
+      retryOn: opts?.idempotency === "none" ? "rate-limit-only" : "retryable",
     });
   },
 
-  async patch<T>(path: string, body: unknown): Promise<T> {
-    return request<T>({ method: "PATCH", path, body, retryOn: "rate-limit-only" });
+  async patch<T>(
+    path: string,
+    body: unknown,
+    opts?: { idempotencyKey?: string }
+  ): Promise<T> {
+    return request<T>({
+      method: "PATCH",
+      path,
+      body,
+      idempotencyKey: opts?.idempotencyKey,
+      retryOn: "rate-limit-only",
+    });
+  },
+
+  async put<T>(
+    path: string,
+    body: unknown,
+    opts?: { idempotencyKey?: string }
+  ): Promise<T> {
+    return request<T>({
+      method: "PUT",
+      path,
+      body,
+      idempotencyKey: opts?.idempotencyKey,
+      retryOn: "rate-limit-only",
+    });
   },
 
   async delete<T = void>(path: string): Promise<T> {
