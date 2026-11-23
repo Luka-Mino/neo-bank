@@ -7,7 +7,6 @@ import {
   ArrowDownToLine,
   ArrowLeftRight,
   ArrowUpFromLine,
-  Bell,
   ChevronRight,
   Eye,
   EyeOff,
@@ -29,6 +28,7 @@ import {
   useDisplayName,
   useTransactions,
 } from "@/components/app/data";
+import { NotificationBell } from "@/components/app/notification-bell";
 import { APP_CONTAINER } from "@/components/app/app-shell";
 import { ActivityRow } from "@/components/app/activity-row";
 import { cn } from "@/lib/utils";
@@ -85,13 +85,7 @@ export default function AppHomePage() {
           <div className="relative flex items-center justify-between lg:hidden">
             <Logo variant="full" tone="reverse" size={24} priority />
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10 hover:text-white"
-              >
-                <Bell className="h-[19px] w-[19px]" />
-              </button>
+              <NotificationBell />
               <Link
                 href="/app/more"
                 aria-label="Profile and settings"

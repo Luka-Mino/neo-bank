@@ -148,3 +148,10 @@ export const DEMO_APPROVALS = [
   { id: "ar2", actionType: "transfer.external", amount: "8500.00", asset: "USD", status: "pending", requiredApprovals: 1, approvalsCount: 0, requestedByName: "Priya Patel", createdAt: "2026-08-24T08:30:00Z", note: "Supplier payout — Acme GmbH (SEPA)" },
   { id: "ar3", actionType: "recipient.destination.change", amount: null, asset: null, status: "pending", requiredApprovals: 2, approvalsCount: 0, requestedByName: "Sam Rivera", createdAt: "2026-08-24T09:05:00Z", note: "New payout address for Contractor #4421" },
 ];
+
+// In-app notifications for the /app bell (same shape as GET /api/notifications).
+export const DEMO_NOTIFICATIONS = [
+  { id: "n-1", type: "transaction", title: "Deposit on its way", body: "Your $3,000.00 deposit is processing and should arrive within 1 business day.", actionUrl: "/app", readAt: null as string | null, createdAt: new Date(DEMO_NOW - 1 * 86400000).toISOString() },
+  { id: "n-2", type: "card_update", title: "Your Moneta card is ready", body: "Your virtual Visa debit card is active. You can use it online right away.", actionUrl: "/app/card", readAt: null as string | null, createdAt: new Date(DEMO_NOW - 3 * 86400000).toISOString() },
+  { id: "n-3", type: "security", title: "New sign-in", body: "Chrome on macOS signed in to your account. If this wasn't you, change your password.", actionUrl: "/settings", readAt: new Date(DEMO_NOW - 6 * 86400000).toISOString() as string | null, createdAt: new Date(DEMO_NOW - 7 * 86400000).toISOString() },
+];

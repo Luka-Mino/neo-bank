@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ArrowLeftRight,
-  Bell,
   CreditCard,
   LayoutGrid,
   Menu,
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { useDisplayName } from "@/components/app/data";
+import { NotificationBell } from "@/components/app/notification-bell";
 import { cn } from "@/lib/utils";
 
 const TABS: { name: string; href: string; icon: LucideIcon; match: (p: string) => boolean }[] = [
@@ -145,13 +145,7 @@ function DesktopNav({ pathname }: { pathname: string }) {
           >
             Classic dashboard
           </Link>
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-white/75 transition hover:bg-white/10 hover:text-white"
-          >
-            <Bell className="h-[19px] w-[19px]" />
-          </button>
+          <NotificationBell />
           <Link
             href="/app/more"
             aria-label="Profile and settings"

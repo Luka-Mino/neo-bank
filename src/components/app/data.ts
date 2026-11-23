@@ -16,7 +16,13 @@ import {
   Send,
   type LucideIcon,
 } from "lucide-react";
-import { DEMO_MODE, DEMO_SESSION, DEMO_TRANSACTIONS } from "@/lib/demo-data";
+import {
+  DEMO_CUSTOMER,
+  DEMO_MODE,
+  DEMO_RECIPIENTS,
+  DEMO_SESSION,
+  DEMO_TRANSACTIONS,
+} from "@/lib/demo-data";
 
 export function useDisplayName(): { firstName: string; initials: string } {
   const { data: realSession } = useSession();
@@ -132,4 +138,47 @@ export function greeting(): string {
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
+}
+
+// ── Customer + recipients (shared by money screens) ─────────────────────────
+
+export type Customer = { kycStatus?: string; fullName?: string };
+
+/** Dakota customer for the active org. kycStatus "active" = verified. */
+export function useCustomer() {
+  const q = useQuery({
+    queryKey: ["customer"],
+    queryFn: () => fetch("/api/customers").then((r) => r.json()),
+    enabled: !DEMO_MODE,
+  });
+  const customer: Customer | undefined = DEMO_MODE
+    ? DEMO_CUSTOMER
+    : q.data?.data || undefined;
+  return {
+    customer,
+    verified: customer?.kycStatus === "active",
+    isLoading: !DEMO_MODE && q.isLoading,
+    isError: !DEMO_MODE && q.isError,
+    refetch: q.refetch,
+  };
+}
+
+export type Recipient = { id: string; name: string; dakotaRecipientId: string; createdAt?: string };
+
+/** People you can send to (P2P). Same ["recipients"] cache key as /send. */
+export function useRecipients(enabled = true) {
+  const q = useQuery({
+    queryKey: ["recipients"],
+    queryFn: () => fetch("/api/recipients").then((r) => r.json()),
+    enabled: !DEMO_MODE && enabled,
+  });
+  const recipients: Recipient[] = DEMO_MODE
+    ? (DEMO_RECIPIENTS as Recipient[])
+    : q.data?.data?.data || [];
+  return {
+    recipients,
+    isLoading: !DEMO_MODE && enabled && q.isLoading,
+    isError: !DEMO_MODE && q.isError,
+    refetch: q.refetch,
+  };
 }

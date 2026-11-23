@@ -14,7 +14,7 @@ export default function AppMovePage() {
       groups={[
         {
           items: [
-            { name: "Send money", hint: "Pay someone you know", href: "/send", icon: Send },
+            { name: "Send money", hint: "Pay someone you know", href: "/app/move/send", icon: Send },
             { name: "Transfer between accounts", hint: "Move money between your Moneta accounts", href: "/transfer-internal", icon: ArrowLeftRight },
           ],
         },
