@@ -505,3 +505,15 @@
   70% { transform: scale(1.06); opacity: 1; }
   100% { transform: scale(1); }
 }
+
+/* Overscroll ("rubber-band") colour. Pulling past the top or bottom shows
+   the canvas behind the page; match it to the dark edges so it never flashes
+   white. Public site: dark utility bar on top, dark footer below. /app: the
+   forest header (its scroller also has overscroll-behavior: none). */
+html:has(.site-shell) {
+  background-color: #0a1c1c;
+}
+html:has(.app-shell) {
+  background-color: #122e2e;
+  overscroll-behavior: none;
+}

@@ -50,10 +50,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-[#f3f5f4]">
+    <div className="app-shell flex min-h-0 flex-1 flex-col bg-[#f3f5f4]">
       <DesktopNav pathname={pathname} />
 
-      <main className="flex-1 overflow-y-auto overscroll-contain">
+      {/* overscroll-none: no rubber-band, so pulling past the top never
+          reveals the light page background above the forest header. */}
+      <main className="flex-1 overflow-y-auto overscroll-none">
         {children}
       </main>
 

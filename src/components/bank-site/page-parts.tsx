@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 export async function SiteShell({ children }: { children: React.ReactNode }) {
   const session = await auth();
   return (
-    <div className="flex min-h-screen flex-col bg-white text-forest">
+    <div className="site-shell flex min-h-screen flex-col bg-white text-forest">
       <SiteHeader isAuthenticated={!!session} />
       <main className="flex-1">{children}</main>
       <SiteFooter />
