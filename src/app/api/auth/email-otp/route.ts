@@ -1,9 +1,13 @@
 // Manage email-code 2FA.
 // GET    → { enabled }
 // POST   → enable  (requires a verified email; can't stack on top of TOTP)
-// DELETE → disable
+// DELETE → disable (requires the account password: turning off a second
+//           factor must need more than a session, same as TOTP /disable)
 import { eq } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { isEmailDeliverable } from "@/lib/email";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { logAudit } from "@/lib/audit";
@@ -36,8 +40,9 @@ export const POST = apiHandler({
     if (row.totpEnabledAt) {
       return err("Authenticator-app 2FA is already enabled", 409);
     }
-    // Only enforce email-verification once email actually delivers.
-    if (process.env.RESEND_API_KEY && !row.emailVerifiedAt) {
+    // Only enforce email-verification once email actually delivers
+    // (Resend or SMTP — previously only Resend was checked).
+    if (isEmailDeliverable() && !row.emailVerifiedAt) {
       return err("Verify your email before enabling email codes", 400);
     }
 
@@ -57,14 +62,26 @@ export const POST = apiHandler({
       type: "security",
       title: "Email sign-in codes enabled",
       body: "You'll now get a one-time code by email each time you sign in.",
-      actionUrl: "/settings",
+      actionUrl: "/app/more/settings",
     });
     return ok({ enabled: true });
   },
 });
 
-export const DELETE = apiHandler({
-  handler: async ({ user }) => {
+const disableSchema = z.object({ password: z.string().min(1, "Enter your password") });
+
+export const DELETE = apiHandler<z.infer<typeof disableSchema>>({
+  schema: disableSchema,
+  rateLimit: { limit: 10, window: "15m" },
+  handler: async ({ user, body }) => {
+    const [row] = await db
+      .select({ passwordHash: users.passwordHash })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
+    if (!row || !(await bcrypt.compare(body.password, row.passwordHash))) {
+      return err("That password isn't right", 400);
+    }
     await db
       .update(users)
       .set({ emailOtpEnabled: false, updatedAt: new Date() })
