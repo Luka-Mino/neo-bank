@@ -76,7 +76,7 @@ export async function recordLoginDevice(params: {
         type: "security",
         title: "New sign-in to your Moneta account",
         body: "We noticed a sign-in from a device or location we haven't seen before. If this was you, no action is needed. If it wasn't, change your password and enable two-factor authentication right away.",
-        actionUrl: "/settings",
+        actionUrl: "/app/more/settings",
       });
     }
   } catch (error) {

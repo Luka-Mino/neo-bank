@@ -45,7 +45,7 @@ export const POST = apiHandler({
       type: "security",
       title: "Two-factor authentication disabled",
       body: "Authenticator codes are no longer required at sign-in. If this wasn't you, reset your password immediately.",
-      actionUrl: "/settings",
+      actionUrl: "/app/more/settings",
     });
 
     return ok({ enabled: false });

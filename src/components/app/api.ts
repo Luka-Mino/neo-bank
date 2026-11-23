@@ -56,8 +56,8 @@ export async function postJson<T = unknown>(
 export function setupActionFor(err: unknown): { label: string; href: string } | null {
   if (!(err instanceof ApiError) || err.status !== 403) return null;
   const m = err.message.toLowerCase();
-  if (m.includes("two-factor")) return { label: "Turn on two-step sign-in", href: "/settings" };
-  if (m.includes("verify your email")) return { label: "Resend verification email", href: "/settings" };
+  if (m.includes("two-factor")) return { label: "Turn on two-step sign-in", href: "/app/more/settings#security" };
+  if (m.includes("verify your email")) return { label: "Check your email settings", href: "/app/more/settings" };
   if (m.includes("kyc")) return { label: "Verify your identity", href: "/app/onboarding" };
   return null;
 }

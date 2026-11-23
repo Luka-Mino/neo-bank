@@ -59,7 +59,7 @@ export default function AppMorePage() {
             {
               name: "Settings",
               hint: "Profile, password, two-step sign-in",
-              href: "/settings",
+              href: "/app/more/settings",
               icon: Settings,
             },
             {

@@ -48,7 +48,7 @@ export const POST = apiHandler({
       type: "security",
       title: "Two-factor authentication enabled",
       body: "Your account now requires an authenticator code at sign-in.",
-      actionUrl: "/settings",
+      actionUrl: "/app/more/settings",
     });
 
     return ok({ enabled: true, backupCodes });

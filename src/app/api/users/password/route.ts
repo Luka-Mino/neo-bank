@@ -59,7 +59,7 @@ export const PATCH = apiHandler({
       type: "security",
       title: "Your password was changed",
       body: "If this wasn't you, reset your password immediately and enable two-factor authentication.",
-      actionUrl: "/settings",
+      actionUrl: "/app/more/settings",
     });
     return ok({ message: "Password updated successfully" });
   },

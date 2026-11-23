@@ -166,7 +166,7 @@ async function onKybStatus(object: EventObject) {
         type: "kyc_update",
         title: "Additional verification needed",
         body: "Please upload a proof of address to keep receiving deposits over the limit.",
-        actionUrl: "/onboarding",
+        actionUrl: "/app/onboarding",
       });
     } else if (reasonCode === "proof_of_address_rejected") {
       await createNotification({
@@ -174,7 +174,7 @@ async function onKybStatus(object: EventObject) {
         type: "kyc_update",
         title: "Proof of address rejected",
         body: "The document you uploaded couldn't be accepted. Please upload a different proof of address.",
-        actionUrl: "/onboarding",
+        actionUrl: "/app/onboarding",
       });
     } else if (reasonCode === "proof_of_address_approved") {
       await createNotification({
@@ -182,7 +182,7 @@ async function onKybStatus(object: EventObject) {
         type: "kyc_update",
         title: "Proof of address approved",
         body: "Thanks — your held deposits will now be processed.",
-        actionUrl: "/dashboard",
+        actionUrl: "/app",
       });
     } else if (kybStatus === "active" && statusChanged) {
       await createNotification({
@@ -190,7 +190,7 @@ async function onKybStatus(object: EventObject) {
         type: "kyc_update",
         title: "Identity verified",
         body: "Your identity has been verified. You can now deposit, withdraw, and send funds.",
-        actionUrl: "/dashboard",
+        actionUrl: "/app",
       });
     } else if (statusChanged) {
       await createNotification({
@@ -198,7 +198,7 @@ async function onKybStatus(object: EventObject) {
         type: "kyc_update",
         title: `Verification status: ${kybStatus}`,
         body: `Your verification status has been updated to ${kybStatus}.`,
-        actionUrl: "/onboarding",
+        actionUrl: "/app/onboarding",
       });
     }
 
