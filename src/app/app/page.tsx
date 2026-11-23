@@ -34,10 +34,10 @@ import { ActivityRow } from "@/components/app/activity-row";
 import { cn } from "@/lib/utils";
 
 const ACTIONS = [
-  { name: "Send", href: "/send", icon: Send },
-  { name: "Transfer", href: "/transfer-internal", icon: ArrowLeftRight },
-  { name: "Deposit", href: "/deposit", icon: ArrowDownToLine },
-  { name: "Withdraw", href: "/transfer-out", icon: ArrowUpFromLine },
+  { name: "Send", href: "/app/move/send", icon: Send },
+  { name: "Transfer", href: "/app/move/transfer", icon: ArrowLeftRight },
+  { name: "Deposit", href: "/app/move/deposit", icon: ArrowDownToLine },
+  { name: "Withdraw", href: "/app/move/withdraw", icon: ArrowUpFromLine },
 ] as const;
 
 export default function AppHomePage() {
@@ -192,7 +192,7 @@ export default function AppHomePage() {
           <div className="flex flex-col">
             {/* ── Feature tile (below activity on desktop) ───────────────── */}
             <Link
-              href="/send"
+              href="/app/move/send"
               className="group relative mx-4 mt-6 block overflow-hidden rounded-[20px] bg-forest text-white lg:order-2 lg:mx-0"
             >
               <Image
@@ -224,7 +224,7 @@ export default function AppHomePage() {
               title="Recent activity"
               aside={
                 <Link
-                  href="/transactions"
+                  href="/app/activity"
                   className="text-[13px] font-semibold text-turquoise-700 hover:underline"
                 >
                   See all

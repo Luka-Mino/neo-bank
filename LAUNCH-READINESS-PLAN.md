@@ -139,18 +139,37 @@ Today's list is an allowlist of *protected* paths, so every new page is public u
 **Principle.** Rebuild each screen inside the `/app` shell, phone (390px) and desktop (1440px), on the **same APIs**: no backend changes, demo mode keeps working. The old `/dashboard` screens stay live until each new one reaches parity, then cut over (2.14).
 
 ### 2.0 Shared building blocks (do first)
-- [ ] `src/components/ui/icon.tsx`: the approved icon set (style A contour disc + bare glyphs), ported from the design board's 16 glyphs, using the 24px grid and signal-dot spec.
-- [ ] `Button` variants per style C (rounded-rect 12px radius): primary forest, secondary outline, text-link with arrow, icon button, destructive. Sizes 40/48/56; focus ring; loading state.
-- [ ] App patterns:
+- [x] `src/components/ui/icon.tsx`: the approved icon set (style A contour disc + bare glyphs), ported from the design board's 16 glyphs, using the 24px grid and signal-dot spec.
+- [x] `Button` variants per style C (rounded-rect 12px radius): primary forest, secondary outline, text-link with arrow, icon button, destructive. Sizes 40/48/56; focus ring; loading state.
+- [x] App patterns:
   - amount input (tabular figures, currency, max button)
   - account/recipient picker sheet
   - review-and-confirm sheet showing the **exact fee before confirming**
   - success state
   - empty / loading / error states
   - toast usage
-- [ ] Notification bell → real dropdown (the `/app` bell is currently decorative).
+- [x] Notification bell → real dropdown (the `/app` bell is currently decorative).
 
 **Done when:** a sample screen built only from these components passes visual review on phone and desktop.
+
+> **2.0 done 2026-11-23.** Built as `src/components/brand/{icon,button}.tsx` (not inside `ui/`, so the old dashboard's shadcn `Button` keeps working until 2.14) plus `src/components/app/{sheet,picker,account-picker,amount-input,review-sheet,flow-screen,states,fields,api,notification-bell}.tsx`. Send money is the sample screen: verified at 390px and 1440px.
+>
+> **Screens done 2026-11-23:** 2.1 Send, 2.2 Deposit, 2.3 Transfer, 2.4 Withdraw, 2.5 Activity + detail, 2.12 Onboarding. All P0 screens are done. Demo mode was checked at both widths. Real-API mode was checked against the local DB with a scripted user: the 2FA refusal showed the server's reason with a fix-it link, and a real internal transfer moved balances correctly. Old-screen bugs fixed while porting:
+> - Transfers held for approval were reported as "Transfer complete".
+> - If the repeat failed after the transfer itself succeeded, the transfer was reported as failed.
+> - The Deposit account picker had no effect: deposits always credit the primary account.
+> - The Deposit page and the old dashboard made FDIC claims.
+> - Transaction detail had no demo mode.
+> - A 202 "confirmation pending" response was shown as done.
+
+### 2.x Follow-ups found during the port
+- [ ] **Exact fee before confirm (quote step).** Today the server learns `send_amount` (fees included) only by creating the Dakota one-off inside `POST /api/transactions`. So the Send and Withdraw review sheets say the fee is "set when the transfer is created", and the receipt shows the exact fee. To show the fee before confirm:
+  - split the endpoint into `POST /api/transactions/quote`, which creates the one-off (no money moves) and stores it against the org with an expiry;
+  - then `POST /api/transactions/{quoteId}/confirm`, which places the hold and does the wallet-send;
+  - cancel quotes that expire.
+  Needs the Dakota sandbox to verify (Phase 5).
+- [ ] Restyle `LinkBankDialog` (still shadcn) into an `AppSheet` with 2.8 Recipients.
+- [ ] New screens still link to old routes until those ports land: `/recipients/new` (2.8), `/settings` for 2FA and email (2.10), `/approvals` (2.11), `/card` (2.6).
 
 ### 2.1–2.13 Screen inventory (old → new)
 
@@ -190,9 +209,13 @@ Per-screen checklist (copy into each PR):
 ## Phase 3 — Finish the public site (~2–3 days, parallel with Phase 2)
 
 ### 3.1 Homepage (D1)
-- [ ] Serve the `/personal` page at `/`. Keep `/personal` as an alias or redirect it.
-- [ ] Remove the old landing components in `src/components/marketing/*` that nothing uses any more.
-- [ ] Update every internal link that points to `/personal`.
+- [x] Serve the `/personal` page at `/`. Keep `/personal` as an alias or redirect it.
+- [x] Remove the old landing components in `src/components/marketing/*` that nothing uses any more.
+- [x] Update every internal link that points to `/personal`.
+
+> **3.1 done 2026-11-23.** `/` serves the retail-bank page, and `/personal` 308-redirects to `/`. `src/components/marketing/*` and `shared/trust-badge.tsx` are deleted. The old landing page claimed "FDIC pass-through insurance up to $250,000", so the homepage swap also removed that claim from the most visible page.
+>
+> **For counsel (D6):** Terms §5 said balances "may be eligible for FDIC pass-through insurance". It now carries the site-wide USDC disclosure, marked `COUNSEL REVIEW` in `src/app/(public)/terms/page.tsx`. Please confirm the wording.
 
 ### 3.2 Apply brand assets (D2)
 - [ ] Icons style A on: Why Moneta, the security tiles, the help tiles, the product tiles.

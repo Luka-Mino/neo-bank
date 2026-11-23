@@ -9,6 +9,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import type { IconName } from "@/components/brand/icon";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -55,7 +56,11 @@ export type AppTx = {
 export function useTransactions() {
   const q = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => fetch("/api/transactions").then((r) => r.json()),
+    queryFn: async () => {
+      const r = await fetch("/api/transactions");
+      if (!r.ok) throw new Error("transactions");
+      return r.json();
+    },
     enabled: !DEMO_MODE,
   });
   const raw: AppTx[] = DEMO_MODE
@@ -66,29 +71,63 @@ export function useTransactions() {
       new Date(b.createdAt ?? 0).getTime() -
       new Date(a.createdAt ?? 0).getTime()
   );
-  return { txs: sorted, isLoading: !DEMO_MODE && q.isLoading };
+  return {
+    txs: sorted,
+    isLoading: !DEMO_MODE && q.isLoading,
+    isError: !DEMO_MODE && q.isError,
+    refetch: q.refetch,
+  };
 }
 
 // Same type → label/direction mapping as txMeta in dashboard/page.tsx and
 // transactions/page.tsx, so a given type reads the same everywhere.
+// `glyph` is the brand icon (components/brand/icon.tsx); `icon` is the legacy
+// lucide icon still used by older rows.
 export function txMeta(t: string | undefined): {
   label: string;
   direction: "in" | "out";
   icon: LucideIcon;
+  glyph: IconName;
 } {
   switch (t) {
     case "onramp":
-      return { label: "Deposit", direction: "in", icon: ArrowDownToLine };
+      return { label: "Deposit", direction: "in", icon: ArrowDownToLine, glyph: "deposit" };
     case "offramp":
-      return { label: "Withdrawal to bank", direction: "out", icon: ArrowUpFromLine };
+      return { label: "Withdrawal to bank", direction: "out", icon: ArrowUpFromLine, glyph: "withdraw" };
     case "send":
-      return { label: "Money sent", direction: "out", icon: Send };
+      return { label: "Money sent", direction: "out", icon: Send, glyph: "send" };
     case "internal_in":
-      return { label: "Transfer in", direction: "in", icon: Repeat };
+      return { label: "Transfer in", direction: "in", icon: Repeat, glyph: "transfer" };
     case "internal_out":
-      return { label: "Transfer out", direction: "out", icon: Repeat };
+      return { label: "Transfer out", direction: "out", icon: Repeat, glyph: "transfer" };
     default:
-      return { label: "Transaction", direction: "out", icon: ArrowUpFromLine };
+      return { label: "Transaction", direction: "out", icon: ArrowUpFromLine, glyph: "accounts" };
+  }
+}
+
+export type TxTone = "pending" | "done" | "problem";
+
+/** Plain-English status + how loudly to show it. */
+export function txStatus(status: string | undefined): { label: string; tone: TxTone } {
+  switch (status) {
+    case "completed":
+      return { label: "Completed", tone: "done" };
+    case "pending":
+    case "processing":
+    case "awaiting_funds":
+    case "pending_approval":
+      return { label: status === "pending_approval" ? "Awaiting approval" : status === "processing" ? "Processing" : "Pending", tone: "pending" };
+    case "failed":
+      return { label: "Failed", tone: "problem" };
+    case "canceled":
+    case "cancelled":
+      return { label: "Canceled", tone: "problem" };
+    case "returned":
+    case "reversed":
+    case "pending_return":
+      return { label: "Returned", tone: "problem" };
+    default:
+      return { label: status ? status[0].toUpperCase() + status.slice(1).replace(/_/g, " ") : "Unknown", tone: "pending" };
   }
 }
 

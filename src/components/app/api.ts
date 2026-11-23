@@ -58,6 +58,17 @@ export function setupActionFor(err: unknown): { label: string; href: string } | 
   const m = err.message.toLowerCase();
   if (m.includes("two-factor")) return { label: "Turn on two-step sign-in", href: "/settings" };
   if (m.includes("verify your email")) return { label: "Resend verification email", href: "/settings" };
-  if (m.includes("kyc")) return { label: "Verify your identity", href: "/onboarding" };
+  if (m.includes("kyc")) return { label: "Verify your identity", href: "/app/onboarding" };
   return null;
+}
+
+/** Only absolute https URLs (e.g. Dakota's hosted KYC link); anything else → null. */
+export function safeHttpsUrl(u: unknown): string | null {
+  if (typeof u !== "string") return null;
+  try {
+    const url = new URL(u);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }

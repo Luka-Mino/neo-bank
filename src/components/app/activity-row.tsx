@@ -1,8 +1,11 @@
 "use client";
 
-import { shortDate, signedMoney, txMeta, type AppTx } from "./data";
+import Link from "next/link";
+import { shortDate, signedMoney, txMeta, txStatus, type AppTx } from "./data";
+import { Icon } from "@/components/brand/icon";
 import { cn } from "@/lib/utils";
 
+// One activity line. Links to the transaction's detail page.
 export function ActivityRow({
   tx,
   accountName,
@@ -14,36 +17,35 @@ export function ActivityRow({
   showDate?: boolean;
 }) {
   const meta = txMeta(tx.txType);
+  const status = txStatus(tx.status);
   const amt = Number(tx.sourceAmount || 0);
-  const pending = tx.status === "pending";
-  const Icon = meta.icon;
+  const detail = [showDate ? shortDate(tx.createdAt) : null, accountName].filter(Boolean).join(" · ");
+
   return (
-    <div className="flex items-center gap-3 border-b border-forest/[0.06] px-4 py-3.5 last:border-b-0">
+    <Link
+      href={`/app/activity/${encodeURIComponent(tx.id)}`}
+      className="flex items-center gap-3 border-b border-forest/[0.06] px-4 py-3.5 transition-colors last:border-b-0 hover:bg-forest/[0.02] active:bg-forest/[0.04] outline-none focus-visible:bg-turquoise-50/60"
+    >
       <span
+        aria-hidden
         className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-          meta.direction === "in"
-            ? "bg-turquoise-50 text-turquoise-700"
-            : "bg-forest/[0.06] text-forest/70"
+          meta.direction === "in" ? "bg-turquoise-50 text-forest" : "bg-forest/[0.06] text-forest/80"
         )}
       >
-        <Icon className="h-[17px] w-[17px]" />
+        <Icon name={meta.glyph} size={20} />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[14px] font-semibold text-forest">
-          {meta.label}
-        </div>
+        <div className="truncate text-[14px] font-semibold text-forest">{meta.label}</div>
         <div className="mt-0.5 truncate text-[12px] text-forest/50">
-          {[showDate ? shortDate(tx.createdAt) : null, accountName]
-            .filter(Boolean)
-            .join(" · ")}
-          {pending ? (
+          {detail}
+          {status.tone !== "done" ? (
             <>
-              {showDate || accountName ? " · " : ""}
-              <span className="font-medium text-cat-orange">Pending</span>
+              {detail ? " · " : ""}
+              <span className={cn("font-medium", status.tone === "problem" ? "text-[#b42f34]" : "text-cat-orange")}>{status.label}</span>
             </>
           ) : (
-            !showDate && !accountName && "Completed"
+            !detail && "Completed"
           )}
         </div>
       </div>
@@ -51,11 +53,12 @@ export function ActivityRow({
         className={cn(
           "font-mono text-[14px] font-semibold tabular",
           meta.direction === "in" ? "text-turquoise-700" : "text-forest",
-          pending && "opacity-60"
+          status.tone === "pending" && "opacity-60",
+          status.tone === "problem" && "text-forest/40 line-through decoration-forest/30"
         )}
       >
         {signedMoney(amt, meta.direction)}
       </div>
-    </div>
+    </Link>
   );
 }

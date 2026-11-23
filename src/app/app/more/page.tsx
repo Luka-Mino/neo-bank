@@ -25,7 +25,7 @@ export default function AppMorePage() {
             {
               name: "Transactions",
               hint: "Search and export your history",
-              href: "/transactions",
+              href: "/app/activity",
               icon: History,
             },
             {

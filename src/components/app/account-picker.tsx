@@ -24,15 +24,15 @@ export function useActiveAccounts() {
 export function useDefaultAccount(
   value: string,
   setValue: (id: string) => void,
-  { preferId, exclude }: { preferId?: string | null; exclude?: string } = {}
+  { preferId, exclude, enabled = true }: { preferId?: string | null; exclude?: string; enabled?: boolean } = {}
 ) {
   const { accounts, isLoading } = useActiveAccounts();
   useEffect(() => {
-    if (value || isLoading) return;
+    if (!enabled || value || isLoading) return;
     const pool = accounts.filter((a) => a.id !== exclude);
     const pick = pool.find((a) => a.id === preferId) ?? pool.find((a) => a.isPrimary) ?? pool[0];
     if (pick) setValue(pick.id);
-  }, [value, isLoading, accounts, preferId, exclude, setValue]);
+  }, [enabled, value, isLoading, accounts, preferId, exclude, setValue]);
 }
 
 export function AccountPicker({

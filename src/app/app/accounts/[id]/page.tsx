@@ -80,11 +80,11 @@ export default function AppAccountPage({
   }
 
   const name = account.nickname || accountTypeLabel(account.accountType);
-  const q = `?account=${encodeURIComponent(account.id)}`;
+  const q = `?from=${encodeURIComponent(account.id)}`;
   const actions = [
-    { name: "Send", href: `/send${q}`, icon: Send },
-    { name: "Transfer", href: `/transfer-internal${q}`, icon: ArrowLeftRight },
-    { name: "Deposit", href: `/deposit${q}`, icon: ArrowDownToLine },
+    { name: "Send", href: `/app/move/send${q}`, icon: Send },
+    { name: "Transfer", href: `/app/move/transfer${q}`, icon: ArrowLeftRight },
+    { name: "Deposit", href: "/app/move/deposit", icon: ArrowDownToLine },
   ];
 
   return (

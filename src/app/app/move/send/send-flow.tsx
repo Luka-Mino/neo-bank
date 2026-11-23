@@ -14,7 +14,7 @@ import { AmountInput } from "@/components/app/amount-input";
 import { AccountPicker, accountName, useActiveAccounts, useDefaultAccount } from "@/components/app/account-picker";
 import { Avatar, Picker } from "@/components/app/picker";
 import { ReviewSheet } from "@/components/app/review-sheet";
-import { EmptyState, ErrorState, LoadingRows, SuccessState } from "@/components/app/states";
+import { EmptyState, ErrorState, LoadingRows, Notice, SuccessState } from "@/components/app/states";
 import { postJson } from "@/components/app/api";
 import { useCustomer, useRecipients } from "@/components/app/data";
 import { Button, ButtonLink, TextLink } from "@/components/brand/button";
@@ -23,7 +23,7 @@ import { queryKeys } from "@/lib/queries";
 import { DEMO_MODE } from "@/lib/demo-data";
 import { cn } from "@/lib/utils";
 
-type Sent = { amount: number; fee: number | null; to: string; from: string };
+type Sent = { amount: number; fee: number | null; to: string; from: string; warning?: string };
 
 export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string | null }) {
   const qc = useQueryClient();
@@ -57,10 +57,11 @@ export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string
     if (!recipient || !account) return;
     const value = parseAmount(amount);
     let fee: number | null = null;
+    let warning: string | undefined;
     if (DEMO_MODE) {
       await new Promise((r) => setTimeout(r, 900));
     } else {
-      const res = await postJson<{ sendAmount?: string }>("/api/transactions", {
+      const res = await postJson<{ sendAmount?: string; warning?: string }>("/api/transactions", {
         amount: toApiAmount(amount),
         destinationId: recipient.dakotaRecipientId,
         accountId: account.id,
@@ -69,11 +70,12 @@ export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string
         txType: "send",
       });
       if (res?.sendAmount) fee = Math.max(0, Number(res.sendAmount) - value);
+      warning = res?.warning;
     }
     qc.invalidateQueries({ queryKey: ["transactions"] });
     qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
     setReviewing(false);
-    setSent({ amount: value, fee, to: recipient.name, from: accountName(account) });
+    setSent({ amount: value, fee, to: recipient.name, from: accountName(account), warning });
   }
 
   function reset() {
@@ -111,16 +113,17 @@ export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string
           title="Verify your identity to send money"
           body="It takes a few minutes. We need it before any money can leave your account."
           action={
-            <ButtonLink href="/onboarding" arrow>
+            <ButtonLink href="/app/onboarding" arrow>
               Verify now
             </ButtonLink>
           }
         />
       ) : sent ? (
+        <>
         <SuccessState
-          title="Money sent"
+          title={sent.warning ? "Payment processing" : "Money sent"}
           amount={formatUsd(sent.amount)}
-          body={`${sent.to} will see it in seconds.`}
+          body={sent.warning ? `We're confirming your payment to ${sent.to}.` : `${sent.to} will see it in seconds.`}
           rows={[
             { label: "To", value: sent.to },
             { label: "From", value: sent.from },
@@ -140,6 +143,12 @@ export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string
             </>
           }
         />
+        {sent.warning && (
+          <Notice tone="warning" title="Confirmation is pending" className="mx-auto max-w-[420px]">
+            {sent.warning} Don&apos;t send it again. Check Activity first.
+          </Notice>
+        )}
+        </>
       ) : (
         <form
           noValidate
@@ -198,7 +207,7 @@ export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string
             </Button>
             <p className="text-center text-[13px] text-forest/55">
               Paying your own bank account?{" "}
-              <Link href="/transfer-out" className="font-semibold text-turquoise-700 hover:text-forest">
+              <Link href="/app/move/withdraw" className="font-semibold text-turquoise-700 hover:text-forest">
                 Withdraw instead
               </Link>
             </p>
