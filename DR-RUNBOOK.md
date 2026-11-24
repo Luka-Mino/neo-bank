@@ -15,25 +15,44 @@
 - **Cadence:** Supabase Pro takes daily automated backups with point-in-time
   recovery. Verify in the Supabase dashboard → Database → Backups.
 - **Retention:** per Supabase plan (typically 7 days daily + PITR window).
-- **Manual snapshot before risky migrations:** `pg_dump "$DATABASE_URL" > backup-$(date +%F).sql`
+- **Manual snapshot before risky migrations:** `pg_dump "$OWNER_DATABASE_URL" > backup-$(date +%F).sql`. Use the **owner** connection (the one migrations use), never `DATABASE_URL`. Since migration 0021, `DATABASE_URL` is the restricted `moneta_app` role, and `pg_dump` as that role fails ("permission denied for schema drizzle"; row-level security would hide rows anyway). Confirmed in the 2026-11-24 drill.
 
 ## Restore procedures
 
 ### Full database restore (Supabase)
 1. Supabase dashboard → Database → Backups → choose a point in time.
 2. Restore into the same project (or a new one if corruption is suspected).
-3. If a new project: update `DATABASE_URL` in Vercel env + local `.env.local`,
-   redeploy.
+3. If a new project: run `scripts/sql/db-roles.sql` there (new passwords),
+   then update `DATABASE_URL` (moneta_app) and `SYSTEM_DATABASE_URL`
+   (moneta_system) in the host's env and local `.env.local`, and redeploy.
+   Restoring into the same project keeps the roles.
 4. Run `npx drizzle-kit migrate` to confirm schema is current.
-5. Verify: `curl https://<app>/api/health` returns `{"status":"ok"}`.
-6. Run the ledger-drift check: `GET /api/maintenance/cleanup` → `ledgerDrift: 0`.
+5. Verify: `curl https://<app>/api/health` returns `{"status":"ok"}` with
+   `"databaseRoles": "ok"` (row-level security posture).
+6. Run the ledger-drift and stuck-transaction checks:
+   `GET /api/maintenance/cleanup` with `Authorization: Bearer $CRON_SECRET`
+   → `ledgerDrift: 0`. Note it also purges expired tokens and old webhook
+   events; that's harmless, but it isn't read-only.
 
 ### Restore from a manual pg_dump
 ```
 createdb moneta_restore
-psql moneta_restore < backup-YYYY-MM-DD.sql
-# point DATABASE_URL at moneta_restore, run health + drift checks
+psql "$OWNER_URL/moneta_restore" < backup-YYYY-MM-DD.sql
+# On a NEW server only: the restore prints "role moneta_app does not exist"
+# for each GRANT (expected). Then create the roles, which also re-applies grants:
+psql "$OWNER_URL/moneta_restore" -v ON_ERROR_STOP=1 < scripts/sql/db-roles.sql   # passwords replaced
+DATABASE_URL="$OWNER_URL/moneta_restore" npx drizzle-kit migrate   # must no-op
 ```
+Then check:
+- Row-level security survived: `select relname from pg_class where relname in ('accounts','transactions') and relrowsecurity and relforcerowsecurity;` returns both rows (11 tables in all).
+- The audit log is still append-only: as `moneta_app`, `update audit_log …` gives "permission denied".
+- Row counts match the source for `users`, `accounts`, `transactions`.
+- Point `DATABASE_URL` (moneta_app) and `SYSTEM_DATABASE_URL` at the restore, then run the health and drift checks. On a non-production copy, the integration tests can run against it too (`INTEGRATION=1 RLS_REQUIRED=1 npx vitest run --dir src --testNamePattern integration`).
+
+### Drill log
+| Date | Drill | Result |
+|---|---|---|
+| 2026-11-24 | Local: `pg_dump` (owner) → restore into a new DB on the same server, and into a brand-new server | Both restored: 22 migrations, RLS + FORCE on all 11 tables, audit trigger, matching row counts, all 16 integration tests pass as `moneta_app`. Found and fixed in this runbook: backups must use the owner URL (the app role fails); a new server needs `db-roles.sql` after the restore. Not drilled: Supabase dashboard restore (no hosted DB yet) |
 
 ### Signer key loss (Dakota)
 The platform signer private key (`DAKOTA_SIGNER_PRIVATE_KEY`) is **not

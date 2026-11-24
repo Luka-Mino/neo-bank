@@ -274,7 +274,10 @@ Sentry is installed (`src/instrumentation*.ts`) with `sendDefaultPii: false`, bu
 
 **Done when:** both boxes are ticked.
 
-### C6 Restore drill (1–2 hours, 👤 you with 🤖 Claude)
+### C6 Restore drill ✅ done locally 2026-11-24
+
+> Dump → restore into a new DB and into a brand-new server; checks and integration tests pass on both. Fixed in `DR-RUNBOOK.md`: backups must use the owner URL, since `pg_dump` as `moneta_app` fails; on a new server, run `db-roles.sql` after the restore. The Supabase dashboard restore waits for a hosted DB (Section 9). See the runbook's drill log.
+
 Walk `DR-RUNBOOK.md` once:
 1. Take a `pg_dump` of staging.
 2. Restore it into a scratch database.
