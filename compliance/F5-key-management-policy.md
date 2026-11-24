@@ -37,13 +37,12 @@ The steps to rotate each secret are in `DR-RUNBOOK.md` under "Secret rotation". 
 | `DATABASE_URL`, and `SYSTEM_DATABASE_URL` (a role that bypasses row-level security, being added in plan C1) | Full database access | All customer data | [ENGINEERING LEAD] |
 | `DAKOTA_WEBHOOK_PUBLIC_KEY` | Checks that webhooks come from Dakota | Public, but a swapped value would let forged events in | [ENGINEERING LEAD] |
 | `CRON_SECRET`, `RESEND_API_KEY` / `SMTP_URL`, Upstash token (planned) | Crons, email sending, rate limits | Phishing from our domain; limits switched off | [ENGINEERING LEAD] |
-| `STRIPE_ISSUING_WEBHOOK_SECRET` | Alternative card provider, not in use | — | Remove if unused |
 | Vendor console and GitHub logins | Everything above | Everything above | Named people only. Password manager plus MFA |
 
 **Rules for every secret**
 - Production values live only in Vercel's Production environment. Sandbox and preview use different values.
 - Never put a secret in chat, a ticket, a commit or a log. gitleaks runs in CI.
-- Read secrets only through `src/lib/secrets.ts`. Its `SECRET_NAMES` list is missing `SMTP_URL`, `STRIPE_ISSUING_WEBHOOK_SECRET` and the new database and Upstash values. Add them.
+- Read secrets only through `src/lib/secrets.ts`. Its `SECRET_NAMES` list covers every secret above (the unused Stripe Issuing secret was removed with that code on 2026-11-24). Add any new secret there.
 - Review who can read production environment variables every quarter. Remove access within 1 business day when someone leaves, then rotate what they could read.
 
 ## 4. Design A (today): the platform holds the only signer

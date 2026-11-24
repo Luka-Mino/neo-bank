@@ -26,7 +26,8 @@
    then update `DATABASE_URL` (moneta_app) and `SYSTEM_DATABASE_URL`
    (moneta_system) in the host's env and local `.env.local`, and redeploy.
    Restoring into the same project keeps the roles.
-4. Run `npx drizzle-kit migrate` to confirm schema is current.
+4. Confirm the schema is current, as the owner (drizzle-kit reads `DATABASE_URL`):
+   `DATABASE_URL="$OWNER_DATABASE_URL" npm run db:migrate` must no-op.
 5. Verify: `curl https://<app>/api/health` returns `{"status":"ok"}` with
    `"databaseRoles": "ok"` (row-level security posture).
 6. Run the ledger-drift and stuck-transaction checks:
@@ -78,7 +79,7 @@ been committed (`git log --all -- .env.local` is empty).
 | `CRON_SECRET` | 90 days | New random value in Vercel (crons read it from env) | — |
 | `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN` | Only if abused | New DSN in Sentry | The DSN is public by design; it only allows sending events |
 | Upstash (`UPSTASH_REDIS_REST_TOKEN`) | 90 days | New token in Upstash → Vercel | A missing or invalid token makes rate limits fall back and raise an ops alert |
-| `DATABASE_URL` password | 90 days | Rotate in Supabase → Vercel → redeploy | Update `MIGRATION_DATABASE_URL` too once it exists (plan C1) |
+| `DATABASE_URL` password | 90 days | Rotate in Supabase → Vercel → redeploy | Update the owner URL you keep for migrations (`OWNER_DATABASE_URL` in these steps) too |
 | `DAKOTA_SIGNER_PRIVATE_KEY` | **Only on exposure** | See "Signer key loss" above: add the new signer to every signer group **before** detaching the old one | Detaching a wallet's last signer group bricks the wallet |
 | `FIELD_ENCRYPTION_KEYS` | Yearly, or on exposure | Prepend a new `id:secret` (≥32 random chars), deploy, run `npm run keys:reencrypt -- --apply` with the owner DB URL, then drop the old entry | Never drop an entry before re-encrypting: blobs name their key id and become unreadable without it |
 | `HMAC_KEYS` | Yearly, or on exposure | Prepend a new `id:secret`, deploy. Keep old entries until what they hashed has expired | Hashes can't be re-keyed: backup codes (until users regenerate), pending invites and approvals (until they expire). Device fingerprints re-stamp themselves at the next sign-in |

@@ -16,6 +16,10 @@
 
 ## 0. Where we are (snapshot, 2026-11-23)
 
+> Historical snapshot: most rows below were fixed on 2026-11-23/24 (see the
+> ticked items in each phase). `src/middleware.ts` is now `src/proxy.ts`, the
+> old dashboard is gone, and the latest migration is `0022`.
+
 | Area | State | Risk |
 |---|---|---|
 | **Uncommitted work** | Today's work is not committed or deployed: public site redesign, `/app`, Dakota cards groundwork, docs. Staging (neo-bank-rho.vercel.app) is months out of date. | High: work can be lost, and nobody can review it |
@@ -412,9 +416,10 @@ Per-screen checklist (copy into each PR):
 - [x] **Fixed 2026-11-23:** API rate limits were keyed on IP alone, so every limited endpoint
       shared one counter and a few normal requests exhausted forgot-password's 5/15m budget.
       Now keyed per IP + route via `rateLimitKey()` (ids collapse to `:id`).
-- [ ] **Rate-limit store is in-memory per server instance** (`src/lib/rate-limit.ts`). On Vercel,
+- [~] **Rate-limit store is in-memory per server instance** (`src/lib/rate-limit.ts`). On Vercel,
       the login brute-force guard and API limits reset per instance, so they are much weaker
-      than they look. Add a shared store (Upstash Redis via `REDIS_URL`) before real users.
+      than they look. The shared store is built (Upstash REST, PRE-DAKOTA-PLAN C2); it switches
+      on once `UPSTASH_REDIS_REST_URL`/`_TOKEN` are set, before real users.
 - [ ] Decide on passkeys (WebAuthn) as the phishing-resistant option (BACKLOG).
 
 ### 4.4 Deep security research (the request paused earlier)
@@ -464,7 +469,7 @@ Licensing questions (from §1b; the full list of 12 is at the end of `reports/Mo
 - [ ] The key goes into `.env.local` by you, never in chat.
 
 ### 5.2 Sandbox proof (ROADMAP M2)
-- [ ] Apply migrations through `0019`.
+- [ ] Apply all migrations (latest `0022`) as the database owner: `DATABASE_URL=<owner url> npm run db:migrate`.
 - [ ] Bootstrap: `npm run dakota:bootstrap` (twice, per ROADMAP).
 - [ ] Restore the real webhook key; turn demo mode and the KYC bypass off.
 - [ ] Set up a webhook tunnel (or reconcile).

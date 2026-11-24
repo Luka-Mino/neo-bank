@@ -58,7 +58,7 @@
   user (incl. soft-deleted), owner membership, point `active_org_id`, stamp `org_id` on
   every class-A row via the unique personal org, seed default (OFF) approval policies.
   Pre-flight assert zero `org_id IS NULL` before 0018.
-- **0018_org_enforce** — after PR-2/4/5 land (every query sets the GUC): `NOT NULL` +
+- **0018_org_enforce** (shipped as `0021_org_enforce`) — after PR-2/4/5 land (every query sets the GUC): `NOT NULL` +
   FKs + `UNIQUE(org_id,id)` + composite FKs + constraint swaps + **RLS ENABLE/FORCE +
   policies**. Switch app DB role to non-owner.
 

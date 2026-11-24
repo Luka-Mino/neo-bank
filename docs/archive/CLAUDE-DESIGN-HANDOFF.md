@@ -1,7 +1,7 @@
 # Moneta — Claude Design build handoff
 
-Driven via Claude-in-Chrome MCP at https://claude.ai/design (logged in as
-nick@gambits.gg).
+Driven via Claude-in-Chrome MCP at https://claude.ai/design (in the
+team's Claude Design workspace).
 
 ## What was delivered
 

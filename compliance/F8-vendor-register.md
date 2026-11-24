@@ -37,11 +37,7 @@ Moneta chooses, contracts with and oversees its own vendors. Dakota oversees its
 | **Upstash** (planned, plan C2) | Shared store for rate limits | IP address plus route, in rate-limit keys | Medium: an outage weakens brute-force protection | Request | DPA: [check] | [ENGINEERING LEAD] |
 | **Password manager** [TBD] | Staff credentials and recovery codes | None directly. Holds the keys to every console | High | Request | [TBD] | [ENGINEERING LEAD] |
 
-**In the code but not in use:**
-- Stripe Issuing (`ISSUING_PROVIDER=stripe`, `/api/webhooks/stripe-issuing`);
-- an SMTP fallback through nodemailer (`EMAIL_PROVIDER=smtp`).
-
-Before enabling either, add it to this register and check it. Otherwise remove it.
+**In the code but not in use:** an SMTP fallback through nodemailer (`EMAIL_PROVIDER=smtp`). Before enabling it, add it to this register and check it. (The unbuilt Stripe Issuing fallback was removed on 2026-11-24.)
 
 ## 4. Fourth parties (Dakota's partners)
 

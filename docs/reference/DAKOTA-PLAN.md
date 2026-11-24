@@ -107,6 +107,10 @@ POST (and only POST); 60 req/min per API key; RFC 9457 problem+json errors; IDs 
 
 ## 3. What we already have vs. what's missing
 
+> Describes the code as of July 2026. Every gap below has since been fixed
+> (see §9's PRs). The single platform-signer model in §2 is being redesigned
+> (decision D11 in `PRE-DAKOTA-PLAN.md`).
+
 ### Already built (and matches the docs)
 - `src/lib/dakota/client.ts` — correct base URLs, `x-api-key`, `x-idempotency-key`
   on POSTs, RFC 9457 error parsing.
@@ -312,6 +316,8 @@ tunnel.
 ---
 
 ## 7. Phased implementation
+
+> July plan. Current status lives in `PRE-DAKOTA-PLAN.md` and `LAUNCH-READINESS-PLAN.md`.
 
 **Phase 0 — Access & bootstrap** *(blocked on Dakota sales for credentials)*
 Sandbox account, API key, bootstrap script (signer/group/policy/webhook target),

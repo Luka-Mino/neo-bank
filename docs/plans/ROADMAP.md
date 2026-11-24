@@ -1,9 +1,10 @@
 # Moneta Roadmap
 
-> Updated 2026-07-10 (evening). This is the master plan: what we're building,
-> how each piece gets done, and the definition of done for every milestone.
-> Deep Dakota reference: `DAKOTA-PLAN.md`. Parked ideas: `BACKLOG.md`.
-> Session context for future work: `HANDOFF.md`.
+> Updated 2026-07-10 (evening); the milestone view. For current work see
+> `PRE-DAKOTA-PLAN.md` and `LAUNCH-READINESS-PLAN.md`; for local setup see the
+> repo README (this file's "Local dev DB" notes predate row-level security).
+> Deep Dakota reference: `docs/reference/DAKOTA-PLAN.md`. Parked ideas:
+> `BACKLOG.md`. The July session handoff is in `docs/archive/HANDOFF.md`.
 
 > **Current execution plan (2026-11-23): [`LAUNCH-READINESS-PLAN.md`](LAUNCH-READINESS-PLAN.md).**
 > A detailed, tick-as-you-go list across five phases: secure the base, finish
@@ -212,6 +213,9 @@ issuer partner and is now part of M2, above.)
 3. **(M3, later)** production hosting + domain choice.
 
 ## Local dev DB (since 2026-07-10)
+
+> Out of date since migration 0021: the app now connects as the restricted
+> `moneta_app` role and migrations run as the owner. Follow the README.
 
 Dev runs on Homebrew PostgreSQL 16 (Supabase kept for staging/M3):
 - Data dir `~/.moneta-pgdata`, port `54321`, superuser `moneta`, db `moneta`.
