@@ -230,7 +230,7 @@ export default function DashboardPage() {
                   <>
                     <span>$</span>
                     <span className="ml-[0.04em]">{dollars}</span>
-                    <span className="ml-[0.08em] text-white/45">
+                    <span className="ml-[0.08em] text-white/60">
                       .{cents || "00"}
                     </span>
                   </>

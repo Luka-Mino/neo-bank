@@ -67,7 +67,7 @@ export default function AppAccountPage({
         <p className="text-[16px] font-semibold text-forest">
           We couldn&apos;t find that account
         </p>
-        <p className="mt-1 text-[13px] text-forest/55">
+        <p className="mt-1 text-[13px] text-forest/65">
           It may have been closed, or the link is out of date.
         </p>
         <Link
@@ -175,7 +175,7 @@ export default function AppAccountPage({
                 "rounded-full py-2 text-[13px] font-semibold capitalize transition",
                 tab === t
                   ? "bg-white text-forest shadow-[0_1px_3px_rgba(10,28,28,0.12)]"
-                  : "text-forest/55 hover:text-forest",
+                  : "text-forest/65 hover:text-forest",
               )}
             >
               {t}
@@ -232,7 +232,7 @@ function ActivityList({
     return (
       <div className="mx-4 mt-4 rounded-[18px] bg-white px-4 py-10 text-center lg:mx-0 lg:mt-3">
         <p className="text-[14px] font-semibold text-forest">No activity yet</p>
-        <p className="mt-1 text-[13px] text-forest/55">
+        <p className="mt-1 text-[13px] text-forest/65">
           Deposits, transfers and payments will show up here.
         </p>
       </div>
@@ -260,7 +260,7 @@ function Group({
 }) {
   return (
     <section className="mt-5 lg:mt-3 lg:[&+section]:mt-5">
-      <h2 className="eyebrow mx-5 mb-2 text-[10px] text-forest/50 lg:mx-1">
+      <h2 className="eyebrow mx-5 mb-2 text-[10px] text-forest/65 lg:mx-1">
         {label}
       </h2>
       <div className="mx-4 lg:mx-0 overflow-hidden rounded-[18px] bg-white shadow-[0_1px_0_rgba(18,46,46,0.04),0_4px_14px_-8px_rgba(18,46,46,0.12)]">
@@ -309,7 +309,7 @@ function DetailsList({
             type="button"
             onClick={() => setReveal((r) => !r)}
             aria-label={reveal ? "Hide account number" : "Show account number"}
-            className="rounded-full p-1.5 text-forest/50 transition hover:bg-forest/[0.06] hover:text-forest"
+            className="rounded-full p-1.5 text-forest/65 transition hover:bg-forest/[0.06] hover:text-forest"
           >
             {reveal ? (
               <EyeOff className="h-3.5 w-3.5" />
@@ -321,7 +321,7 @@ function DetailsList({
             type="button"
             onClick={copy}
             aria-label="Copy account number"
-            className="rounded-full p-1.5 text-forest/50 transition hover:bg-forest/[0.06] hover:text-forest"
+            className="rounded-full p-1.5 text-forest/65 transition hover:bg-forest/[0.06] hover:text-forest"
           >
             <Copy className="h-3.5 w-3.5" />
           </button>
@@ -335,10 +335,10 @@ function DetailsList({
       value: (
         <span
           className={cn(
-            "rounded-full px-2.5 py-1 text-[11px] font-semibold",
+            "rounded-full px-2.5 py-1 text-[12px] font-semibold",
             account.status === "active"
               ? "bg-turquoise-50 text-turquoise-700"
-              : "bg-cat-blue/10 text-cat-blue",
+              : "bg-cat-blue/10 text-cat-blue-700",
           )}
         >
           {accountTypeLabel(account.status)}
@@ -365,7 +365,7 @@ function DetailsList({
           key={r.label}
           className="flex min-h-[52px] items-center justify-between gap-4 border-b border-forest/[0.06] px-4 py-3 last:border-b-0"
         >
-          <dt className="text-[13px] text-forest/55">{r.label}</dt>
+          <dt className="text-[13px] text-forest/65">{r.label}</dt>
           <dd className="text-right text-[14px] font-medium text-forest">
             {r.value}
           </dd>

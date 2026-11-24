@@ -189,7 +189,7 @@ export function ActivityList({ accountId }: { accountId: string | null }) {
             </Link>
           )}
           {accounts.length > 1 && !scoped && (
-            <p className="mt-4 hidden text-[12.5px] leading-relaxed text-forest/50 lg:block">
+            <p className="mt-4 hidden text-[12.5px] leading-relaxed text-forest/65 lg:block">
               Open an account from Accounts to see only its activity.
             </p>
           )}
@@ -223,7 +223,7 @@ export function ActivityList({ accountId }: { accountId: string | null }) {
           ) : (
             groups.map((g) => (
               <section key={g.label} className="mt-5 first:mt-5 lg:first:mt-0">
-                <h2 className="eyebrow mx-5 mb-2 text-[10px] text-forest/50 lg:mx-1" suppressHydrationWarning>
+                <h2 className="eyebrow mx-5 mb-2 text-[10px] text-forest/65 lg:mx-1" suppressHydrationWarning>
                   {g.label}
                 </h2>
                 <div className="mx-4 overflow-hidden rounded-[18px] bg-white shadow-[0_1px_0_rgba(18,46,46,0.04),0_4px_14px_-8px_rgba(18,46,46,0.12)] lg:mx-0">

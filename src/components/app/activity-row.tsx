@@ -37,12 +37,12 @@ export function ActivityRow({
       </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-[14px] font-semibold text-forest">{meta.label}</div>
-        <div className="mt-0.5 truncate text-[12px] text-forest/50">
+        <div className="mt-0.5 truncate text-[12px] text-forest/65">
           {detail}
           {status.tone !== "done" ? (
             <>
               {detail ? " · " : ""}
-              <span className={cn("font-medium", status.tone === "problem" ? "text-[#b42f34]" : "text-cat-orange")}>{status.label}</span>
+              <span className={cn("font-medium", status.tone === "problem" ? "text-[#b42f34]" : "text-cat-orange-700")}>{status.label}</span>
             </>
           ) : (
             !detail && "Completed"
@@ -53,8 +53,9 @@ export function ActivityRow({
         className={cn(
           "font-mono text-[14px] font-semibold tabular",
           meta.direction === "in" ? "text-turquoise-700" : "text-forest",
-          status.tone === "pending" && "opacity-60",
-          status.tone === "problem" && "text-forest/40 line-through decoration-forest/30"
+          // Muted, but still ≥4.5:1 (opacity-60 had dropped it to ~2.2:1).
+          status.tone === "pending" && "text-forest/65",
+          status.tone === "problem" && "text-forest/65 line-through decoration-forest/40"
         )}
       >
         {signedMoney(amt, meta.direction)}

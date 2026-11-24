@@ -136,11 +136,11 @@ export function NotificationBell({ tone = "dark" }: { tone?: "dark" | "light" })
             </div>
             <div className="max-h-[min(420px,70dvh)] overflow-y-auto overscroll-contain">
               {isLoading ? (
-                <p role="status" className="px-4 py-8 text-center text-[13.5px] text-forest/55">
+                <p role="status" className="px-4 py-8 text-center text-[13.5px] text-forest/65">
                   Loading…
                 </p>
               ) : isError ? (
-                <div className="px-4 py-8 text-center text-[13.5px] text-forest/60">
+                <div className="px-4 py-8 text-center text-[13.5px] text-forest/65">
                   Couldn&apos;t load notifications.{" "}
                   <button type="button" onClick={() => refetch()} className="font-semibold text-turquoise-700 underline-offset-2 hover:underline">
                     Try again
@@ -149,7 +149,7 @@ export function NotificationBell({ tone = "dark" }: { tone?: "dark" | "light" })
               ) : data.length === 0 ? (
                 <div className="px-6 py-10 text-center">
                   <p className="text-[14.5px] font-semibold">You&apos;re all caught up</p>
-                  <p className="mt-1 text-[13px] text-forest/55">Updates about your money and security show up here.</p>
+                  <p className="mt-1 text-[13px] text-forest/65">Updates about your money and security show up here.</p>
                 </div>
               ) : (
                 <ul className="divide-y divide-forest/[0.06]">
@@ -177,11 +177,11 @@ export function NotificationBell({ tone = "dark" }: { tone?: "dark" | "light" })
                                 {n.title}
                                 {!n.readAt && <span className="sr-only"> (unread)</span>}
                               </span>
-                              <span className="shrink-0 text-[11.5px] text-forest/45" suppressHydrationWarning>
+                              <span className="shrink-0 text-[11.5px] text-forest/65" suppressHydrationWarning>
                                 {timeAgo(n.createdAt)}
                               </span>
                             </span>
-                            {n.body && <span className="mt-0.5 line-clamp-2 block text-[13px] leading-snug text-forest/60">{n.body}</span>}
+                            {n.body && <span className="mt-0.5 line-clamp-2 block text-[13px] leading-snug text-forest/65">{n.body}</span>}
                           </span>
                         </Popover.Close>
                       </li>

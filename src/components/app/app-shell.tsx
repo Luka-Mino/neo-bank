@@ -76,10 +76,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   href={t.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative flex flex-col items-center gap-1 pb-2.5 pt-3 text-[11px] font-medium transition-colors",
+                    "relative flex flex-col items-center gap-1 pb-2.5 pt-3 text-[12px] font-medium transition-colors",
                     active
                       ? "text-forest"
-                      : "text-forest/45 hover:text-forest/75"
+                      : "text-forest/65 hover:text-forest/75"
                   )}
                 >
                   <span

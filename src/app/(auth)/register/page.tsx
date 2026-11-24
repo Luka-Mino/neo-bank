@@ -134,11 +134,11 @@ export default function RegisterPage() {
               />
               <Label htmlFor="acceptTerms" className="text-sm font-normal leading-snug text-muted-foreground">
                 I agree to Moneta&apos;s{" "}
-                <Link href="/terms" target="_blank" className="text-primary underline underline-offset-4">
+                <Link href="/terms" target="_blank" className="font-medium text-forest underline underline-offset-4">
                   Terms of use
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" target="_blank" className="text-primary underline underline-offset-4">
+                <Link href="/privacy" target="_blank" className="font-medium text-forest underline underline-offset-4">
                   Privacy policy
                 </Link>
                 .
@@ -158,7 +158,7 @@ export default function RegisterPage() {
           </Button>
           <p className="text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary underline-offset-4 hover:underline">
+            <Link href="/login" className="font-medium text-forest underline underline-offset-4">
               Sign in
             </Link>
           </p>

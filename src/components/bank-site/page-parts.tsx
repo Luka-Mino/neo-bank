@@ -56,7 +56,7 @@ export function PageHero({
         )}
       >
         <div>
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-[13px] text-forest/60">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-[13px] text-forest/65">
             <Link href="/" className="hover:text-forest hover:underline">
               Home
             </Link>

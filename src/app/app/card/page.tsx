@@ -193,7 +193,7 @@ export default function CardPage() {
                 </ButtonLink>
               </div>
               {frozen && (
-                <p className="mt-3 text-[13px] text-forest/60">Frozen cards decline every payment. Unfreeze it any time.</p>
+                <p className="mt-3 text-[13px] text-forest/65">Frozen cards decline every payment. Unfreeze it any time.</p>
               )}
               {pending && (
                 <Notice tone="info" className="mt-4">
@@ -228,7 +228,7 @@ export default function CardPage() {
                   loading={relink.isPending}
                   disabled={pending}
                 />
-                {linked && <p className="mt-2 text-[12.5px] text-forest/50">Card payments come out of {accountName(linked)}.</p>}
+                {linked && <p className="mt-2 text-[12.5px] text-forest/65">Card payments come out of {accountName(linked)}.</p>}
               </div>
 
               {error && (
@@ -238,7 +238,7 @@ export default function CardPage() {
               )}
 
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-forest/[0.07] pt-4">
-                <p className="text-[13px] text-forest/55">Lost it or seeing payments you don&apos;t recognise? Freeze it first.</p>
+                <p className="text-[13px] text-forest/65">Lost it or seeing payments you don&apos;t recognise? Freeze it first.</p>
                 <Button size="sm" variant="quiet" loading={issue.isPending} onClick={() => issue.mutate()}>
                   Add another virtual card
                 </Button>

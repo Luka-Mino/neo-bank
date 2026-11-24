@@ -70,7 +70,7 @@ export function SiteFooter() {
           ))}
         </div>
 
-        <div className="mt-12 space-y-3 border-t border-white/10 pt-8 text-[11.5px] leading-relaxed text-white/45">
+        <div className="mt-12 space-y-3 border-t border-white/10 pt-8 text-[11.5px] leading-relaxed text-white/60">
           <p>
             Moneta is a financial technology company, not a bank. Accounts,
             deposits and transfers are powered by Dakota&apos;s regulated
@@ -88,7 +88,7 @@ export function SiteFooter() {
               program; add Dakota&apos;s required Visa/issuer wording when it goes live
             </Ph>
           </p>
-          <p className="pt-2 text-white/35">
+          <p className="pt-2 text-white/60">
             &copy; <span suppressHydrationWarning>{new Date().getFullYear()}</span>{" "}
             Moneta. All rights reserved.
           </p>

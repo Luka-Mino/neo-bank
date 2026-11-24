@@ -129,7 +129,7 @@ function MagicConsume() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Link href="/login" className="text-sm font-medium text-primary hover:underline">
+          <Link href="/login" className="text-sm font-medium text-forest underline underline-offset-4">
             Go to sign in →
           </Link>
         </CardContent>
@@ -155,7 +155,7 @@ function MagicConsume() {
           <AlertCircle className="h-4 w-4 shrink-0" />
           The link is invalid, expired, or already used.
         </div>
-        <Link href="/login" className="text-sm font-medium text-primary hover:underline">
+        <Link href="/login" className="text-sm font-medium text-forest underline underline-offset-4">
           Request a new sign-in link →
         </Link>
       </CardContent>

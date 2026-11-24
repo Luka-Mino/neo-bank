@@ -324,7 +324,7 @@ function StandingOrders() {
               <p className="truncate text-[14px] font-semibold text-forest">
                 <span className="tabular">{formatUsd(Number(r.amount))}</span> · {r.fromLabel || r.fromType} → {r.toLabel || r.toType}
               </p>
-              <p className="mt-0.5 text-[12.5px] text-forest/55">
+              <p className="mt-0.5 text-[12.5px] text-forest/65">
                 {r.frequency === "biweekly" ? "Every 2 weeks" : r.frequency === "weekly" ? "Every week" : "Every month"} · next{" "}
                 {new Date(r.nextRunAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 {r.note ? ` · ${r.note}` : ""}

@@ -76,7 +76,7 @@ function VariantB() {
           <Link href="/register" className={FLAT_BTN}>
             Open an account <ArrowRight className="h-4 w-4" />
           </Link>
-          <span className="text-sm text-white/45">
+          <span className="text-sm text-white/60">
             Two-step sign-in · Fees itemised on every receipt
           </span>
         </div>

@@ -216,7 +216,7 @@ export default function WithdrawPage() {
                 <GlyphBadge name="reserve" />
               </div>
               <p className="mt-3 text-[15px] font-semibold text-forest">Link a bank account first</p>
-              <p className="mx-auto mt-1 max-w-[34ch] text-[13.5px] text-forest/60">Add the US bank account you want to withdraw to. It must be in your name.</p>
+              <p className="mx-auto mt-1 max-w-[34ch] text-[13.5px] text-forest/65">Add the US bank account you want to withdraw to. It must be in your name.</p>
               <Button size="sm" className="mt-4" onClick={() => setLinkOpen(true)}>
                 Link a bank account
               </Button>

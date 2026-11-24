@@ -157,7 +157,7 @@ export default function DepositPage() {
                 <h2 id="bank-details" className="text-[16px] font-semibold text-forest">
                   Your deposit details
                 </h2>
-                <p className="mt-0.5 text-[13px] text-forest/55">Give these to your other bank. They&apos;re only for you.</p>
+                <p className="mt-0.5 text-[13px] text-forest/65">Give these to your other bank. They&apos;re only for you.</p>
               </div>
               {details.length > 0 && (
                 <CopyButton
@@ -176,7 +176,7 @@ export default function DepositPage() {
                   {details.map((d) => (
                     <div key={d.label} className="flex items-center gap-3 px-4 py-3">
                       <div className="min-w-0 flex-1">
-                        <dt className="text-[12.5px] text-forest/55">{d.label}</dt>
+                        <dt className="text-[12.5px] text-forest/65">{d.label}</dt>
                         <dd className={cn("mt-0.5 truncate text-[15px] font-semibold text-forest", d.mono && "font-mono tracking-wide")}>
                           {d.value}
                         </dd>
@@ -188,7 +188,7 @@ export default function DepositPage() {
               ) : (
                 <div className="px-6 py-8 text-center">
                   <p className="text-[15px] font-semibold text-forest">Setting up your deposit account…</p>
-                  <p className="mx-auto mt-1 max-w-[36ch] text-[13.5px] text-forest/60">
+                  <p className="mx-auto mt-1 max-w-[36ch] text-[13.5px] text-forest/65">
                     We&apos;re creating your account and routing numbers. This usually takes under a minute.
                   </p>
                   <Button variant="secondary" size="sm" className="mt-4" loading={retrying} onClick={retryProvisioning}>
@@ -207,11 +207,11 @@ export default function DepositPage() {
             <ul className="mt-3 grid gap-3 sm:grid-cols-2">
               <li className="rounded-[14px] bg-[#f3f5f4] px-4 py-3.5">
                 <p className="text-[14.5px] font-semibold text-forest">ACH transfer</p>
-                <p className="mt-0.5 text-[13px] text-forest/60">1–3 business days</p>
+                <p className="mt-0.5 text-[13px] text-forest/65">1–3 business days</p>
               </li>
               <li className="rounded-[14px] bg-[#f3f5f4] px-4 py-3.5">
                 <p className="text-[14.5px] font-semibold text-forest">Wire transfer</p>
-                <p className="mt-0.5 text-[13px] text-forest/60">Usually the same business day. Your bank may charge for wires.</p>
+                <p className="mt-0.5 text-[13px] text-forest/65">Usually the same business day. Your bank may charge for wires.</p>
               </li>
             </ul>
           </section>
@@ -240,7 +240,7 @@ function CopyButton({ text, what, label }: { text: string; what: string; label?:
       aria-label={label ? undefined : `Copy ${what}`}
       className={cn(
         "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[10px] text-[13px] font-semibold transition outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_#4ac280]",
-        label ? "h-9 px-3 text-turquoise-700 ring-1 ring-forest/12 hover:text-forest" : "h-9 w-9 text-forest/55 hover:bg-forest/[0.05] hover:text-forest"
+        label ? "h-9 px-3 text-turquoise-700 ring-1 ring-forest/12 hover:text-forest" : "h-9 w-9 text-forest/65 hover:bg-forest/[0.05] hover:text-forest"
       )}
     >
       {copied ? (

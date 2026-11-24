@@ -107,7 +107,7 @@ export default function OnboardingPage() {
     >
       {q.isLoading || (!hasCustomer && !q.isError && !DEMO_MODE) ? (
         <div>
-          <p role="status" className="mb-2 text-center text-[14px] text-forest/60">
+          <p role="status" className="mb-2 text-center text-[14px] text-forest/65">
             Getting things ready…
           </p>
           <LoadingRows rows={3} />
@@ -161,12 +161,12 @@ export default function OnboardingPage() {
                   aria-hidden
                   className={cn(
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12.5px] font-semibold",
-                    s.done ? "bg-turquoise text-forest-900" : "bg-forest/[0.07] text-forest/50"
+                    s.done ? "bg-turquoise text-forest-900" : "bg-forest/[0.07] text-forest/65"
                   )}
                 >
                   {s.done ? "✓" : i + 1}
                 </span>
-                <span className={cn("text-[14.5px]", s.done ? "font-medium text-forest" : "text-forest/55")}>
+                <span className={cn("text-[14.5px]", s.done ? "font-medium text-forest" : "text-forest/65")}>
                   {s.label}
                   <span className="sr-only">{s.done ? " (done)" : " (to do)"}</span>
                 </span>

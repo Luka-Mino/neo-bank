@@ -176,10 +176,10 @@ export function NewRecipient({ existingId, existingName }: { existingId: string 
         }
       >
         <div className="rounded-[16px] bg-[#f3f5f4] px-4 py-5">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/55">USDC on Base</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/65">USDC on Base</p>
           <p className="mt-2 flex flex-wrap gap-x-2 gap-y-1 font-mono text-[17px] font-semibold tracking-wide text-forest">
             {groups(cleanAddress).map((g, i) => (
-              <span key={i} className={i === 0 ? "text-forest/45" : undefined}>
+              <span key={i} className={i === 0 ? "text-forest/65" : undefined}>
                 {g}
               </span>
             ))}

@@ -120,7 +120,7 @@ export default function ApprovalsPage() {
                           {amt && <span className="tabular"> · {amt}</span>}
                         </p>
                         {r.note && <p className="mt-0.5 truncate text-[13px] text-forest/65">{r.note}</p>}
-                        <p className="mt-0.5 text-[12.5px] text-forest/50">
+                        <p className="mt-0.5 text-[12.5px] text-forest/65">
                           Requested by {r.requestedByName ?? "a teammate"} ·{" "}
                           <span className="font-semibold text-forest/70">
                             {r.approvalsCount} of {r.requiredApprovals} approvals

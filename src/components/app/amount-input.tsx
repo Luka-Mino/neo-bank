@@ -43,11 +43,11 @@ export function AmountInput({
       )}
     >
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor={id} className="text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/55">
+        <label htmlFor={id} className="text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/65">
           {label}
         </label>
         {available !== undefined && (
-          <div id={hintId} className="flex items-center gap-2 text-[12.5px] text-forest/60">
+          <div id={hintId} className="flex items-center gap-2 text-[12.5px] text-forest/65">
             <span className="tabular">{formatUsd(available)} available</span>
             <button
               type="button"
@@ -80,7 +80,7 @@ export function AmountInput({
           onChange={(e) => onChange(sanitizeAmount(e.target.value))}
           className="tabular min-w-0 flex-1 bg-transparent text-[34px] font-semibold leading-none tracking-[-0.02em] text-forest outline-none placeholder:text-forest/25 disabled:opacity-60 lg:text-[40px]"
         />
-        <span className="text-[13px] font-semibold text-forest/50">{currency}</span>
+        <span className="text-[13px] font-semibold text-forest/65">{currency}</span>
       </div>
 
       {presets && presets.length > 0 && (

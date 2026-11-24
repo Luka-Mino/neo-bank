@@ -40,7 +40,7 @@ type SupportRow = {
   createdAt: string;
 };
 
-const LABEL = "mb-1.5 block text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/55";
+const LABEL = "mb-1.5 block text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/65";
 
 export function SupportFlow({ transactionId }: { transactionId: string | null }) {
   const qc = useQueryClient();
@@ -165,7 +165,7 @@ export function SupportFlow({ transactionId }: { transactionId: string | null })
                   </span>
                   <span>
                     <span className="block text-[14.5px] font-semibold text-forest">{c.label}</span>
-                    <span className="block text-[13px] text-forest/55">{c.hint}</span>
+                    <span className="block text-[13px] text-forest/65">{c.hint}</span>
                   </span>
                 </button>
               );
@@ -242,7 +242,7 @@ export function SupportFlow({ transactionId }: { transactionId: string | null })
                   <li key={r.id} className="flex items-center justify-between gap-3 py-3">
                     <div className="min-w-0">
                       <p className="truncate text-[14.5px] font-semibold text-forest">{r.subject}</p>
-                      <p className="mt-0.5 text-[12.5px] text-forest/50">
+                      <p className="mt-0.5 text-[12.5px] text-forest/65">
                         <span className="font-mono">{r.reference}</span> ·{" "}
                         {new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </p>

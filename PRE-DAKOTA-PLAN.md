@@ -22,7 +22,7 @@
 |---|---|---|
 | **Today** | A1 send the Dakota message · A3 make the quick decisions | ~~F1 draft the Dakota application text · C5 secrets check~~ ✅ |
 | **This week** | A2 find a lawyer · B1–B3 form the company, EIN, bank account · B5 gather KYB documents | ~~C1 · C2 · C3 · C4~~ ✅ (code; switch-on waits for a hosted backend, see Section 9) |
-| **Next week** | E1 supply the placeholder facts · E3 test on your phone | ~~C6 restore drill · separate keys from `AUTH_SECRET` · D2 Insights~~ ✅ · E2 quality pass · D1 old-dashboard switch-over (if you say yes) · ~~F2–F9~~ ✅ |
+| **Next week** | E1 supply the placeholder facts · E3 test on your phone | ~~C6 restore drill · separate keys from `AUTH_SECRET` · D2 Insights~~ ✅ · ~~E2 quality pass~~ ✅ · D1 old-dashboard switch-over (if you say yes) · ~~F2–F9~~ ✅ |
 | **When Dakota answers** | Forward the answers | Section 8, starting with the custody redesign |
 
 Nothing here waits on Dakota. If Dakota answers early, Section 8 jumps the queue.
@@ -330,7 +330,23 @@ There are about 15 amber `<Ph>` placeholders: Terms 9, Privacy 2, homepage 2, Se
 
 **Done when:** `grep -rn "<Ph\b\|PhotoPlaceholder" src/` finds only the Dakota-dependent ones.
 
-### E2 Quality pass (🤖, 1 day)
+### E2 Quality pass ✅ done 2026-11-24 (performance follow-up open)
+
+> Lighthouse (mobile) on a local production build in demo mode:
+>
+> | Page | Perf | Accessibility | Best practices | SEO |
+> |---|---|---|---|---|
+> | `/` | 83 | **100** (was 96) | 96 | 100 |
+> | `/security` | 86 | **100** (was 96) | 96 | 100 |
+> | `/login` | 88 | **100** (was 92) | 96 (was 93) | 66 (noindex on purpose) |
+> | `/register` | 88 | **100** (was 92) | 96 (was 93) | 100 |
+> | `/app` | 84 | **100** (was 96) | 96 (was 93) | 58 (noindex on purpose) |
+>
+> - **Critical bug fixed:** `/login`, `/register`, `/forgot-password`, `/reset-password`, `/magic` and `/verify-email` were prerendered as static HTML. The proxy's nonce-based CSP (`strict-dynamic`) then blocked every script on them, so in production those forms could never have worked. The root layout now renders every page per request (`await connection()`, as the Next.js CSP guide requires).
+> - **Contrast (WCAG AA):** `turquoise-700` darkened to `#297a4e`; faded text raised to `forest/65` (placeholders excluded); faint footer text raised to `white/60`; new `cat-orange-700` and `cat-blue-700` for text; sign-in page links are dark and underlined; pending amounts no longer dimmed with opacity; 11 px text in `/app` raised to 12 px.
+> - **Performance (open):** FCP and speed index are 1.2 s. Lighthouse's LCP is a 7%-opacity decorative pattern held about 2.9 s behind the hero entrance animation (preloading it didn't help). The real win is about 0.75 s of unused JavaScript (a 142 KB chunk, about 93 KB unused). Follow-up: find what's in that chunk.
+> - Not fixable here: a "Content security policy" entry in Chrome's Issues panel with no details or console error.
+
 Run Lighthouse on `/`, `/security`, `/login`, `/register` and `/app` (performance, accessibility and SEO ≥ 90). Fix contrast, labels, focus order and image sizes.
 **Done when:** every score is ≥ 90, recorded in `LAUNCH-READINESS-PLAN.md` §3.5.
 

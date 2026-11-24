@@ -116,7 +116,7 @@ export function InsightsView({ accountId }: { accountId: string | null }) {
             </label>
           )}
 
-          <p className="mt-4 hidden text-[12.5px] leading-relaxed text-forest/50 lg:block">
+          <p className="mt-4 hidden text-[12.5px] leading-relaxed text-forest/65 lg:block">
             Completed transactions only. Moves between your own accounts count only when you look at one account.
           </p>
         </div>
@@ -126,7 +126,7 @@ export function InsightsView({ accountId }: { accountId: string | null }) {
             <div className="flex items-baseline justify-between gap-3 px-5 pb-2 pt-5">
               <h2 className="text-[15px] font-semibold text-forest">Spending by category</h2>
               {!isLoading && !isError && r.moneyOut > 0 && (
-                <span className="tabular text-[13px] text-forest/55">{formatUsd(r.moneyOut)} total</span>
+                <span className="tabular text-[13px] text-forest/65">{formatUsd(r.moneyOut)} total</span>
               )}
             </div>
 
@@ -147,7 +147,7 @@ export function InsightsView({ accountId }: { accountId: string | null }) {
                       </span>
                       <span className="tabular text-forest">
                         {formatUsd(c.amount)}
-                        <span className="ml-2 text-[12.5px] text-forest/50">{Math.round(c.share * 100)}%</span>
+                        <span className="ml-2 text-[12.5px] text-forest/65">{Math.round(c.share * 100)}%</span>
                       </span>
                     </div>
                     <div
@@ -163,7 +163,7 @@ export function InsightsView({ accountId }: { accountId: string | null }) {
             )}
           </section>
 
-          <p className="mx-4 mt-4 text-[13px] text-forest/55 lg:mx-0">
+          <p className="mx-4 mt-4 text-[13px] text-forest/65 lg:mx-0">
             Categories are set automatically; change one from the transaction&apos;s page in{" "}
             <Link href={activityHref} className="font-semibold text-forest underline underline-offset-2">
               Activity

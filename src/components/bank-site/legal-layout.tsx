@@ -39,7 +39,7 @@ export function LegalPage({
         {/* Sidebar */}
         <aside className="lg:sticky lg:top-28 lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-y-auto">
           <nav aria-label="Legal documents">
-            <p className="eyebrow text-[10px] text-forest/50">Legal &amp; policies</p>
+            <p className="eyebrow text-[10px] text-forest/65">Legal &amp; policies</p>
             <ul className="mt-3 flex gap-2 overflow-x-auto lg:flex-col lg:gap-0.5">
               {LEGAL_DOCS.map((d) => {
                 const on = d.href === current;
@@ -62,13 +62,13 @@ export function LegalPage({
           </nav>
           {sections.length > 0 && (
             <nav aria-label="On this page" className="mt-8 hidden lg:block">
-              <p className="eyebrow text-[10px] text-forest/50">On this page</p>
+              <p className="eyebrow text-[10px] text-forest/65">On this page</p>
               <ol className="mt-3 space-y-0.5 border-l border-forest/10">
                 {sections.map((s) => (
                   <li key={s.id}>
                     <a
                       href={`#${s.id}`}
-                      className="-ml-px block border-l-2 border-transparent py-1 pl-3 text-[13px] text-forest/60 transition hover:border-turquoise hover:text-forest"
+                      className="-ml-px block border-l-2 border-transparent py-1 pl-3 text-[13px] text-forest/65 transition hover:border-turquoise hover:text-forest"
                     >
                       {s.n}. {s.title}
                     </a>
@@ -81,14 +81,14 @@ export function LegalPage({
 
         {/* Document */}
         <article className="min-w-0 max-w-[760px]">
-          <nav aria-label="Breadcrumb" className="text-[13px] text-forest/55">
+          <nav aria-label="Breadcrumb" className="text-[13px] text-forest/65">
             <Link href={LEGAL_DOCS[0].href} className="hover:text-forest hover:underline">
               Legal &amp; policies
             </Link>
           </nav>
           <h1 className="mt-3 font-display text-[34px] font-semibold leading-[1.1] tracking-[-0.015em] text-forest lg:text-[42px]">{title}</h1>
           <p className="mt-2 text-[17px] text-forest/65">{subtitle}</p>
-          <p className="mt-4 text-[13px] text-forest/50">Last updated {updated}</p>
+          <p className="mt-4 text-[13px] text-forest/65">Last updated {updated}</p>
           {draft && (
             <div role="note" className="mt-6 rounded-[14px] border border-dashed border-[#e0a030] bg-[#fff8e8] px-4 py-3 text-[13.5px] leading-relaxed text-[#6b4a00]">
               <span className="font-semibold">Draft for legal review.</span> This document hasn&apos;t been approved by counsel yet. Highlighted

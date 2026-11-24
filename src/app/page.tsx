@@ -84,7 +84,7 @@ function Hero() {
         <figure className="relative mx-auto w-full max-w-[460px] py-2">
           <div aria-hidden className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-turquoise/25 blur-3xl" />
           <MonetaCardPair tint="smoked" animate className="relative" />
-          <figcaption className="relative -mt-2 text-center text-[12px] text-forest/55">
+          <figcaption className="relative -mt-2 text-center text-[12px] text-forest/65">
             The Moneta card · Smoked forest · design preview
           </figcaption>
         </figure>
@@ -203,7 +203,7 @@ function FeatureCard({
     <article className="group flex flex-col overflow-hidden rounded-[18px] border border-forest/[0.08] bg-white shadow-[0_1px_0_rgba(18,46,46,0.04),0_10px_30px_-20px_rgba(18,46,46,0.25)]">
       <div className="overflow-hidden">{media}</div>
       <div className="flex flex-1 flex-col p-6">
-        <p className="eyebrow text-[10px] text-forest/50">{eyebrow}</p>
+        <p className="eyebrow text-[10px] text-forest/65">{eyebrow}</p>
         <h3 className="mt-2 text-[19px] font-semibold leading-snug">{title}</h3>
         <p className="mt-2 text-[14px] leading-relaxed text-forest/65">{body}</p>
         <SectionLink
@@ -359,11 +359,11 @@ function CardDesign() {
         <div className="grid gap-6 sm:grid-cols-2">
           <figure>
             <MonetaCardArt side="front" tint="smoked" />
-            <figcaption className="mt-3 text-center text-[13px] font-medium text-forest/60">Front</figcaption>
+            <figcaption className="mt-3 text-center text-[13px] font-medium text-forest/65">Front</figcaption>
           </figure>
           <figure>
             <MonetaCardArt side="back" tint="smoked" />
-            <figcaption className="mt-3 text-center text-[13px] font-medium text-forest/60">Back</figcaption>
+            <figcaption className="mt-3 text-center text-[13px] font-medium text-forest/65">Back</figcaption>
           </figure>
         </div>
       </div>

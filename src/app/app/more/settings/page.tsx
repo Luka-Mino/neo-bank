@@ -70,7 +70,7 @@ function Section({ id, icon, title, description, children }: { id?: string; icon
         <IconDisc name={icon} size={42} />
         <div className="min-w-0">
           <h2 className="text-[17px] font-semibold text-forest">{title}</h2>
-          {description && <p className="mt-0.5 text-[13.5px] leading-relaxed text-forest/60">{description}</p>}
+          {description && <p className="mt-0.5 text-[13.5px] leading-relaxed text-forest/65">{description}</p>}
         </div>
       </div>
       <div className="mt-5">{children}</div>
@@ -410,9 +410,9 @@ function OptionRow({ title, badge, body, action }: { title: string; badge?: stri
       <div className="min-w-0">
         <p className="text-[14.5px] font-semibold text-forest">
           {title}
-          {badge && <span className="ml-2 rounded-full bg-turquoise-50 px-2 py-0.5 text-[11px] font-semibold text-turquoise-700">{badge}</span>}
+          {badge && <span className="ml-2 rounded-full bg-turquoise-50 px-2 py-0.5 text-[12px] font-semibold text-turquoise-700">{badge}</span>}
         </p>
-        <p className="mt-0.5 text-[13px] leading-relaxed text-forest/60">{body}</p>
+        <p className="mt-0.5 text-[13px] leading-relaxed text-forest/65">{body}</p>
       </div>
       <div className="shrink-0">{action}</div>
     </div>
@@ -478,7 +478,7 @@ function NotificationsSection() {
           <li key={p.key} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
             <div>
               <p className="text-[14.5px] font-semibold text-forest">{p.title}</p>
-              <p className="text-[13px] text-forest/55">{p.desc}</p>
+              <p className="text-[13px] text-forest/65">{p.desc}</p>
             </div>
             <Switch checked={prefs[p.key]} label={p.title} onChange={(v) => toggle(p.key, v)} />
           </li>

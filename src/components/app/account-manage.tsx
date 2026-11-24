@@ -41,7 +41,7 @@ export function GoalProgress({ balance, goal }: { balance: number; goal: number 
     <div>
       <div className="flex items-baseline justify-between text-[13px]">
         <span className="font-semibold text-forest">{pct}% of {formatUsd(goal)}</span>
-        <span className="text-forest/55">{balance >= goal ? "Goal reached" : `${formatUsd(goal - balance)} to go`}</span>
+        <span className="text-forest/65">{balance >= goal ? "Goal reached" : `${formatUsd(goal - balance)} to go`}</span>
       </div>
       <div
         role="progressbar"
@@ -143,7 +143,7 @@ export function AccountManage({ account }: { account: AccountRow }) {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className={cn("block text-[14.5px] font-semibold", a.danger ? "text-[#b42f34]" : "text-forest")}>{a.label}</span>
-                  {a.hint && <span className="mt-0.5 block truncate text-[12.5px] text-forest/50">{a.hint}</span>}
+                  {a.hint && <span className="mt-0.5 block truncate text-[12.5px] text-forest/65">{a.hint}</span>}
                 </span>
               </button>
             </li>

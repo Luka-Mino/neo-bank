@@ -90,7 +90,7 @@ export function Picker({
 
   return (
     <div>
-      <div id={`${id}-label`} className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/55">
+      <div id={`${id}-label`} className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/65">
         {label}
       </div>
       <button
@@ -109,11 +109,11 @@ export function Picker({
       >
         {current?.leading ?? (current ? <Avatar name={current.title} /> : null)}
         <span id={`${id}-value`} className="min-w-0 flex-1">
-          <span className={cn("block truncate text-[15px] font-semibold", !current && "font-medium text-forest/50")}>
+          <span className={cn("block truncate text-[15px] font-semibold", !current && "font-medium text-forest/65")}>
             {loading ? "Loading…" : current ? current.title : placeholder}
           </span>
           {current?.subtitle && (
-            <span className="mt-0.5 block truncate text-[12.5px] text-forest/55">{current.subtitle}</span>
+            <span className="mt-0.5 block truncate text-[12.5px] text-forest/65">{current.subtitle}</span>
           )}
         </span>
         {current?.trailing && <span className="tabular shrink-0 text-[13px] font-medium text-forest/70">{current.trailing}</span>}
@@ -127,7 +127,7 @@ export function Picker({
 
       <AppSheet open={open} onOpenChange={setOpen} title={sheetTitle ?? label}>
         {options.length === 0 ? (
-          <div className="py-6 text-center text-[14px] text-forest/60">{empty ?? "Nothing here yet."}</div>
+          <div className="py-6 text-center text-[14px] text-forest/65">{empty ?? "Nothing here yet."}</div>
         ) : (
           <ul role="listbox" aria-label={sheetTitle ?? label} className="-mx-2">
             {options.map((o) => {
@@ -151,7 +151,7 @@ export function Picker({
                     {o.leading ?? <Avatar name={o.title} />}
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-semibold">{o.title}</span>
-                      {o.subtitle && <span className="mt-0.5 block truncate text-[12.5px] text-forest/55">{o.subtitle}</span>}
+                      {o.subtitle && <span className="mt-0.5 block truncate text-[12.5px] text-forest/65">{o.subtitle}</span>}
                     </span>
                     {o.trailing && <span className="tabular shrink-0 text-[13px] font-medium text-forest/70">{o.trailing}</span>}
                     {selected && <Check />}

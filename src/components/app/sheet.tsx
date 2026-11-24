@@ -63,7 +63,7 @@ export function AppSheet({
                 {title}
               </Dialog.Title>
               {description && (
-                <Dialog.Description className="mt-1 text-[13.5px] leading-relaxed text-forest/60">
+                <Dialog.Description className="mt-1 text-[13.5px] leading-relaxed text-forest/65">
                   {description}
                 </Dialog.Description>
               )}
@@ -71,7 +71,7 @@ export function AppSheet({
             <Dialog.Close
               disabled={busy}
               aria-label="Close"
-              className="-mr-1.5 -mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-forest/50 transition hover:bg-forest/[0.05] hover:text-forest disabled:opacity-40 outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_#4ac280]"
+              className="-mr-1.5 -mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-forest/65 transition hover:bg-forest/[0.05] hover:text-forest disabled:opacity-40 outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_#4ac280]"
             >
               <svg viewBox="0 0 24 24" width={18} height={18} aria-hidden>
                 <path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" />

@@ -29,13 +29,13 @@ const BASE =
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
     "bg-forest text-marble hover:bg-forest-700 active:bg-forest-900 " +
-    "disabled:bg-forest/[0.12] disabled:text-forest/45 aria-disabled:bg-forest/[0.12] aria-disabled:text-forest/45",
+    "disabled:bg-forest/[0.12] disabled:text-forest/65 aria-disabled:bg-forest/[0.12] aria-disabled:text-forest/65",
   secondary:
     "border-[1.5px] border-forest bg-transparent text-forest hover:bg-forest/[0.04] active:bg-forest/[0.08] " +
     "disabled:border-forest/20 disabled:text-forest/40",
   "on-dark":
     "bg-turquoise text-forest-900 hover:bg-[#5fd092] active:bg-turquoise-600 " +
-    "focus-visible:shadow-[0_0_0_2px_#122e2e,0_0_0_4px_#4ac280] disabled:bg-white/15 disabled:text-white/45",
+    "focus-visible:shadow-[0_0_0_2px_#122e2e,0_0_0_4px_#4ac280] disabled:bg-white/15 disabled:text-white/60",
   danger:
     "border-[1.5px] border-[#c4363b] bg-transparent text-[#b42f34] hover:bg-[#c4363b]/[0.06] active:bg-[#c4363b]/[0.1] " +
     "disabled:border-[#c4363b]/30 disabled:text-[#b42f34]/45",

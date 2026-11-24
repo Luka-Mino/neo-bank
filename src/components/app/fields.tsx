@@ -5,7 +5,7 @@
 import { useId, type ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
-const LABEL = "mb-1.5 block text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/55";
+const LABEL = "mb-1.5 block text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/65";
 
 export function TextField({
   label,
@@ -36,7 +36,7 @@ export function TextField({
           {error}
         </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="mt-1.5 text-[12.5px] text-forest/50">
+        <p id={`${id}-hint`} className="mt-1.5 text-[12.5px] text-forest/65">
           {hint}
         </p>
       ) : null}
@@ -77,7 +77,7 @@ export function Segmented<T extends string>({
               onClick={() => onChange(o.value)}
               className={cn(
                 "h-10 rounded-[10px] px-2 text-[13.5px] font-semibold transition outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_#4ac280]",
-                on ? "bg-white text-forest shadow-[0_1px_3px_rgba(18,46,46,0.12)]" : "text-forest/55 hover:text-forest"
+                on ? "bg-white text-forest shadow-[0_1px_3px_rgba(18,46,46,0.12)]" : "text-forest/65 hover:text-forest"
               )}
             >
               {o.label}

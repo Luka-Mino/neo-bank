@@ -45,7 +45,7 @@ export function HubScreen({
           <section key={g.label ?? i} className="mt-5 lg:mt-6">
             <h2
               className={cn(
-                "eyebrow mx-5 mb-2 text-[10px] text-forest/50 lg:mx-1",
+                "eyebrow mx-5 mb-2 text-[10px] text-forest/65 lg:mx-1",
                 !g.label && "hidden lg:block lg:invisible",
               )}
             >
@@ -65,7 +65,7 @@ export function HubScreen({
                     <div className="text-[15px] font-semibold text-forest">
                       {it.name}
                     </div>
-                    <div className="mt-0.5 truncate text-[12px] text-forest/50">
+                    <div className="mt-0.5 truncate text-[12px] text-forest/65">
                       {it.hint}
                     </div>
                   </div>

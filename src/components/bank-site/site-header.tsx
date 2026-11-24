@@ -38,7 +38,7 @@ export function SiteHeader({
             >
               Personal
             </Link>
-            <span className="flex items-center gap-1.5 px-3 text-white/45">
+            <span className="flex items-center gap-1.5 px-3 text-white/60">
               Business
               <span className="rounded bg-white/10 px-1.5 py-px text-[9px] font-semibold uppercase tracking-[0.12em] text-white/60">
                 Soon

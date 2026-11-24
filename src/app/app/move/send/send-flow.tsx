@@ -203,7 +203,7 @@ export function SendFlow({ fromId, toId }: { fromId: string | null; toId: string
             <Button type="submit" block arrow size="lg">
               Review
             </Button>
-            <p className="text-center text-[13px] text-forest/55">
+            <p className="text-center text-[13px] text-forest/65">
               Paying your own bank account?{" "}
               <Link href="/app/move/withdraw" className="font-semibold text-turquoise-700 hover:text-forest">
                 Withdraw instead
@@ -249,7 +249,7 @@ function RecentRecipients({
   if (loading || payees.length === 0) return null;
   return (
     <div>
-      <div className="mb-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/55">Recent</div>
+      <div className="mb-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/65">Recent</div>
       <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
         {payees.map((r) => {
           const active = r.destinationId === selected;
@@ -264,7 +264,7 @@ function RecentRecipients({
               <span className={cn("rounded-full ring-2 ring-offset-2 transition", active ? "ring-turquoise" : "ring-transparent")}>
                 <Avatar name={r.name} tone={active ? "forest" : "mint"} />
               </span>
-              <span className={cn("w-full truncate text-center text-[12px]", active ? "font-semibold text-forest" : "text-forest/60")}>
+              <span className={cn("w-full truncate text-center text-[12px]", active ? "font-semibold text-forest" : "text-forest/65")}>
                 {r.name.split(" ")[0]}
               </span>
             </button>
@@ -274,12 +274,12 @@ function RecentRecipients({
           href="/app/move/recipients/new"
           className="flex w-16 shrink-0 flex-col items-center gap-1.5 rounded-[12px] py-1 outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_#4ac280]"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] border-dashed border-forest/25 text-forest/55">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] border-dashed border-forest/25 text-forest/65">
             <svg viewBox="0 0 24 24" width={18} height={18} aria-hidden>
               <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" />
             </svg>
           </span>
-          <span className="text-[12px] text-forest/60">New</span>
+          <span className="text-[12px] text-forest/65">New</span>
         </Link>
       </div>
     </div>

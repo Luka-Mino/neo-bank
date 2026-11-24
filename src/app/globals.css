@@ -46,7 +46,7 @@
   --color-turquoise-50: #eaf8f0;
   --color-turquoise-100: #c9ecd7;
   --color-turquoise-600: #3fb073;
-  --color-turquoise-700: #2f8b58;
+  --color-turquoise-700: #297a4e; /* was #2f8b58: 4.2:1 on white; now ≥4.5:1 on white, stone and turquoise-50 (WCAG AA) */
   --color-deep-forest: #122e2e;
   --color-forest: #122e2e;
   --color-forest-700: #1f4040;
@@ -61,7 +61,9 @@
   --color-noir: #212020;
 
   --color-cat-blue: #2f80ed;
+  --color-cat-blue-700: #1f66c9; /* text on white or cat-blue/10 (≥4.9:1) */
   --color-cat-orange: #ff9500;
+  --color-cat-orange-700: #a85d00; /* text on white (≥4.9:1) */
   --color-cat-red: #ff3b30;
   --color-cat-purple: #8b5cf6;
   --color-cat-cyan: #22d3ee;

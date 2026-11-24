@@ -115,7 +115,7 @@ export default function TeamPage() {
                           <span className="rounded-full bg-[#fff7e6] px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wider text-[#8a5a00]">Invited</span>
                         )}
                       </p>
-                      <p className="truncate text-[12.5px] text-forest/55">
+                      <p className="truncate text-[12.5px] text-forest/65">
                         {m.email} · <span className="capitalize">{m.role}</span>
                       </p>
                     </div>
@@ -203,7 +203,7 @@ function InviteSheet({ open, onOpenChange, onInvited }: { open: boolean; onOpenC
         <div className="space-y-5">
           <TextField label="Email" type="email" autoComplete="off" placeholder="teammate@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
           <div>
-            <div className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/55">Access</div>
+            <div className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-forest/65">Access</div>
             <div role="radiogroup" aria-label="Access" className="space-y-2">
               {PRESETS.map((p) => {
                 const on = preset.key === p.key;
@@ -221,7 +221,7 @@ function InviteSheet({ open, onOpenChange, onInvited }: { open: boolean; onOpenC
                   >
                     <span>
                       <span className="block text-[14.5px] font-semibold text-forest">{p.label}</span>
-                      <span className="block text-[12.5px] text-forest/55">{p.desc}</span>
+                      <span className="block text-[12.5px] text-forest/65">{p.desc}</span>
                     </span>
                     <span className={cn("h-4 w-4 shrink-0 rounded-full ring-2", on ? "bg-forest ring-forest" : "ring-forest/25")} aria-hidden />
                   </button>

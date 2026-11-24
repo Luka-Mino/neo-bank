@@ -22,7 +22,7 @@ export function EmptyState({
     <div className={cn("flex flex-col items-center px-6 py-10 text-center", className)}>
       <IconDisc name={icon} size={56} />
       <h3 className="mt-4 text-[16px] font-semibold text-forest">{title}</h3>
-      {body && <p className="mt-1.5 max-w-[34ch] text-[14px] leading-relaxed text-forest/60">{body}</p>}
+      {body && <p className="mt-1.5 max-w-[34ch] text-[14px] leading-relaxed text-forest/65">{body}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
@@ -49,7 +49,7 @@ export function ErrorState({
         </svg>
       </span>
       <h3 className="mt-4 text-[16px] font-semibold text-forest">{title}</h3>
-      <p className="mt-1.5 max-w-[34ch] text-[14px] leading-relaxed text-forest/60">{body}</p>
+      <p className="mt-1.5 max-w-[34ch] text-[14px] leading-relaxed text-forest/65">{body}</p>
       {onRetry && (
         <Button variant="secondary" size="sm" className="mt-5" onClick={onRetry}>
           Try again
@@ -131,7 +131,7 @@ export function DetailList({ rows, className }: { rows: DetailRow[]; className?:
     <dl className={cn("divide-y divide-forest/[0.07]", className)}>
       {rows.map((r) => (
         <div key={r.label} className="flex items-baseline justify-between gap-4 py-3">
-          <dt className="text-[14px] text-forest/60">{r.label}</dt>
+          <dt className="text-[14px] text-forest/65">{r.label}</dt>
           <dd className={cn("tabular min-w-0 text-right text-[14px] text-forest", r.strong ? "font-semibold" : "font-medium")}>
             {r.value}
           </dd>

@@ -120,7 +120,7 @@ export function ReviewSheet({
       <DetailList rows={[...rows, ...feeRows]} className="mt-2" />
 
       {fee.kind === "at-creation" && (
-        <p className="mt-1 text-[12.5px] leading-relaxed text-forest/55">
+        <p className="mt-1 text-[12.5px] leading-relaxed text-forest/65">
           Our payment partner sets any network or transfer fee when the transfer is created. You&apos;ll see it on your receipt. If your balance
           can&apos;t cover the amount plus fees, nothing is sent.
         </p>

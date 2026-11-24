@@ -47,7 +47,7 @@ export default function AuthLayout({
         />
         <div className="relative mx-auto grid max-w-[1200px] items-start gap-8 px-4 py-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12 lg:px-8 lg:py-14">
           <div className="mx-auto w-full max-w-md lg:mx-0 lg:ml-auto">
-            <div className="mb-4 flex items-center gap-2 text-[12px] font-medium text-forest/60">
+            <div className="mb-4 flex items-center gap-2 text-[12px] font-medium text-forest/75">
               <Lock className="h-3.5 w-3.5 text-turquoise-700" />
               Secure sign-in
             </div>
@@ -84,7 +84,7 @@ export default function AuthLayout({
       </main>
 
       <footer className="border-t border-forest/[0.08] bg-white">
-        <div className="mx-auto flex max-w-[1200px] flex-col gap-2 px-4 py-6 text-[12px] text-forest/55 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+        <div className="mx-auto flex max-w-[1200px] flex-col gap-2 px-4 py-6 text-[12px] text-forest/65 sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <nav className="flex gap-5">
             <Link href="/terms" className="hover:text-forest">Terms</Link>
             <Link href="/privacy" className="hover:text-forest">Privacy</Link>

@@ -75,7 +75,7 @@ export default function RecipientsPage() {
                     <Avatar name={r.name} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[15px] font-semibold text-forest">{r.name}</p>
-                      <p className={cn("mt-0.5 truncate text-[12.5px]", wallet ? "font-mono text-forest/55" : "text-forest/45")}>
+                      <p className={cn("mt-0.5 truncate text-[12.5px]", wallet ? "font-mono text-forest/65" : "text-forest/65")}>
                         {wallet ? `USDC wallet ${shortAddress(wallet.address)}` : "No wallet saved yet"}
                         {r.wallets.length > 1 ? ` +${r.wallets.length - 1}` : ""}
                       </p>

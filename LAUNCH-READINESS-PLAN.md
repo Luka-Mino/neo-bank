@@ -375,7 +375,7 @@ Per-screen checklist (copy into each PR):
   - **Icons:** Moneta `favicon.ico`, `icon.png` and `apple-icon.png`, rendered from `/design/app-icon`. They replace the stock Next.js favicon.
   - **Metadata:** `metadataBase` plus canonicals.
   - **Crawlers:** `robots.ts` keeps signed-in areas and the API out of search, and `/app` is `noindex`. `sitemap.ts` lists the public pages.
-- [ ] Lighthouse (performance / accessibility / SEO ≥ 90) on `/`, `/security`, `/login`.
+- [x] Lighthouse on `/`, `/security`, `/login`, `/register`, `/app` (2026-11-24): accessibility 100 everywhere, SEO 100 on public pages, best practices 96. Performance 83–88: follow-up on unused JS (see `PRE-DAKOTA-PLAN.md` E2). Fixed: static auth pages had every script blocked by the CSP.
 - [ ] Real-phone check (iOS Safari, Android Chrome).
 
 ---

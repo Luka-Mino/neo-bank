@@ -78,7 +78,7 @@ export function AccountSwitcher() {
             {triggerSub}
           </span>
         </span>
-        <ChevronsUpDown className="h-4 w-4 shrink-0 text-white/45 transition group-hover/switcher:text-white/70" />
+        <ChevronsUpDown className="h-4 w-4 shrink-0 text-white/60 transition group-hover/switcher:text-white/70" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent

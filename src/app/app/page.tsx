@@ -250,7 +250,7 @@ export default function AppHomePage() {
           </div>
         </div>
 
-        <p className="mx-6 mt-8 text-center text-[11px] leading-relaxed text-forest/45 lg:mt-12">
+        <p className="mx-6 mt-8 text-center text-[12px] leading-relaxed text-forest/65 lg:mt-12">
           Built on Dakota&apos;s regulated infrastructure · Your balance is
           held as USDC and isn&apos;t FDIC-insured
         </p>
@@ -277,7 +277,7 @@ function Section({
       <div className="mb-2 flex items-baseline justify-between px-1">
         <h2 className="eyebrow text-[10.5px] text-copper">{title}</h2>
         {typeof aside === "string" ? (
-          <span className="font-mono text-[13px] font-medium text-forest/60 tabular">
+          <span className="font-mono text-[13px] font-medium text-forest/65 tabular">
             {aside}
           </span>
         ) : (
@@ -310,12 +310,12 @@ function AccountListRow({
             {account.nickname || account.accountType}
           </span>
           {account.status === "frozen" && (
-            <span className="rounded-full bg-cat-blue/10 px-2 py-0.5 text-[10px] font-semibold text-cat-blue">
+            <span className="rounded-full bg-cat-blue/10 px-2 py-0.5 text-[10px] font-semibold text-cat-blue-700">
               Frozen
             </span>
           )}
         </div>
-        <div className="mt-0.5 font-mono text-[12px] text-forest/50">
+        <div className="mt-0.5 font-mono text-[12px] text-forest/65">
           {maskNumber(account.accountNumber)}
         </div>
       </div>
@@ -323,7 +323,7 @@ function AccountListRow({
         <div className="font-mono text-[15px] font-semibold text-forest tabular">
           {shown ? money(Number(account.balance)) : "$••••"}
         </div>
-        <div className="text-[11px] text-forest/45">Available</div>
+        <div className="text-[12px] text-forest/65">Available</div>
       </div>
       <ChevronRight className="h-4 w-4 shrink-0 text-forest/30" />
     </Link>
@@ -356,16 +356,16 @@ function CardListRow({
         <div className="truncate text-[15px] font-semibold text-forest">
           {title}
         </div>
-        <div className="mt-0.5 text-[12px] text-forest/50">
+        <div className="mt-0.5 text-[12px] text-forest/65">
           <span className="font-mono">•••• {card.last4}</span>
           {accountName ? ` · ${accountName}` : ""}
         </div>
       </div>
       <span
         className={cn(
-          "rounded-full px-2.5 py-1 text-[11px] font-semibold",
+          "rounded-full px-2.5 py-1 text-[12px] font-semibold",
           frozen
-            ? "bg-cat-blue/10 text-cat-blue"
+            ? "bg-cat-blue/10 text-cat-blue-700"
             : "bg-turquoise-50 text-turquoise-700",
         )}
       >
@@ -398,7 +398,7 @@ function RowSkeleton({ count }: { count: number }) {
 
 function EmptyRow({ text }: { text: string }) {
   return (
-    <div className="px-4 py-6 text-center text-[13px] text-forest/50">
+    <div className="px-4 py-6 text-center text-[13px] text-forest/65">
       {text}
     </div>
   );

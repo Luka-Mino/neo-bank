@@ -120,7 +120,7 @@ export function TransactionDetail({ id }: { id: string }) {
       <FlowScreen title="Transaction" back={back}>
         <div className="py-8 text-center">
           <p className="text-[16px] font-semibold text-forest">We couldn&apos;t find that transaction</p>
-          <p className="mt-1 text-[14px] text-forest/60">It may belong to a different account or organisation.</p>
+          <p className="mt-1 text-[14px] text-forest/65">It may belong to a different account or organisation.</p>
           <ButtonLink href="/app/activity" variant="secondary" size="sm" className="mt-5">
             Back to activity
           </ButtonLink>
@@ -180,7 +180,7 @@ export function TransactionDetail({ id }: { id: string }) {
       aside={
         <HelpCard title="Something not right?">
           <p>If you don&apos;t recognise this, or it&apos;s taking longer than expected, contact support and quote the transaction ID below.</p>
-          <p className="break-all font-mono text-[12px] text-forest/50">{tx.id}</p>
+          <p className="break-all font-mono text-[12px] text-forest/65">{tx.id}</p>
         </HelpCard>
       }
     >
@@ -246,7 +246,7 @@ export function TransactionDetail({ id }: { id: string }) {
           rel="noopener noreferrer"
           className="mt-1 flex items-center justify-between gap-3 border-t border-forest/[0.07] py-3 text-[14px]"
         >
-          <span className="text-forest/60">On-chain record</span>
+          <span className="text-forest/65">On-chain record</span>
           <span className="font-mono text-[12.5px] font-medium text-turquoise-700 hover:text-forest">
             {tx.transactionHash!.slice(0, 10)}…{tx.transactionHash!.slice(-8)} ↗
           </span>
@@ -255,7 +255,7 @@ export function TransactionDetail({ id }: { id: string }) {
 
       <div className="mt-2 border-t border-forest/[0.07] pt-4">
         <label className="flex items-center justify-between gap-4">
-          <span className="text-[14px] text-forest/60">Category</span>
+          <span className="text-[14px] text-forest/65">Category</span>
           <select
             value={(tx.category as CategoryKey) ?? "other"}
             onChange={(e) => recategorize.mutate(e.target.value as CategoryKey)}
