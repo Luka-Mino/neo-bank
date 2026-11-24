@@ -407,7 +407,7 @@ Per-screen checklist (copy into each PR):
 ### 4.3 Authentication review
 > **Reviewed 2026-11-24** (`PRE-DAKOTA-PLAN.md` C3): rate limits on every auth endpoint plus a new per-IP login tier; shared limits via Upstash (C2); 2FA turn-off now revokes all sessions. Open: session length (your decision) and separating keys from `AUTH_SECRET`.
 - [ ] After the 1.2 upgrade, review `src/lib/auth/config.ts` against the next-auth advisory: protected checks must **fail closed** on auth errors, never only test "session object exists".
-- [ ] Session lifetime and idle timeout appropriate for banking; logout everywhere on password change.
+- [x] Session lifetime and idle timeout: 2 h max, 30 min idle (2026-11-24); sign-out everywhere on password change, password reset and 2FA turn-off.
 - [ ] Rate limits on every auth endpoint; lockout/backoff on repeated failures.
 - [x] **Fixed 2026-11-23:** API rate limits were keyed on IP alone, so every limited endpoint
       shared one counter and a few normal requests exhausted forgot-password's 5/15m budget.

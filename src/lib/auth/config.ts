@@ -10,6 +10,7 @@ import { resolveActiveMembership, type Role } from "@/lib/orgs";
 import { decryptSecret, verifyTotpCode } from "@/lib/auth/totp";
 import { consumeBackupCode } from "@/lib/auth/backup-codes";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
+import { IDLE_TIMEOUT_S, isSessionTooOld } from "@/lib/auth/session-policy";
 import { logAudit } from "@/lib/audit";
 
 // Password was right but the account has 2FA — the login page shows the
@@ -207,6 +208,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        // Sign-in time for the 2-hour limit (session-policy.ts).
+        token.authTime = Math.floor(Date.now() / 1000);
+      } else if (isSessionTooOld(token.authTime as number | undefined)) {
+        return null; // past the 2-hour limit (or predates it): sign in again
       }
 
       if (token.id) {
@@ -297,6 +302,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.canMoveMoney = (token.canMoveMoney as boolean | undefined) ?? false;
         session.user.canExport = (token.canExport as boolean | undefined) ?? false;
         session.kycStatus = token.kycStatus as string | undefined;
+        // Not sensitive: lets the browser warn before the 2-hour limit.
+        session.authTime = token.authTime as number | undefined;
       }
       return session;
     },
@@ -326,6 +333,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: "jwt",
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    // Idle timeout: the token expires 30 minutes after it was last re-issued,
+    // and <SessionTimeouts> re-issues it only on real activity. The 2-hour
+    // absolute limit is enforced in the jwt callback. See session-policy.ts.
+    maxAge: IDLE_TIMEOUT_S,
   },
 });

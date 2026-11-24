@@ -15,6 +15,8 @@ declare module "next-auth" {
       canExport?: boolean;
     } & DefaultSession["user"];
     kycStatus?: string;
+    /** Unix seconds at sign-in (2-hour limit, src/lib/auth/session-policy.ts). */
+    authTime?: number;
   }
 }
 
@@ -28,5 +30,6 @@ declare module "next-auth/jwt" {
     canApprove?: boolean;
     canMoveMoney?: boolean;
     canExport?: boolean;
+    authTime?: number;
   }
 }

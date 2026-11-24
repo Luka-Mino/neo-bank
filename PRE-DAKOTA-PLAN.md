@@ -234,10 +234,10 @@ Steps:
 > - **Fail closed:** a failed user lookup denies sign-in; the org/permission claim is dropped on any error (`src/lib/auth/config.ts` jwt callback). The session-revocation check keeps an existing token only while the database is unreachable, and then every org-scoped route denies anyway. Acceptable; noted.
 > - **Sign out everywhere:** password change and reset already revoked all sessions. **Gap fixed:** turning off the authenticator app or email codes didn't, though `src/lib/auth/sessions.ts` said it should. Now both revoke, and the settings screen signs out with a message in all three cases instead of leaving a dead session.
 > - **Found by the compliance review, fixed:** (1) magic-link sign-in skipped the email-code second factor, so for those accounts the inbox alone gave a session that could move money, and it skipped the deleted-account check. Email-code accounts must now sign in with password + code, and deleted accounts are refused. (2) Executing an approved payment and creating a recurring transfer didn't require verified email + 2FA like other money moves; now they do.
-> - **Still open:** your session-length decision. (Separate keys from `AUTH_SECRET`: done, below.)
+> - **Session length:** 2 h max / 30 min idle, done (below). Separate keys from `AUTH_SECRET`: done.
 
 Each item gets evidence (code reference or test) written into `LAUNCH-READINESS-PLAN.md` §4.3.
-- [ ] **Session length (👤 your decision).** Today it's 7 days. Proposal: 12 hours maximum plus 30 minutes idle for money screens. Finance apps usually go short.
+- [x] **Session length.** Decided 2026-11-24: **2 hours maximum, 30 minutes idle.** The server enforces both: the JWT and cookie expire 30 minutes after last re-issue, and the jwt callback rejects tokens 2 hours after sign-in. `<SessionTimeouts>` re-issues on real activity (at most every 5 min), warns 5 min before the 2-hour limit, and signs out with a reason shown on the login page. See `src/lib/auth/session-policy.ts` (tested).
 - [x] **Password change** signs out every session (`revokeSessions`); so do 2FA turn-off (fixed) and password reset.
 - [x] **Fail closed.** See findings above.
 - [x] **Every auth endpoint is rate-limited.** Listed above; per-IP login tier added.

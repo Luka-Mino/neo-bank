@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -71,8 +71,15 @@ function MagicLinkButton() {
   );
 }
 
+// Why the user landed here, set by <SessionTimeouts> (session-policy.ts).
+const SIGNED_OUT_REASON: Record<string, string> = {
+  idle: "You were signed out after 30 minutes without activity. Please sign in again.",
+  expired: "For your security, sessions end after 2 hours. Please sign in again.",
+};
+
 export default function LoginPage() {
   const router = useRouter();
+  const reason = SIGNED_OUT_REASON[useSearchParams().get("reason") ?? ""];
   const [error, setError] = useState("");
   // Revealed only after the server confirms the password AND says the
   // account has 2FA (error code "2fa_required").
@@ -125,6 +132,11 @@ export default function LoginPage() {
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
+          {reason && !error && (
+            <div role="status" className="rounded-md bg-turquoise-50 p-3 text-sm text-forest ring-1 ring-turquoise/30">
+              {reason}
+            </div>
+          )}
           {error && (
             <div
               role="alert"
