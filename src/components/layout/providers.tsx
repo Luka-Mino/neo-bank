@@ -3,7 +3,6 @@
 import { SessionProvider } from "next-auth/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
-import { NewAccountDialogProvider } from "@/components/account/new-account-dialog-provider";
 import { SessionTimeouts } from "@/components/layout/session-timeouts";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -23,7 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <SessionTimeouts />
       <QueryClientProvider client={queryClient}>
-        <NewAccountDialogProvider>{children}</NewAccountDialogProvider>
+        {children}
       </QueryClientProvider>
     </SessionProvider>
   );

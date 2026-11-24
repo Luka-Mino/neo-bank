@@ -1,6 +1,6 @@
 "use client";
 
-// Withdraw to a linked bank — /app version of (dashboard)/transfer-out.
+// Withdraw to the customer's own account at another bank — /app version of the old transfer-out.
 // Same API: POST /api/transactions { txType: "offramp", USDC → USD,
 // destinationPaymentRail: "ach" | "fedwire" }. Two-leg on the server; the
 // total debited (send_amount, fees included) is only known once the transfer
@@ -136,7 +136,7 @@ export default function WithdrawPage() {
   return (
     <FlowScreen
       title="Withdraw to your bank"
-      subtitle="Move money out to a US bank account you've linked."
+      subtitle="Move money out to your account at another US bank."
       back={{ href: "/app/move", label: "Move money" }}
       aside={
         result ? undefined : (
@@ -215,10 +215,10 @@ export default function WithdrawPage() {
               <div className="flex justify-center">
                 <GlyphBadge name="reserve" />
               </div>
-              <p className="mt-3 text-[15px] font-semibold text-forest">Link a bank account first</p>
-              <p className="mx-auto mt-1 max-w-[34ch] text-[13.5px] text-forest/65">Add the US bank account you want to withdraw to. It must be in your name.</p>
+              <p className="mt-3 text-[15px] font-semibold text-forest">Add your bank account first</p>
+              <p className="mx-auto mt-1 max-w-[34ch] text-[13.5px] text-forest/65">Your account at another US bank, to withdraw to. It must be in your name.</p>
               <Button size="sm" className="mt-4" onClick={() => setLinkOpen(true)}>
-                Link a bank account
+                Add your bank account
               </Button>
             </div>
           ) : (
@@ -242,7 +242,7 @@ export default function WithdrawPage() {
                   onClick={() => setLinkOpen(true)}
                   className="px-2 text-[14px] font-semibold text-turquoise-700 hover:text-forest"
                 >
-                  + Link another bank account
+                  + Add another bank account
                 </button>
               }
             />

@@ -22,7 +22,7 @@ export default function AppMovePage() {
           label: "Your bank",
           items: [
             { name: "Deposit", hint: "Add money from another bank", href: "/app/move/deposit", icon: ArrowDownToLine },
-            { name: "Withdraw", hint: "Send money to a linked bank account", href: "/app/move/withdraw", icon: ArrowUpFromLine },
+            { name: "Withdraw", hint: "Move money to your account at another bank", href: "/app/move/withdraw", icon: ArrowUpFromLine },
           ],
         },
         {

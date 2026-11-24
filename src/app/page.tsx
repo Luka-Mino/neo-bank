@@ -12,7 +12,7 @@ import { CoinSeal, MonetaCardArt, MonetaCardPair } from "@/components/brand/mone
 export const metadata: Metadata = {
   title: "Moneta | Everyday money",
   description:
-    "Checking, savings, a debit card with real controls, and simple ways to send and track your money.",
+    "Separate accounts for everything you're putting money toward, a debit card with real controls, and simple ways to send and track your money.",
   alternates: { canonical: "/" },
 };
 
@@ -68,8 +68,9 @@ function Hero() {
             Money that keeps up with you
           </h1>
           <p className="mt-4 max-w-[46ch] text-[16px] leading-relaxed text-forest/70">
-            Checking, savings and a debit card in one place. Move money between
-            your accounts instantly and always see where it goes.
+            Separate accounts for everything you&apos;re putting money toward,
+            and a debit card. Move money between them instantly and always see
+            where it goes.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
             <ButtonLink href="/register" size="lg" arrow>
@@ -229,11 +230,11 @@ const PRODUCTS: {
   {
     id: "accounts",
     icon: "accounts",
-    title: "Checking & savings",
-    lead: "Everyday spending and saving, side by side.",
+    title: "Accounts",
+    lead: "As many as you need, each with its own name.",
     points: [
-      "A checking account for day-to-day money",
-      "Savings accounts with goals, so you can watch a fund grow",
+      "One for bills, one for spending, one for the holiday",
+      "Set a goal on any account and watch it grow",
       "Every account and balance in one view",
     ],
   },

@@ -154,9 +154,9 @@ export default function AppHomePage() {
 
         <div className="lg:mt-4 lg:grid lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
           <div>
-            {/* ── Bank accounts ───────────────────────────────────────────── */}
+            {/* ── Your accounts ───────────────────────────────────────────── */}
             <Section
-              title="Bank accounts"
+              title="Your accounts"
               aside={shown && !accountsQ.isLoading ? money(total) : undefined}
             >
               {accountsQ.isLoading ? (
@@ -303,7 +303,7 @@ function AccountListRow({
       href={`/app/accounts/${account.id}`}
       className="flex items-center gap-3 border-b border-forest/[0.06] px-4 py-4 transition-colors last:border-b-0 hover:bg-forest/[0.02] active:bg-forest/[0.04]"
     >
-      <GlyphBadge name={account.accountType === "savings" ? "goals" : "accounts"} />
+      <GlyphBadge name={Number(account.goalAmount ?? 0) > 0 ? "goals" : "accounts"} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="truncate text-[15px] font-semibold text-forest">

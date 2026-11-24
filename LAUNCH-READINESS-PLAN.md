@@ -116,7 +116,7 @@
 > copy.
 
 - [x] **1c.1 Drop "banking" as a self-description.** Titles, hero, eyebrows, footer, auth layout, breadcrumb, aria-labels and the social image are now "Everyday money" / "Money that keeps up with you"; the social image (`src/app/opengraph-image.png`, `twitter-image.png`) was re-rendered from `/design/og`. Also fixed: the old dashboard menu said **"Funds protected up to $250K"** (reads as FDIC insurance, which USDC doesn't have). It now says "Balances are USDC, not FDIC-insured". "Bank-grade security" is now "Two-step sign-in".
-  - [ ] **Follow-up for counsel: "Checking" and "Savings".** They are bank deposit-account names, used in the hero copy, the footer, the meta description, the social image and the account types. Ask counsel whether non-bank use is OK in our target states. If not, rename them (e.g., "Everyday" / "Set-aside"), which touches the account types in the data model.
+  - [x] **"Checking" and "Savings": decided 2026-11-24, no account types.** Accounts are just named accounts (Main, Bills, Holiday fund…). The type column stays internal and is never shown; new accounts are created with a name only; "savings goal" is now "goal"; site copy, footer and preview image say "separate accounts". The only checking/savings choice left is the type of the customer's account at their other bank, which US bank transfers require.
 - [x] **1c.2 Accept Moneta's own Terms and Privacy at sign-up.** A required checkbox on `/register`. The server stores `terms_version`, `privacy_version` and `legal_accepted_at` from `src/lib/legal.ts` (also the source of each page's "Last updated"), plus a `legal.accepted` audit entry. Users created before 0020 have NULLs.
   - [ ] Later: a re-acceptance prompt when `LEGAL_DOCS` versions change. Needs counsel's view on which changes require it.
 - [x] **1c.3 Support and complaints intake.** `/app/more/help` (More → Help & support), plus "Report a problem with this payment" on each transaction. The `support_requests` table holds a `SUP-XXXXXX` reference, a category (question, complaint, card dispute, fraud) and a status. `GET`/`POST /api/support` check that a linked payment is in the caller's org. Each request triggers an in-app notification, an escaped copy to `SUPPORT_EMAIL`, and an audit entry.
@@ -261,9 +261,9 @@ Today's list is an allowlist of *protected* paths, so every new page is public u
   - then `POST /api/transactions/{quoteId}/confirm`, which places the hold and does the wallet-send;
   - cancel quotes that expire.
   Needs the Dakota sandbox to verify (Phase 5).
-- [ ] Restyle `LinkBankDialog` (still shadcn) into an `AppSheet` with 2.8 Recipients.
+- [x] `LinkBankDialog` restyled as an `AppSheet` and reworded "Add your bank account" (the customer's account at another bank) (2026-11-24).
 - [x] New screens no longer link to old routes. Exceptions: Insights (2.9, P2, not ported) and the "Classic dashboard" comparison link, which stays until cut-over.
-- [ ] **Product decision: how to pay people.** Send pays a recipient's **USDC wallet on Base**, the only payee type the current API supports. To pay someone's *bank account* (third-party ACH/wire), or to make instant Moneta-to-Moneta transfers between users, we need a decision, plus a compliance check on third-party payouts.
+- [ ] **Product decision: how to pay people.** Direction (2026-11-24): **pay in shops like Rain**, using Dakota Cards (Visa debit spending straight from the wallet balance) added to Apple Pay / Google Pay. Still open: payments between Moneta users, and paying someone's bank account.
 - [ ] Recipients: the API has no delete or edit, so people can't be removed yet. Add `DELETE /api/recipients/[id]`, which also removes the Dakota recipient.
 - [x] 2.9 Insights moved to `/app/insights` (2026-11-24, `PRE-DAKOTA-PLAN.md` D2).
 - [x] **2.14 Cut-over done 2026-11-24.** All P0 and P1 screens exist. Doing it removes the old dashboard, and with it the side-by-side comparison. It needs your go-ahead.

@@ -16,7 +16,7 @@ import { useAccountsQuery } from "@/components/account/use-accounts";
 import { AccountManage } from "@/components/app/account-manage";
 import { ActivityRow } from "@/components/app/activity-row";
 import {
-  accountTypeLabel,
+  statusLabel,
   dayLabel,
   maskNumber,
   money,
@@ -80,7 +80,7 @@ export default function AppAccountPage({
     );
   }
 
-  const name = account.nickname || accountTypeLabel(account.accountType);
+  const name = account.nickname || "Account";
   const q = `?from=${encodeURIComponent(account.id)}`;
   const actions = [
     { name: "Send", href: `/app/move/send${q}`, icon: Send },
@@ -125,8 +125,6 @@ export default function AppAccountPage({
                 <span className="font-mono">
                   {maskNumber(account.accountNumber)}
                 </span>
-                <span aria-hidden>·</span>
-                <span>{accountTypeLabel(account.accountType)}</span>
                 {pendingIn > 0 && (
                   <>
                     <span aria-hidden>·</span>
@@ -328,7 +326,6 @@ function DetailsList({
         </span>
       ),
     },
-    { label: "Account type", value: accountTypeLabel(account.accountType) },
     { label: "Currency", value: account.currency },
     {
       label: "Status",
@@ -341,7 +338,7 @@ function DetailsList({
               : "bg-cat-blue/10 text-cat-blue-700",
           )}
         >
-          {accountTypeLabel(account.status)}
+          {statusLabel(account.status)}
         </span>
       ),
     },

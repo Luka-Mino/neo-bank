@@ -1,6 +1,6 @@
 "use client";
 
-// Account management for /app (2.7): rename, savings goal, set primary,
+// Account management for /app (2.7): rename, goal, set primary,
 // close, and opening a new account. Same APIs as (dashboard)/accounts:
 // PATCH /api/accounts/[id] { nickname | goalAmount | setPrimary },
 // DELETE /api/accounts/[id] (soft close — the server enforces the rules),
@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AppSheet } from "@/components/app/sheet";
 import { AmountInput } from "@/components/app/amount-input";
-import { Segmented, TextField } from "@/components/app/fields";
+import { TextField } from "@/components/app/fields";
 import { Notice } from "@/components/app/states";
 import { postJson } from "@/components/app/api";
 import { accountName } from "@/components/app/account-picker";
@@ -48,7 +48,7 @@ export function GoalProgress({ balance, goal }: { balance: number; goal: number 
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={pct}
-        aria-label="Savings goal progress"
+        aria-label="Goal progress"
         className="mt-2 h-2 overflow-hidden rounded-full bg-forest/[0.08]"
       >
         <div className="h-full rounded-full bg-turquoise transition-[width]" style={{ width: `${pct}%` }} />
@@ -112,7 +112,7 @@ export function AccountManage({ account }: { account: AccountRow }) {
     { icon: "accounts", label: "Rename", hint: accountName(account), onClick: () => open("rename") },
     {
       icon: "goals",
-      label: goalNum > 0 ? "Edit savings goal" : "Set a savings goal",
+      label: goalNum > 0 ? "Edit goal" : "Set a goal",
       hint: goalNum > 0 ? formatUsd(goalNum) : "Watch a fund grow",
       onClick: () => open("goal"),
     },
@@ -169,7 +169,7 @@ export function AccountManage({ account }: { account: AccountRow }) {
       <AppSheet
         open={sheet === "goal"}
         onOpenChange={(o) => !o && setSheet(null)}
-        title={goalNum > 0 ? "Edit savings goal" : "Set a savings goal"}
+        title={goalNum > 0 ? "Edit goal" : "Set a goal"}
         description="We'll show how close this account is to your target."
         busy={patch.isPending}
         footer={
@@ -219,17 +219,17 @@ export function OpenAccountButton({ className }: { className?: string }) {
   const qc = useQueryClient();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<"checking" | "savings">("savings");
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const create = useMutation({
     mutationFn: async () => {
-      const name = nickname.trim() || (type === "savings" ? "Savings" : "Checking");
+      const name = nickname.trim();
+      if (!name) throw new Error("Give the account a name, e.g. Bills or Holiday fund.");
       if (DEMO_MODE) {
         const fresh: AccountRow = {
           id: `acct-${Date.now()}`,
-          accountType: type,
+          accountType: "checking", // internal only, never shown
           nickname: name,
           accountNumber: `40${Math.floor(Math.random() * 1e12)}`,
           currency: "USD",
@@ -240,7 +240,7 @@ export function OpenAccountButton({ className }: { className?: string }) {
         qc.setQueryData<AccountRow[]>(queryKeys.accounts.list, (old) => [...(old ?? []), fresh]);
         return fresh;
       }
-      return postJson<AccountRow>("/api/accounts", { accountType: type, nickname: name });
+      return postJson<AccountRow>("/api/accounts", { nickname: name });
     },
     onMutate: () => setError(null),
     onSuccess: (acct) => {
@@ -271,16 +271,7 @@ export function OpenAccountButton({ className }: { className?: string }) {
         }
       >
         <div className="space-y-5">
-          <Segmented<"checking" | "savings">
-            label="Type"
-            value={type}
-            onChange={setType}
-            options={[
-              { value: "savings", label: "Savings" },
-              { value: "checking", label: "Checking" },
-            ]}
-          />
-          <TextField label="Name (optional)" placeholder={type === "savings" ? "e.g. Holiday fund" : "e.g. Bills"} maxLength={40} value={nickname} onChange={(e) => setNickname(e.target.value)} />
+          <TextField label="Name" placeholder="e.g. Bills, Holiday fund" maxLength={40} value={nickname} onChange={(e) => setNickname(e.target.value)} hint="Use separate accounts to keep money apart. You can rename them any time." />
           {error && <Notice tone="error">{error}</Notice>}
         </div>
       </AppSheet>

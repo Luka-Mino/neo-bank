@@ -53,7 +53,10 @@ Send this to your Dakota contact on Telegram. Edit freely. Questions 1–3 decid
 >    that at KYC, or should we? Any New York or California coverage?
 > 5. **Sandbox.** Can you switch on sandbox access and Cards for us?
 > 6. **Cards.** Debit or prepaid? Which issuing bank? Can cards spend USDC on
->    Base?
+>    Base? For paying in shops: can customers add the card to Apple Pay and
+>    Google Pay by typing it in, and do you support one-tap "Add to Apple
+>    Wallet" (push provisioning) for a native app? Are physical cards coming,
+>    and when does Cards leave sandbox?
 > 7. **RD.** Which entity issues it, will it be a permitted issuer by
 >    18 Jan 2027, and how are rewards funded?
 > 8. **Tax.** Who files 1099-DA for USDC redemptions: you or the platform?
@@ -309,7 +312,10 @@ Walk `DR-RUNBOOK.md` once:
 Move it to `/app/insights` with the same API and categories, and link it from More.
 **Done when:** it works at 390px and 1440px, in demo and real mode.
 
-### D3 Restyle the link-bank dialog (2 hours)
+### D3 Restyle the link-bank dialog ✅ done 2026-11-24
+
+> Now an `AppSheet` titled "Add your bank account" (the customer's own account at another bank, for withdrawals).
+
 Change `LinkBankDialog` (still shadcn) to an `AppSheet`.
 **Done when:** it matches the other `/app` sheets.
 

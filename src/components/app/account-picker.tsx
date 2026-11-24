@@ -7,11 +7,11 @@ import { useEffect, useMemo } from "react";
 import { Picker } from "@/components/app/picker";
 import { GlyphBadge } from "@/components/app/states";
 import { useAccountsQuery, type AccountRow } from "@/components/account/use-accounts";
-import { accountTypeLabel, maskNumber } from "@/components/app/data";
+import { maskNumber } from "@/components/app/data";
 import { formatUsd } from "@/lib/money-input";
 
-export function accountName(a: Pick<AccountRow, "nickname" | "accountType">): string {
-  return a.nickname || accountTypeLabel(a.accountType);
+export function accountName(a: Pick<AccountRow, "nickname">): string {
+  return a.nickname || "Account";
 }
 
 export function useActiveAccounts() {
@@ -57,12 +57,9 @@ export function AccountPicker({
     .map((a) => ({
       id: a.id,
       title: accountName(a),
-      subtitle:
-        accountName(a) === accountTypeLabel(a.accountType)
-          ? maskNumber(a.accountNumber)
-          : `${accountTypeLabel(a.accountType)} ${maskNumber(a.accountNumber)}`,
+      subtitle: maskNumber(a.accountNumber),
       trailing: formatUsd(Number(a.balance)),
-      leading: <GlyphBadge name={a.accountType === "savings" ? "goals" : "accounts"} />,
+      leading: <GlyphBadge name={Number(a.goalAmount ?? 0) > 0 ? "goals" : "accounts"} />,
     }));
   return (
     <Picker

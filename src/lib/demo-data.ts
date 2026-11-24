@@ -9,12 +9,12 @@ export const DEMO_TODAY = new Date(DEMO_NOW);
 
 export const DEMO_CUSTOMER = { kycStatus: "active" as const, fullName: "Alex Demo" };
 
-// User's banking accounts. Aggregate balance is checking + savings + vacation.
+// The demo user's accounts: just named accounts (no checking/savings).
 export const DEMO_ACCOUNTS = [
   {
     id: "acct-checking",
     accountType: "checking" as const,
-    nickname: "Checking",
+    nickname: "Main",
     accountNumber: "40123456789012",
     currency: "USD",
     balance: "8250.18",
@@ -25,7 +25,7 @@ export const DEMO_ACCOUNTS = [
   {
     id: "acct-savings",
     accountType: "savings" as const,
-    nickname: "Savings",
+    nickname: "Rainy day",
     accountNumber: "40987654321098",
     currency: "USD",
     balance: "3208.14",

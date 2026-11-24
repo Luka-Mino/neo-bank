@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   title: "Moneta | Everyday money",
   description:
-    "Checking, savings and a debit card in one place, built on regulated infrastructure.",
+    "Separate accounts and a debit card in one place, built on regulated infrastructure.",
   applicationName: "Moneta",
   openGraph: {
     type: "website",

@@ -44,7 +44,7 @@ export const POST = apiHandler({
             orgId: user.orgId!,
             userId: user.id, // creator/actor
             accountType: body.accountType,
-            nickname: body.nickname ?? defaultNickname(body.accountType),
+            nickname: body.nickname ?? defaultNickname(),
             accountNumber: generateAccountNumber(),
             isPrimary,
           })

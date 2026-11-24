@@ -140,7 +140,7 @@ export default function TransferPage() {
           {!DEMO_MODE && <StandingOrders />}
           <HelpCard title="Good to know">
             <p>Transfers between your own accounts are instant and never cost anything.</p>
-            <p>Choose a repeat to move the same amount on a schedule, for example into savings every payday.</p>
+            <p>Choose a repeat to move the same amount on a schedule, for example putting money toward a goal every payday.</p>
           </HelpCard>
         </>
       }

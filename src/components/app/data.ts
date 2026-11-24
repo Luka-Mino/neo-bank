@@ -153,8 +153,10 @@ export function maskNumber(acct: string | undefined): string {
   return `•••• ${acct.slice(-4)}`;
 }
 
-export function accountTypeLabel(t: string | undefined): string {
-  if (!t) return "Account";
+/** Capitalised status label ("active" → "Active"). Account TYPES are never
+ *  shown to customers: accounts are just named (see src/lib/accounts.ts). */
+export function statusLabel(t: string | undefined): string {
+  if (!t) return "";
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 

@@ -4,7 +4,8 @@ import { z } from "zod";
 import { ACCOUNT_TYPES } from "@/lib/accounts";
 
 export const createAccountSchema = z.object({
-  accountType: z.enum(ACCOUNT_TYPES),
+  // Internal only and never shown; defaults so clients needn't send it.
+  accountType: z.enum(ACCOUNT_TYPES).default("checking"),
   nickname: z.string().trim().min(1).max(40).optional(),
 });
 export type CreateAccountInput = z.infer<typeof createAccountSchema>;

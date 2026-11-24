@@ -6,7 +6,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Accounts",
     links: [
-      { label: "Checking & savings", href: "/#accounts" },
+      { label: "Accounts", href: "/#accounts" },
       { label: "Debit cards", href: "/#cards" },
       { label: "Send & transfer", href: "/#transfers" },
       { label: "Spending insights", href: "/#insights" },

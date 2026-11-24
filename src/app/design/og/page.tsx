@@ -21,7 +21,7 @@ export default function OgFrame() {
           Money that keeps up with you
         </h1>
         <p className="mt-6 max-w-[30ch] text-[24px] leading-snug text-forest/70">
-          Checking, savings and a debit card, built on regulated infrastructure.
+          Separate accounts and a debit card, built on regulated infrastructure.
         </p>
       </div>
       <div className="relative -mr-6 w-[560px]">

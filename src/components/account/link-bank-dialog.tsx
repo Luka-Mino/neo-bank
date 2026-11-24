@@ -1,12 +1,13 @@
 "use client";
 
-// LinkBankDialog — links an external US bank account as a withdrawal
-// destination. Two Dakota resources are created behind one form:
+// Add your bank account — the customer's own account at another US bank,
+// saved as a withdrawal destination (money comes back out of Moneta to it).
+// Two Dakota resources are created behind one form:
 //   1. POST /api/recipients                 (holder name + postal address —
 //      Dakota requires a recipient address for fiat payouts)
 //   2. POST /api/recipients/{id}/destinations  (fiat_us details)
 // On success the caller's destinations query is invalidated and the new
-// destination is auto-selected.
+// destination is auto-selected. /app sheet styling (plan D3).
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -14,21 +15,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { AppSheet } from "@/components/app/sheet";
+import { Segmented, TextField } from "@/components/app/fields";
+import { Notice } from "@/components/app/states";
+import { Button } from "@/components/brand/button";
 import { fetchApi } from "@/lib/queries";
-import { cn } from "@/lib/utils";
-import { Landmark, Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   // Dakota caps both at 35 chars for fiat_us destinations.
@@ -36,12 +27,15 @@ const formSchema = z.object({
   bankName: z.string().trim().min(1, "Required").max(35, "Max 35 characters"),
   abaRoutingNumber: z.string().regex(/^\d{9}$/, "Must be exactly 9 digits"),
   accountNumber: z.string().trim().min(4, "Too short").max(17, "Too long"),
+  // The account's type AT THE OTHER BANK. US bank transfers (ACH) require it;
+  // it says nothing about Moneta accounts, which have no type.
   accountType: z.enum(["checking", "savings"]),
   street1: z.string().trim().min(1, "Required").max(35, "Max 35 characters"),
   city: z.string().trim().min(1, "Required"),
-  region: z.string().trim().min(2, "Required").max(2, "2-letter state"),
+  region: z.string().trim().length(2, "2-letter state"),
   postalCode: z.string().trim().min(5, "Required"),
 });
+
 type FormInput = z.infer<typeof formSchema>;
 
 interface LinkedDestination {
@@ -59,10 +53,7 @@ export function LinkBankDialog({
   onLinked?: (dakotaDestinationId: string) => void;
 }) {
   const queryClient = useQueryClient();
-  const [accountTypeValue, setAccountTypeValue] = useState<"checking" | "savings">(
-    "checking"
-  );
-
+  const [externalType, setExternalType] = useState<"checking" | "savings">("checking");
   const {
     register,
     handleSubmit,
@@ -76,31 +67,27 @@ export function LinkBankDialog({
 
   const mutation = useMutation({
     mutationFn: async (data: FormInput) => {
-      const recipientRes = await fetchApi<{ data: { id: string } }>(
-        "/api/recipients",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            name: data.accountHolderName,
-            address: {
-              street1: data.street1,
-              city: data.city,
-              region: data.region,
-              postalCode: data.postalCode,
-              country: "US",
-            },
-          }),
-        }
-      );
+      const recipientRes = await fetchApi<{ data: { id: string } }>("/api/recipients", {
+        method: "POST",
+        body: JSON.stringify({
+          name: data.accountHolderName,
+          address: {
+            street1: data.street1,
+            city: data.city,
+            region: data.region.toUpperCase(),
+            postalCode: data.postalCode,
+            country: "US",
+          },
+        }),
+      });
       const recipientId = recipientRes.data.id;
-
       const destinationRes = await fetchApi<{ data: LinkedDestination }>(
         `/api/recipients/${recipientId}/destinations`,
         {
           method: "POST",
           body: JSON.stringify({
             destinationType: "fiat_us",
-            name: `${data.bankName} ${data.accountType} ··${data.accountNumber.slice(-4)}`,
+            name: `${data.bankName} ··${data.accountNumber.slice(-4)}`,
             abaRoutingNumber: data.abaRoutingNumber,
             accountNumber: data.accountNumber,
             accountType: data.accountType,
@@ -109,7 +96,7 @@ export function LinkBankDialog({
             accountHolderAddress: {
               street1: data.street1,
               city: data.city,
-              region: data.region,
+              region: data.region.toUpperCase(),
               postalCode: data.postalCode,
               country: "US",
             },
@@ -121,113 +108,99 @@ export function LinkBankDialog({
     },
     onSuccess: (destination) => {
       queryClient.invalidateQueries({ queryKey: ["destinations"] });
-      toast.success("Bank account linked");
+      toast.success("Bank account added");
       onLinked?.(destination.dakotaDestinationId);
       reset();
+      setExternalType("checking");
       onOpenChange(false);
-    },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Could not link bank");
     },
   });
 
-  const field = (
-    id: keyof FormInput,
-    label: string,
-    props?: React.ComponentProps<typeof Input>
-  ) => (
-    <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} {...props} {...register(id)} />
-      {errors[id] && (
-        <p className="text-xs text-destructive">{errors[id]?.message}</p>
-      )}
-    </div>
-  );
+  const submit = handleSubmit((data) => mutation.mutate(data));
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Landmark className="h-4 w-4" /> Link a bank account
-          </DialogTitle>
-          <DialogDescription>
-            Withdrawals arrive by ACH or wire. Use an account held in your name.
-          </DialogDescription>
-        </DialogHeader>
+    <AppSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Add your bank account"
+      description="Your account at another US bank, so you can withdraw to it. It must be in your name. Withdrawals arrive by ACH or wire."
+      busy={mutation.isPending}
+      footer={
+        <Button block loading={mutation.isPending} onClick={() => void submit()}>
+          Add bank account
+        </Button>
+      }
+    >
+      <form
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault();
+          void submit();
+        }}
+        className="space-y-4"
+      >
+        <TextField
+          label="Name on the account"
+          placeholder="Your full legal name"
+          maxLength={35}
+          autoComplete="name"
+          error={errors.accountHolderName?.message}
+          {...register("accountHolderName")}
+        />
+        <TextField
+          label="Bank"
+          placeholder="e.g. Chase"
+          maxLength={35}
+          error={errors.bankName?.message}
+          {...register("bankName")}
+        />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <TextField
+            label="Routing number"
+            placeholder="9 digits"
+            inputMode="numeric"
+            maxLength={9}
+            error={errors.abaRoutingNumber?.message}
+            {...register("abaRoutingNumber")}
+          />
+          <TextField
+            label="Account number"
+            inputMode="numeric"
+            maxLength={17}
+            error={errors.accountNumber?.message}
+            {...register("accountNumber")}
+          />
+        </div>
+        <Segmented<"checking" | "savings">
+          label="Type of account at that bank"
+          value={externalType}
+          onChange={(t) => {
+            setExternalType(t);
+            setValue("accountType", t, { shouldValidate: true });
+          }}
+          options={[
+            { value: "checking", label: "Checking" },
+            { value: "savings", label: "Savings" },
+          ]}
+        />
 
-        <form
-          onSubmit={handleSubmit((data) => mutation.mutate(data))}
-          className="space-y-4"
-        >
-          {field("accountHolderName", "Account holder name", {
-            placeholder: "Full legal name",
-            maxLength: 35,
-          })}
-          {field("bankName", "Bank name", { placeholder: "e.g. Chase", maxLength: 35 })}
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {field("abaRoutingNumber", "Routing number", {
-              inputMode: "numeric",
-              maxLength: 9,
-              placeholder: "9 digits",
-            })}
-            {field("accountNumber", "Account number", { inputMode: "numeric" })}
+        <fieldset className="space-y-4 rounded-[16px] bg-[#f3f5f4] p-4">
+          <legend className="sr-only">Address on the account</legend>
+          <p className="text-[13px] text-forest/65">Address on the account (banks require it for payouts)</p>
+          <TextField label="Street" maxLength={35} autoComplete="address-line1" error={errors.street1?.message} {...register("street1")} />
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <TextField className="col-span-2 sm:col-span-1" label="City" autoComplete="address-level2" error={errors.city?.message} {...register("city")} />
+            <TextField label="State" placeholder="CA" maxLength={2} autoComplete="address-level1" error={errors.region?.message} {...register("region")} />
+            <TextField label="ZIP" inputMode="numeric" autoComplete="postal-code" error={errors.postalCode?.message} {...register("postalCode")} />
           </div>
+        </fieldset>
 
-          <div className="space-y-1.5">
-            <Label>Account type</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {(["checking", "savings"] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => {
-                    setAccountTypeValue(t);
-                    setValue("accountType", t, { shouldValidate: true });
-                  }}
-                  className={cn(
-                    "rounded-lg px-3 py-2 text-sm font-medium capitalize ring-1 transition",
-                    accountTypeValue === t
-                      ? "bg-primary/10 text-primary ring-primary"
-                      : "ring-border hover:ring-primary/40"
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3 rounded-xl bg-muted/40 p-3">
-            <p className="text-xs font-medium text-muted-foreground">
-              Account holder address (required for bank payouts)
-            </p>
-            {field("street1", "Street", { maxLength: 35 })}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <div className="col-span-2 sm:col-span-1">{field("city", "City")}</div>
-              <div>{field("region", "State", { placeholder: "CA", maxLength: 2 })}</div>
-              <div>{field("postalCode", "ZIP", { inputMode: "numeric" })}</div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={mutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Link account
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        {mutation.isError && (
+          <Notice tone="error">
+            {mutation.error instanceof Error ? mutation.error.message : "We couldn't add that bank account."}
+          </Notice>
+        )}
+      </form>
+    </AppSheet>
   );
 }

@@ -2,9 +2,10 @@
 // Generation, validation, and constants — no DB access here.
 
 /**
- * Allowed account types at this point. The DB column is free-text so adding
- * new entries here is the only change needed when joint / business / goal
- * accounts come online.
+ * Internal account types. Customers never see a type: accounts are just
+ * named accounts (decided 2026-11-24 — no "Checking"/"Savings", which are
+ * bank deposit-account names). The column stays for compatibility; new
+ * accounts are stored as "checking" and the value is never displayed.
  */
 export const ACCOUNT_TYPES = ["checking", "savings"] as const;
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
@@ -27,12 +28,7 @@ export function generateAccountNumber(): string {
   return `40${rand12}`;
 }
 
-/** Default labels per type — used when nickname is omitted. */
-export function defaultNickname(type: AccountType): string {
-  switch (type) {
-    case "checking":
-      return "Checking";
-    case "savings":
-      return "Savings";
-  }
+/** Name used when none is given. Never the internal type. */
+export function defaultNickname(): string {
+  return "Account";
 }

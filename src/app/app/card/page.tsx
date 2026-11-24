@@ -221,7 +221,7 @@ export default function CardPage() {
                   options={accounts.map((a) => ({
                     id: a.id,
                     title: accountName(a),
-                    leading: <GlyphBadge name={a.accountType === "savings" ? "goals" : "accounts"} />,
+                    leading: <GlyphBadge name={Number(a.goalAmount ?? 0) > 0 ? "goals" : "accounts"} />,
                   }))}
                   value={card.accountId}
                   onChange={(id) => id !== card.accountId && relink.mutate(id)}
