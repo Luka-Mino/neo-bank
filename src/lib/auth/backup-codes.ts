@@ -1,5 +1,6 @@
 import { createHmac, randomInt } from "node:crypto";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
+import { currentKey, keyring } from "@/lib/crypto/keyring";
 import { db } from "@/lib/db";
 import { twoFactorBackupCodes } from "@/lib/db/schema";
 
@@ -7,7 +8,7 @@ import { twoFactorBackupCodes } from "@/lib/db/schema";
 // losing their authenticator device is recoverable, not a permanent lockout.
 //
 // Codes are high-entropy (10 chars from a 30-symbol alphabet ≈ 49 bits), so a
-// fast *keyed* hash (HMAC-SHA256 peppered with AUTH_SECRET) is the right tool —
+// fast *keyed* hash (HMAC-SHA256 peppered with an HMAC_KEYS key) is the right tool —
 // unlike low-entropy email OTPs, which need bcrypt. The pepper means a DB leak
 // alone can't confirm a guessed code. Each code is single-use (used_at).
 
@@ -27,10 +28,11 @@ export function looksLikeBackupCode(code: string): boolean {
   return n.length === CODE_LEN && [...n].every((c) => ALPHABET.includes(c));
 }
 
-function hashBackupCode(normalized: string): string {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) throw new Error("AUTH_SECRET is not configured");
-  return createHmac("sha256", `${secret}:backup-codes-v1`)
+// Keyed with the HMAC_KEYS keyring (src/lib/crypto/keyring.ts). New codes use
+// the current key; a code is checked against every key, so rotating keys
+// doesn't invalidate codes people already saved.
+function hashBackupCode(normalized: string, material: string): string {
+  return createHmac("sha256", `${material}:backup-codes-v1`)
     .update(normalized)
     .digest("hex");
 }
@@ -60,7 +62,7 @@ export async function generateBackupCodes(userId: string): Promise<string[]> {
     if (seen.has(normalized)) continue; // avoid a duplicate in the same set
     seen.add(normalized);
     plaintext.push(formatted);
-    rows.push({ userId, codeHash: hashBackupCode(normalized) });
+    rows.push({ userId, codeHash: hashBackupCode(normalized, currentKey("HMAC_KEYS").material) });
   }
   await db.insert(twoFactorBackupCodes).values(rows);
   return plaintext;
@@ -76,14 +78,15 @@ export async function consumeBackupCode(
   code: string
 ): Promise<boolean> {
   if (!looksLikeBackupCode(code)) return false;
-  const codeHash = hashBackupCode(normalizeBackupCode(code));
+  const normalized = normalizeBackupCode(code);
+  const candidates = keyring("HMAC_KEYS").map((k) => hashBackupCode(normalized, k.material));
   const consumed = await db
     .update(twoFactorBackupCodes)
     .set({ usedAt: new Date() })
     .where(
       and(
         eq(twoFactorBackupCodes.userId, userId),
-        eq(twoFactorBackupCodes.codeHash, codeHash),
+        inArray(twoFactorBackupCodes.codeHash, candidates),
         isNull(twoFactorBackupCodes.usedAt)
       )
     )

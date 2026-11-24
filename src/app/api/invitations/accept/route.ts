@@ -2,11 +2,11 @@
 // invite. Bound to the invited email, single-use, atomic. Not orgScoped — the
 // user is joining a NEW org.
 import { z } from "zod";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
 import { orgInvitations, orgMembers, users } from "@/lib/db/schema";
-import { hashInviteToken } from "@/lib/orgs";
+import { inviteTokenHashCandidates } from "@/lib/orgs";
 import { assertEmailVerified } from "@/lib/auth/verification";
 import { logAudit } from "@/lib/audit";
 
@@ -16,13 +16,13 @@ export const POST = apiHandler({
   schema,
   rateLimit: { limit: 10, window: "15m" },
   handler: async ({ user, body }) => {
-    const tokenHash = hashInviteToken(body.token);
+    const tokenHashes = inviteTokenHashCandidates(body.token);
     const [inv] = await db
       .select()
       .from(orgInvitations)
       .where(
         and(
-          eq(orgInvitations.tokenHash, tokenHash),
+          inArray(orgInvitations.tokenHash, tokenHashes),
           eq(orgInvitations.status, "pending")
         )
       )

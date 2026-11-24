@@ -22,7 +22,7 @@
 |---|---|---|
 | **Today** | A1 send the Dakota message · A3 make the quick decisions | ~~F1 draft the Dakota application text · C5 secrets check~~ ✅ |
 | **This week** | A2 find a lawyer · B1–B3 form the company, EIN, bank account · B5 gather KYB documents | ~~C1 · C2 · C3 · C4~~ ✅ (code; switch-on waits for a hosted backend, see Section 9) |
-| **Next week** | E1 supply the placeholder facts · E3 test on your phone | C6 restore drill (locally) · separate keys from `AUTH_SECRET` · D2 Insights · E2 quality pass · D1 old-dashboard switch-over (if you say yes) · ~~F2–F9~~ ✅ |
+| **Next week** | E1 supply the placeholder facts · E3 test on your phone | ~~C6 restore drill · separate keys from `AUTH_SECRET`~~ ✅ · D2 Insights · E2 quality pass · D1 old-dashboard switch-over (if you say yes) · ~~F2–F9~~ ✅ |
 | **When Dakota answers** | Forward the answers | Section 8, starting with the custody redesign |
 
 Nothing here waits on Dakota. If Dakota answers early, Section 8 jumps the queue.
@@ -234,7 +234,7 @@ Steps:
 > - **Fail closed:** a failed user lookup denies sign-in; the org/permission claim is dropped on any error (`src/lib/auth/config.ts` jwt callback). The session-revocation check keeps an existing token only while the database is unreachable, and then every org-scoped route denies anyway. Acceptable; noted.
 > - **Sign out everywhere:** password change and reset already revoked all sessions. **Gap fixed:** turning off the authenticator app or email codes didn't, though `src/lib/auth/sessions.ts` said it should. Now both revoke, and the settings screen signs out with a message in all three cases instead of leaving a dead session.
 > - **Found by the compliance review, fixed:** (1) magic-link sign-in skipped the email-code second factor, so for those accounts the inbox alone gave a session that could move money, and it skipped the deleted-account check. Email-code accounts must now sign in with password + code, and deleted accounts are refused. (2) Executing an approved payment and creating a recurring transfer didn't require verified email + 2FA like other money moves; now they do.
-> - **Still open:** separate keys from `AUTH_SECRET` (below), and your session-length decision.
+> - **Still open:** your session-length decision. (Separate keys from `AUTH_SECRET`: done, below.)
 
 Each item gets evidence (code reference or test) written into `LAUNCH-READINESS-PLAN.md` §4.3.
 - [ ] **Session length (👤 your decision).** Today it's 7 days. Proposal: 12 hours maximum plus 30 minutes idle for money screens. Finance apps usually go short.
@@ -242,7 +242,7 @@ Each item gets evidence (code reference or test) written into `LAUNCH-READINESS-
 - [x] **Fail closed.** See findings above.
 - [x] **Every auth endpoint is rate-limited.** Listed above; per-IP login tier added.
 - [x] **Lockout and backoff** on repeated failures. Per-email (two tiers) and per-IP at login; email codes capped per code.
-- [ ] **Separate keys from `AUTH_SECRET`.** Today it also roots the 2FA and phone-number encryption, the backup-code pepper, invite and approval HMACs and device fingerprints (found in C5 and the compliance review). Add dedicated, versioned keys (e.g. `FIELD_ENCRYPTION_KEYS` with key IDs) so each can rotate without locking users out.
+- [x] **Separate keys from `AUTH_SECRET`.** Done 2026-11-24: `FIELD_ENCRYPTION_KEYS` and `HMAC_KEYS` keyrings (`src/lib/crypto/keyring.ts`) with an implicit `legacy` entry, so existing data keeps working. Encrypted values name their key; hashes verify under every key. `npm run keys:reencrypt` moves stored secrets to the current key. Startup rejects malformed keyrings. Rotation steps are in `DR-RUNBOOK.md`.
 
 **Done when:** every box is ticked with evidence.
 

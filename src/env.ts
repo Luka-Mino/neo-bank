@@ -7,6 +7,9 @@ export const env = createEnv({
     // Role with BYPASSRLS for allowlisted system jobs (see src/lib/db/index.ts).
     SYSTEM_DATABASE_URL: z.string().url().optional(),
     AUTH_SECRET: z.string().min(16),
+    // Versioned key lists, `id:secret,…` (src/lib/crypto/keyring.ts).
+    FIELD_ENCRYPTION_KEYS: z.string().optional(),
+    HMAC_KEYS: z.string().optional(),
     DAKOTA_API_KEY: z.string().min(1),
     DAKOTA_ENV: z.enum(["sandbox", "production"]).default("sandbox"),
     DAKOTA_WEBHOOK_PUBLIC_KEY: z.string().length(64),
@@ -36,6 +39,8 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     SYSTEM_DATABASE_URL: process.env.SYSTEM_DATABASE_URL,
     AUTH_SECRET: process.env.AUTH_SECRET,
+    FIELD_ENCRYPTION_KEYS: process.env.FIELD_ENCRYPTION_KEYS,
+    HMAC_KEYS: process.env.HMAC_KEYS,
     DAKOTA_API_KEY: process.env.DAKOTA_API_KEY,
     DAKOTA_ENV: process.env.DAKOTA_ENV,
     DAKOTA_WEBHOOK_PUBLIC_KEY: process.env.DAKOTA_WEBHOOK_PUBLIC_KEY,

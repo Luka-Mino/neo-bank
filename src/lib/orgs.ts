@@ -1,4 +1,5 @@
 import { createHmac, randomBytes } from "node:crypto";
+import { currentKey, keyring } from "@/lib/crypto/keyring";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import type { DbTx } from "@/lib/db/with-org";
@@ -101,10 +102,16 @@ export async function resolveActiveMembership(
 export function generateInviteToken(): string {
   return randomBytes(32).toString("base64url");
 }
-export function hashInviteToken(token: string): string {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) throw new Error("AUTH_SECRET is not configured");
-  return createHmac("sha256", `${secret}:org-invite-v1`).update(token).digest("hex");
+export function hashInviteToken(
+  token: string,
+  material: string = currentKey("HMAC_KEYS").material
+): string {
+  return createHmac("sha256", `${material}:org-invite-v1`).update(token).digest("hex");
+}
+
+/** The token's hash under every HMAC key, for lookups that must survive key rotation. */
+export function inviteTokenHashCandidates(token: string): string[] {
+  return keyring("HMAC_KEYS").map((k) => hashInviteToken(token, k.material));
 }
 
 /** How many active owners the org has — used to enforce the ≥1-owner invariant. */

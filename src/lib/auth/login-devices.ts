@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
+import { currentKey, keyring } from "@/lib/crypto/keyring";
 import { logger } from "@/lib/logger";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { loginDevices } from "@/lib/db/schema";
 import { createNotification } from "@/lib/notifications";
@@ -11,15 +12,21 @@ import { createNotification } from "@/lib/notifications";
 // first device a user ever signs in from is recorded silently (there's no
 // prior baseline to compare against).
 
-/** Coarse device fingerprint: UA + first two IP octets, salted with AUTH_SECRET.
+/** Coarse device fingerprint: UA + first two IP octets, salted with an
+ *  HMAC_KEYS key (the implicit `legacy` entry is AUTH_SECRET, as before).
  *  IP is truncated so a rotating home IP within the same ISP block doesn't
  *  re-alert on every login, while a genuinely new network does. */
-export function deviceFingerprint(userId: string, userAgent: string, ip: string): string {
+export function deviceFingerprint(
+  userId: string,
+  userAgent: string,
+  ip: string,
+  material: string = currentKey("HMAC_KEYS").material
+): string {
   const ipPrefix = ip.includes(".")
     ? ip.split(".").slice(0, 2).join(".") // IPv4 /16
     : ip.split(":").slice(0, 3).join(":"); // IPv6 approx
   return createHash("sha256")
-    .update(`${process.env.AUTH_SECRET ?? ""}|${userId}|${userAgent}|${ipPrefix}`)
+    .update(`${material}|${userId}|${userAgent}|${ipPrefix}`)
     .digest("hex");
 }
 
@@ -29,6 +36,11 @@ export async function recordLoginDevice(params: {
   ip: string;
 }): Promise<void> {
   const fingerprint = deviceFingerprint(params.userId, params.userAgent, params.ip);
+  // Match under every key, so rotating HMAC_KEYS doesn't make every known
+  // device look new (and trigger a wave of "new sign-in" alerts).
+  const candidates = keyring("HMAC_KEYS").map((k) =>
+    deviceFingerprint(params.userId, params.userAgent, params.ip, k.material)
+  );
 
   try {
     const existing = await db
@@ -37,15 +49,16 @@ export async function recordLoginDevice(params: {
       .where(
         and(
           eq(loginDevices.userId, params.userId),
-          eq(loginDevices.fingerprint, fingerprint)
+          inArray(loginDevices.fingerprint, candidates)
         )
       )
       .limit(1);
 
     if (existing.length > 0) {
+      // Re-stamp with the current key so old keys can eventually be retired.
       await db
         .update(loginDevices)
-        .set({ lastSeenAt: new Date() })
+        .set({ lastSeenAt: new Date(), fingerprint })
         .where(eq(loginDevices.id, existing[0].id));
       return;
     }

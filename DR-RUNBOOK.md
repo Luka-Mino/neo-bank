@@ -80,24 +80,34 @@ been committed (`git log --all -- .env.local` is empty).
 | Upstash (`UPSTASH_REDIS_REST_TOKEN`) | 90 days | New token in Upstash → Vercel | A missing or invalid token makes rate limits fall back and raise an ops alert |
 | `DATABASE_URL` password | 90 days | Rotate in Supabase → Vercel → redeploy | Update `MIGRATION_DATABASE_URL` too once it exists (plan C1) |
 | `DAKOTA_SIGNER_PRIVATE_KEY` | **Only on exposure** | See "Signer key loss" above: add the new signer to every signer group **before** detaching the old one | Detaching a wallet's last signer group bricks the wallet |
-| `AUTH_SECRET` | **Only on exposure, with the steps below** | See below | **Not a plain session key.** It also roots: the AES key for stored TOTP secrets (`src/lib/auth/totp.ts`), field encryption for phone numbers (`src/lib/crypto/field.ts`), the backup-code hash pepper (`src/lib/auth/backup-codes.ts`), invite-token HMACs (`src/lib/orgs.ts`), approval payload hashes (`src/lib/approvals.ts`) and device fingerprints (`src/lib/auth/login-devices.ts`) |
+| `FIELD_ENCRYPTION_KEYS` | Yearly, or on exposure | Prepend a new `id:secret` (≥32 random chars), deploy, run `npm run keys:reencrypt -- --apply` with the owner DB URL, then drop the old entry | Never drop an entry before re-encrypting: blobs name their key id and become unreadable without it |
+| `HMAC_KEYS` | Yearly, or on exposure | Prepend a new `id:secret`, deploy. Keep old entries until what they hashed has expired | Hashes can't be re-keyed: backup codes (until users regenerate), pending invites and approvals (until they expire). Device fingerprints re-stamp themselves at the next sign-in |
+| `AUTH_SECRET` | 90 days, or on exposure, with the steps below | See below | Since 2026-11-24 it's only the session key plus the implicit `legacy` keyring entry for data written before the keyrings existed (`src/lib/crypto/keyring.ts`) |
 
 ### Rotating `AUTH_SECRET` safely
 
-Swapping it alone would sign everyone out (fine), but also:
-- make every stored 2FA secret and phone number undecryptable, locking out every user with an authenticator app;
-- make every 2FA backup code stop matching (they're stored as peppered hashes, so they can't be re-keyed);
-- invalidate every pending team invite and fail the integrity check on every pending approval;
-- change every device fingerprint, so every next sign-in sends a "new device" alert.
+`AUTH_SECRET` used to root 2FA and phone encryption, backup-code hashes,
+invite and approval hashes and device fingerprints. Those now use the
+`FIELD_ENCRYPTION_KEYS` and `HMAC_KEYS` keyrings (`src/lib/crypto/keyring.ts`).
+Data written before the keyrings existed still uses the old `AUTH_SECRET`
+through the keyrings' implicit `legacy` entry, so keep that value reachable:
 
-Until separate, versioned keys exist (follow-up in `PRE-DAKOTA-PLAN.md` C3), do this:
-1. Announce a short maintenance window.
-2. Run a one-off script that, in one transaction, decrypts each `users.totp_secret` and each encrypted phone number with the old key and re-encrypts it with the new one.
-3. Delete all 2FA backup codes and email the affected users to generate new ones in Settings.
-4. Expire pending invitations (the inviters re-send them) and reject pending approval requests (the requesters re-submit).
-5. Pause "new sign-in" alerts for 7 days, or warn users to expect one.
-6. Set the new `AUTH_SECRET` in Vercel and redeploy.
-7. Check that a 2FA login and a phone-number read work, then record the rotation.
+1. Copy the **current** `AUTH_SECRET` value.
+2. Add it as `legacy:<that value>` at the **end** of both `FIELD_ENCRYPTION_KEYS`
+   and `HMAC_KEYS`. If a keyring is empty, put a new key first, e.g.
+   `k1:<random ≥32 chars>,legacy:<old value>`.
+3. Set the new `AUTH_SECRET` and redeploy. Everyone is signed out once
+   (sessions are signed with it); nothing else breaks. A malformed keyring
+   fails at startup (`validateSecretsAtStartup`), not at sign-in.
+4. Optional, to stop depending on the old value for encryption: run
+   `npm run keys:reencrypt -- --apply` with the owner DB URL, then remove
+   `legacy:` from `FIELD_ENCRYPTION_KEYS`. Keep it in `HMAC_KEYS` until old
+   backup codes are regenerated and pending invites and approvals expire.
+5. Check that a 2FA login and a phone-number read work, then record the rotation.
+
+Tested 2026-11-24 (`src/lib/crypto/keyring.test.ts` and a re-encryption run
+on a copy of the dev DB): after re-encrypting, a 2FA secret decrypts with only
+the new key and a different `AUTH_SECRET`.
 
 ## Recovery objectives
 

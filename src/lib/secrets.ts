@@ -6,6 +6,8 @@
 // AWS Secrets Manager / GCP Secret Manager / Vault, select it by
 // `SECRETS_PROVIDER=kms`, and no call site changes.
 
+import { parseKeyring } from "@/lib/crypto/keyring";
+
 export interface SecretsProvider {
   get(name: SecretName): string | undefined;
 }
@@ -25,6 +27,8 @@ export const SECRET_NAMES = [
   "SENTRY_DSN",
   "UPSTASH_REDIS_REST_TOKEN",
   "STRIPE_ISSUING_WEBHOOK_SECRET",
+  "FIELD_ENCRYPTION_KEYS",
+  "HMAC_KEYS",
 ] as const;
 
 export type SecretName = (typeof SECRET_NAMES)[number];
@@ -73,6 +77,16 @@ export function validateSecretsAtStartup(): void {
   const authSecret = getSecret("AUTH_SECRET");
   if (authSecret && authSecret.length < 16) {
     problems.push("AUTH_SECRET must be at least 16 characters");
+  }
+
+  // Keyrings (src/lib/crypto/keyring.ts): a malformed list must fail at boot,
+  // not when someone signs in or saves a phone number.
+  for (const name of ["FIELD_ENCRYPTION_KEYS", "HMAC_KEYS"] as const) {
+    try {
+      parseKeyring(getSecret(name), name);
+    } catch (e) {
+      problems.push(e instanceof Error ? e.message : `${name} is malformed`);
+    }
   }
 
   // Dakota is required in production unless demo mode is on.

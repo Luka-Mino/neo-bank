@@ -20,8 +20,8 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   fullName: text("full_name").notNull(),
   phone: text("phone"),
-  // TOTP 2FA. Secret is AES-256-GCM encrypted with a key derived from
-  // AUTH_SECRET (see src/lib/auth/totp.ts). Enabled only once the user has
+  // TOTP 2FA. Secret is AES-256-GCM encrypted with a key from
+  // the FIELD_ENCRYPTION_KEYS keyring (see src/lib/auth/totp.ts). Enabled only once the user has
   // proven a valid code (totp_enabled_at set).
   totpSecret: text("totp_secret"),
   totpEnabledAt: timestamp("totp_enabled_at", { withTimezone: true }),

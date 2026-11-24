@@ -5,7 +5,7 @@
 import { and, eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { approvalRequests } from "@/lib/db/schema";
-import { hashPayload } from "@/lib/approvals";
+import { payloadHashMatches } from "@/lib/approvals";
 import { performInternalTransfer, INSUFFICIENT_FUNDS } from "@/lib/transfers";
 import {
   assertAccountOwnership,
@@ -46,7 +46,7 @@ export const POST = apiHandler({
       return err(`This request is ${req.status}, not approved`, 409);
     }
     // TOCTOU guard: the stored payload must still hash to what was approved.
-    if (hashPayload(req.payload) !== req.payloadHash) {
+    if (!payloadHashMatches(req.payload, req.payloadHash)) {
       return err("Approval payload failed its integrity check", 409);
     }
 

@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "check:db": "node scripts/check-db-access.mjs",
+    "keys:reencrypt": "tsx scripts/reencrypt-fields.ts",
     "dakota:webhook": "tsx scripts/dakota-simulate-webhook.ts",
     "dakota:bootstrap": "tsx scripts/dakota-bootstrap.ts",
     "dakota:reconcile": "tsx scripts/dakota-reconcile.ts",

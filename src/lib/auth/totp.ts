@@ -5,40 +5,47 @@ import {
   randomBytes,
 } from "node:crypto";
 import * as OTPAuth from "otpauth";
+import { currentKey, keyById, LEGACY_KEY_ID } from "@/lib/crypto/keyring";
 
-// TOTP two-factor auth. Secrets are never stored raw: AES-256-GCM with a
-// key derived from AUTH_SECRET. Not an HSM, but a DB leak alone doesn't
-// yield working 2FA seeds. (M3 hardening: move key to a secrets manager.)
+// TOTP two-factor auth. Secrets are never stored raw: AES-256-GCM with a key
+// from the FIELD_ENCRYPTION_KEYS keyring (src/lib/crypto/keyring.ts; the
+// implicit `legacy` entry is AUTH_SECRET). Not an HSM, but a DB leak alone
+// doesn't yield working 2FA seeds.
 
 const ISSUER = "Moneta";
 
-function encryptionKey(): Buffer {
-  const authSecret = process.env.AUTH_SECRET;
-  if (!authSecret) throw new Error("AUTH_SECRET is not configured");
-  return createHash("sha256").update(`${authSecret}:totp-encryption-v1`).digest();
+function encryptionKey(material: string): Buffer {
+  return createHash("sha256").update(`${material}:totp-encryption-v1`).digest();
 }
 
-/** base64(iv).base64(ciphertext).base64(gcmTag) */
+/**
+ * base64(iv).base64(ciphertext).base64(gcmTag), prefixed with "<keyId>$" when
+ * the current key isn't the legacy one ("$" never appears in base64).
+ */
 export function encryptSecret(base32Secret: string): string {
+  const key = currentKey("FIELD_ENCRYPTION_KEYS");
   const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", encryptionKey(), iv);
+  const cipher = createCipheriv("aes-256-gcm", encryptionKey(key.material), iv);
   const ciphertext = Buffer.concat([
     cipher.update(base32Secret, "utf8"),
     cipher.final(),
   ]);
-  return [
+  const body = [
     iv.toString("base64"),
     ciphertext.toString("base64"),
     cipher.getAuthTag().toString("base64"),
   ].join(".");
+  return key.id === LEGACY_KEY_ID ? body : `${key.id}$${body}`;
 }
 
 export function decryptSecret(blob: string): string {
-  const [ivB64, ctB64, tagB64] = blob.split(".");
+  const dollar = blob.indexOf("$");
+  const keyId = dollar === -1 ? LEGACY_KEY_ID : blob.slice(0, dollar);
+  const [ivB64, ctB64, tagB64] = blob.slice(dollar + 1).split(".");
   if (!ivB64 || !ctB64 || !tagB64) throw new Error("Malformed TOTP secret blob");
   const decipher = createDecipheriv(
     "aes-256-gcm",
-    encryptionKey(),
+    encryptionKey(keyById("FIELD_ENCRYPTION_KEYS", keyId).material),
     Buffer.from(ivB64, "base64")
   );
   decipher.setAuthTag(Buffer.from(tagB64, "base64"));

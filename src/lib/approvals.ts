@@ -1,4 +1,5 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { currentKey, keyring } from "@/lib/crypto/keyring";
 import { and, eq, sql } from "drizzle-orm";
 import {
   approvalPolicies,
@@ -34,13 +35,23 @@ function canonical(v: unknown): string {
   );
 }
 
-/** HMAC of the canonical payload — the TOCTOU guard, keyed off AUTH_SECRET. */
-export function hashPayload(payload: unknown): string {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) throw new Error("AUTH_SECRET is not configured");
-  return createHmac("sha256", `${secret}:approvals-v1`)
+/** HMAC of the canonical payload — the TOCTOU guard, keyed with HMAC_KEYS. */
+export function hashPayload(
+  payload: unknown,
+  material: string = currentKey("HMAC_KEYS").material
+): string {
+  return createHmac("sha256", `${material}:approvals-v1`)
     .update(canonical(payload))
     .digest("hex");
+}
+
+/** True if `hash` matches the payload under any HMAC key (survives rotation). */
+export function payloadHashMatches(payload: unknown, hash: string): boolean {
+  const given = Buffer.from(hash, "hex");
+  return keyring("HMAC_KEYS").some((k) => {
+    const expected = Buffer.from(hashPayload(payload, k.material), "hex");
+    return expected.length === given.length && timingSafeEqual(expected, given);
+  });
 }
 
 /**
