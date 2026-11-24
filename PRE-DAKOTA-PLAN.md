@@ -20,9 +20,9 @@
 
 | When | 👤 You | 🤖 Claude |
 |---|---|---|
-| **Today** | A1 send the Dakota message · A3 make the quick decisions · B6 open the tool accounts | F1 draft the Dakota application text · C5 secrets check |
-| **This week** | A2 find a lawyer · B1–B3 form the company, EIN, bank account · B5 gather KYB documents | C1 keep customers' data apart in the database · C2 shared rate limits · C3 sign-in review · C4 error tracking and alerts |
-| **Next week** | E1 supply the placeholder facts · E3 test on your phone · C6 run the restore drill with Claude | D1 old-dashboard switch-over (if you say yes) · D2 Insights · F2–F9 policy drafts · E2 quality pass · D4 staging migrations |
+| **Today** | A1 send the Dakota message · A3 make the quick decisions | ~~F1 draft the Dakota application text · C5 secrets check~~ ✅ |
+| **This week** | A2 find a lawyer · B1–B3 form the company, EIN, bank account · B5 gather KYB documents | ~~C1 · C2 · C3 · C4~~ ✅ (code; switch-on waits for a hosted backend, see Section 9) |
+| **Next week** | E1 supply the placeholder facts · E3 test on your phone | C6 restore drill (locally) · separate keys from `AUTH_SECRET` · D2 Insights · E2 quality pass · D1 old-dashboard switch-over (if you say yes) · ~~F2–F9~~ ✅ |
 | **When Dakota answers** | Forward the answers | Section 8, starting with the custody redesign |
 
 Nothing here waits on Dakota. If Dakota answers early, Section 8 jumps the queue.
@@ -84,8 +84,8 @@ Send this to your Dakota contact on Telegram. Edit freely. Questions 1–3 decid
 | D10 | Offshore entity? | Not now · later for non-US customers | Company structure (B1) |
 | D12 | Where are you and the team based? | US · Canada · elsewhere | Canada registrations; company structure |
 | D13 | Switch over to the new app and delete the old dashboard? | Yes now · after one more side-by-side look | D1 |
-| D14 | Support inbox address | e.g. support@ your domain | `SUPPORT_EMAIL` in Vercel |
-| D15 | Vercel Pro (about $20/month per member)? | Yes before launch · later | Frequent crons for reconcile and recurring transfers |
+| D14 | ~~Support inbox address~~ | ⏸ Not until near launch (2026-11-24) | — |
+| D15 | ~~Vercel Pro~~ | ⏸ Not until near launch (2026-11-24) | — |
 
 **Done when:** each row has an answer, copied into `LAUNCH-READINESS-PLAN.md` §1b.
 
@@ -142,7 +142,10 @@ For the applicant, a control person (a senior officer who signs the attestations
 
 **Done when:** every box is ticked and the files sit in one private folder, not in this repo.
 
-### B6 Open the tool accounts (today, 20 minutes)
+### B6 Open the tool accounts ⏸ deferred to near launch (Section 9)
+
+> 2026-11-24: not now. There's no real hosted backend yet, and no emails or outside services until closer to launch. The code works without all of these.
+
 - [ ] **Support inbox** (D14). Then add `SUPPORT_EMAIL` in Vercel (Production and Preview).
 - [ ] **Upstash Redis** (free tier). Create a database, then add `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in Vercel. Needed for C2.
 - [ ] **Sentry** project. Add `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` in Vercel. Needed for C4.
@@ -166,7 +169,7 @@ For the applicant, a control person (a senior officer who signs the attestations
 > Tests: 7 new RLS integration tests, all integration tests run as `moneta_app`
 > in CI, and a unit-tested CI guard. `/api/health` reports `databaseRoles`.
 >
-> **👤 Deploy steps (staging, then production), in this order:**
+> **👤 Deploy steps — ⏸ when a real hosted backend exists (Section 9).** Today's Vercel project is the demo-mode click-through with no database, so there's nothing to deploy to. In order:
 > 1. In Supabase's SQL editor, run `scripts/sql/db-roles.sql` once, after
 >    replacing both passwords with long random values from a password manager.
 >    The last query should show `moneta_app f f` and `moneta_system f t`. If
@@ -301,7 +304,7 @@ Move it to `/app/insights` with the same API and categories, and link it from Mo
 Change `LinkBankDialog` (still shadcn) to an `AppSheet`.
 **Done when:** it matches the other `/app` sheets.
 
-### D4 Bring the staging database up to date (15 minutes)
+### D4 Bring the staging database up to date ⏸ deferred (no hosted database yet; Section 9)
 Apply migrations `0019` and `0020` to the staging/production database with `drizzle-kit migrate`. You'll need to provide the URL, or run it yourself.
 **Done when:** `drizzle.__drizzle_migrations` shows 21 rows.
 
@@ -369,6 +372,19 @@ Q numbers refer to the message in A1.
 | RD and any rewards | Dakota Q7 + the lawyer | GENIUS Act rules from 18 Jan 2027 |
 
 ---
+
+## 9. Near launch: switch-ons that need a hosted backend
+
+Decided 2026-11-24: no hosted backend, support inbox, emails or outside services until Moneta is close to launch. The code already works without each of these, and here's what happens meanwhile:
+
+| Item | Without it today | To switch on (near launch) |
+|---|---|---|
+| Database roles + migrations 0019–0021 on a hosted DB (C1, D4) | Only local and CI databases use row-level security | C1 deploy steps |
+| Shared rate limits (C2) | Limits count per server (fine for one dev server) | Upstash keys in the host's env |
+| Error tracking (C4) | Sentry is a no-op; alerts go to the logs | Sentry DSNs in the host's env |
+| Support inbox (1c.3, D14) | Requests are saved and listed in-app; no email copy | `SUPPORT_EMAIL` |
+| Frequent crons (D15) | Reconcile and recurring transfers run daily | A plan that allows more frequent crons |
+| Tool accounts (B6) | — | Create Upstash and Sentry, and the inbox |
 
 ## Progress log
 
