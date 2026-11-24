@@ -67,7 +67,7 @@
 |---|---|---|
 | D9 | Who are the customers: US residents, non-US retail (which region), or businesses? | Drives every licence. An offshore licence does **not** permit serving US residents |
 | D10 | Offshore entity or not (user leaning "probably offshore, not sure"), and where | Offshore deposit bank needs about US$10M+ capital; digital-asset licence about US$100k–2M plus a partner bank |
-| D11 | Custody design: keep the platform-only signer, or require the user's passkey? | Today the server holds the only key and P2P is internal book entries, so we are very likely a money transmitter ourselves, not covered by Dakota's licences |
+| D11 | Custody design: keep the platform-only signer, or require the user's passkey? | Today the server holds the only signing key, so we are very likely a money transmitter ourselves, not covered by Dakota's licences |
 | D12 | Where the company and team are based (US / Canada / elsewhere) | Canadian staff or incorporation likely triggers FINTRAC MSB registration even with US-only users |
 
 **Findings that apply whichever path we pick:**
@@ -77,6 +77,38 @@
 - Launching unlicensed first can disqualify us from NMLS multistate licensing later.
 - GENIUS Act takes effect 2027-01-18. Rewards on RD balances are a counsel question.
 - Copy: never call Moneta a bank (state laws, FDIC Part 328, Canada Bank Act s.983).
+
+> **Correction to the report (checked against the code 2026-11-24).** The
+> research brief assumed user-to-user transfers are book entries. They aren't:
+> internal, recurring and approval-executed transfers all go through
+> `performInternalTransfer`, which moves money only between accounts of the
+> **same** org. That is sub-account bookkeeping, not paying another person.
+> The live problem is the signing key. Keep it that way: Moneta-to-Moneta
+> payments (the 2.x "how to pay people" decision) go on-chain through Dakota,
+> never as book entries.
+
+## Phase 1c: Build changes from the licensing research
+
+> Before any real customer money moves. The sandbox drill (5.2) can still run
+> on the current design, since sandbox funds aren't real.
+
+### Can start now (no Dakota answers needed)
+
+- [ ] **1c.1 Drop "banking" as a self-description.** Page titles "Moneta | Personal banking" (`src/app/layout.tsx`, `src/app/page.tsx`), eyebrows and headlines in `src/app/page.tsx` ("Personal banking", "Banking that keeps up with you", "Everyday banking", "Banking with Moneta"), the footer column and tagline (`site-footer.tsx`), the auth layout, the header aria-label, `page-parts.tsx` and the design/og pages. **Done when:** "banking" appears only in references to Dakota's partners.
+- [ ] **1c.2 Residence gate before KYC.** Collect state of residence first. Allow only Dakota's licensed states (a config list, filled in from Dakota Q8) minus CA and NY. Block Dakota's 35 prohibited jurisdictions, and hide RD in FL, GA, NY, TX, WA and LA. **Done when:** a CA or NY address can't start KYC.
+- [ ] **1c.3 Passkeys (WebAuthn) for sign-in and step-up.** Today MFA is TOTP only. Passkeys are the groundwork for user signing in 1c.7. **Done when:** a user can register two or more passkeys and confirm a send with one.
+- [ ] **1c.4 Consent records.** Get E-SIGN consent before any electronic disclosure. Store which version of each document every user accepted, and when: Moneta Terms and Privacy, plus Dakota's Terms, Funds Transfer Agreement, privacy policies and accuracy attestation.
+- [ ] **1c.5 Complaints intake.** An in-app form, logged with a status, and forwarded to Dakota per the contract. Partners ask for this.
+- [ ] **1c.6 Hold the line.** No rewards, no RD, no Moneta-to-Moneta book transfers, no new server-initiated on-chain sends.
+
+### After Dakota answers on the wallet model and consumer programme (§5.1 Q6, Q7, Q12)
+
+- [ ] **1c.7 Custody redesign.** One of two options:
+  - **(a) Dakota is the custodian.** If Dakota offers wallets it hosts for platform end users, switch wallet creation to that model. Least code.
+  - **(b) Users hold the key.** Register each user's passkey as a Dakota `WEBAUTHN` signer, with a per-wallet policy that needs the user's signature (user-only, or 2-of-2 with the platform key). The browser signs each send intent. Governance changes also need the user. Recovery is a second passkey, never platform-only.
+  - **Touches:** `src/lib/dakota/{signing,wallets,wallet-transactions,provisioning}.ts`, `scripts/dakota-bootstrap.ts`, the send and withdraw routes, and `review-sheet.tsx` (the signing step).
+- [ ] **1c.8 Team approvals enforced by Dakota.** Under (b), each approver's passkey joins the org's Dakota signer group with threshold M. Dakota then enforces M-of-N for on-chain sends, not our database.
+- [ ] **1c.9 Onboarding for the chosen segment (D9).** Business-first uses Dakota KYB (`customerType: "business"` already exists in `src/lib/dakota/customers.ts`). Consumer-first waits until Dakota confirms a consumer programme in writing.
 
 ---
 
@@ -395,11 +427,12 @@ Ask for:
 Licensing questions (from §1b; the full list of 12 is at the end of `reports/Moneta licensing and permits.md`):
 
 6. Do you run a **consumer** programme? Your public Terms and the Lead Bank Funds Transfer Agreement say no personal or household use. What are the consumer terms?
-7. Can we be your **agent or authorised delegate**, and what contract covers it? With our server holding the only signing key and our own P2P ledger, counsel expects us to be a money transmitter ourselves.
+7. Can we be your **agent or authorised delegate**, and what contract covers it? With our server holding the only signing key, the research says we'd likely be a money transmitter ourselves.
 8. Your **licence footprint**: which 20 states? Do you hold a NY BitLicense, a California DFAL licence, or a Louisiana crypto licence?
 9. Who is the **1099-DA broker** for USDC redemptions: you or us?
 10. Who issues **RD**? Will it be a permitted issuer by 2027-01-18, and how are rewards funded?
 11. Would you onboard an **offshore** licensed entity as a platform, and from which countries?
+12. **Wallet model:** do platform end users get pure self-custody wallets or your three-shard Dakota-Supported Wallet? Can a wallet be hosted by you, so you are the custodian, and may a platform be the only signer?
 
 - [ ] The key goes into `.env.local` by you, never in chat.
 
