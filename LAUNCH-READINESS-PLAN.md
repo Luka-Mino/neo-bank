@@ -386,9 +386,9 @@ Per-screen checklist (copy into each PR):
 ## Phase 4 — Security hardening (parallel; all before real users) 🟥
 
 ### 4.1 Org isolation: finish the RLS enforce step (`ORG-FOUNDATION-SPEC.md`)
-- [ ] Route every org-scoped query through `withOrg(orgId, fn)` (sets `app.current_org_id` in a transaction). 0 of 58 routes use it today. Start with the money routes.
+- [ ] Route every org-scoped query through `withOrg(orgId, fn)` (sets `app.current_org_id` in a transaction). **Status 2026-11-24:** `apiHandler` runs `orgScoped` routes inside `withOrg`, and 27 of the 28 use `ctx.db`. But the database has **no RLS policies yet**, so the GUC isn't enforced and a missed `org_id` filter would still leak. Remaining: the one org-scoped route on the global `db`, plus the 31 non-scoped routes that touch class-A tables.
 - [ ] Add a CI check that fails on raw `db.select/insert/update/delete` against class-A tables outside `withOrg`.
-- [ ] Migration `0020_org_enforce`:
+- [ ] Migration `0021_org_enforce` (0020 is taken by legal acceptance and support):
   - `NOT NULL org_id`
   - composite FKs (`UNIQUE(org_id,id)`)
   - `ENABLE` + `FORCE ROW LEVEL SECURITY`, with policies on the 11 class-A tables
