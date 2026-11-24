@@ -50,6 +50,7 @@ export type AppTx = {
   sourceAmount?: string;
   sourceAsset?: string;
   destinationAsset?: string;
+  category?: string | null;
   createdAt?: string;
 };
 
@@ -66,7 +67,10 @@ export function useTransactions() {
   const raw: AppTx[] = DEMO_MODE
     ? (DEMO_TRANSACTIONS as AppTx[])
     : q.data?.data?.data || q.data?.data || [];
-  const sorted = [...raw].sort(
+  // Hide funding legs: a withdrawal or send stores the user-facing row plus
+  // the on-chain `wallet_send` that funds it. Listing both showed a stray
+  // "Transaction" and double-counted money out.
+  const sorted = raw.filter((t) => t.txType !== "wallet_send").sort(
     (a, b) =>
       new Date(b.createdAt ?? 0).getTime() -
       new Date(a.createdAt ?? 0).getTime()

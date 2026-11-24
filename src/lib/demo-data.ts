@@ -4,6 +4,8 @@ export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 // DEMO_NOW here caused React hydration mismatches (server renders minutes
 // before the client). Bump occasionally to keep relative labels fresh.
 const DEMO_NOW = new Date("2026-07-10T09:00:00-04:00").getTime();
+/** The demo's fixed "today", for screens that bucket by date (e.g. Insights). */
+export const DEMO_TODAY = new Date(DEMO_NOW);
 
 export const DEMO_CUSTOMER = { kycStatus: "active" as const, fullName: "Alex Demo" };
 
@@ -83,10 +85,10 @@ export const DEMO_CARDS = [
 
 export const DEMO_TRANSACTIONS = [
   { id: "tx-1", accountId: "acct-checking", txType: "onramp", sourceAmount: "5000.00", sourceAsset: "USD", destinationAsset: "USDC", status: "completed", createdAt: new Date(DEMO_NOW - 2 * 86400000).toISOString(), updatedAt: new Date(DEMO_NOW - 2 * 86400000).toISOString() },
-  { id: "tx-2", accountId: "acct-checking", txType: "send", sourceAmount: "250.00", sourceAsset: "USDC", destinationAsset: "USDC", status: "completed", createdAt: new Date(DEMO_NOW - 5 * 86400000).toISOString(), updatedAt: new Date(DEMO_NOW - 5 * 86400000).toISOString() },
-  { id: "tx-3", accountId: "acct-checking", txType: "offramp", sourceAmount: "1000.00", sourceAsset: "USDC", destinationAsset: "USD", status: "completed", createdAt: new Date(DEMO_NOW - 7 * 86400000).toISOString(), updatedAt: new Date(DEMO_NOW - 7 * 86400000).toISOString() },
+  { id: "tx-2", category: "food", accountId: "acct-checking", txType: "send", sourceAmount: "250.00", sourceAsset: "USDC", destinationAsset: "USDC", status: "completed", createdAt: new Date(DEMO_NOW - 5 * 86400000).toISOString(), updatedAt: new Date(DEMO_NOW - 5 * 86400000).toISOString() },
+  { id: "tx-3", category: "bills", accountId: "acct-checking", txType: "offramp", sourceAmount: "1000.00", sourceAsset: "USDC", destinationAsset: "USD", status: "completed", createdAt: new Date(DEMO_NOW - 7 * 86400000).toISOString(), updatedAt: new Date(DEMO_NOW - 7 * 86400000).toISOString() },
   { id: "tx-4", accountId: "acct-checking", txType: "onramp", sourceAmount: "3000.00", sourceAsset: "USD", destinationAsset: "USDC", status: "pending", createdAt: new Date(DEMO_NOW - 1 * 86400000).toISOString(), updatedAt: new Date(DEMO_NOW - 1 * 86400000).toISOString() },
-  { id: "tx-5", accountId: "acct-savings", txType: "send", sourceAmount: "75.50", sourceAsset: "USDC", destinationAsset: "USDC", status: "completed", createdAt: new Date(DEMO_NOW - 14 * 86400000).toISOString(), updatedAt: new Date(DEMO_NOW - 14 * 86400000).toISOString() },
+  { id: "tx-5", category: "shopping", accountId: "acct-savings", txType: "send", sourceAmount: "75.50", sourceAsset: "USDC", destinationAsset: "USDC", status: "completed", createdAt: new Date(DEMO_NOW - 14 * 86400000).toISOString(), updatedAt: new Date(DEMO_NOW - 14 * 86400000).toISOString() },
   { id: "tx-6", accountId: "acct-savings", txType: "onramp", sourceAmount: "2000.00", sourceAsset: "USD", destinationAsset: "USDC", status: "completed", createdAt: new Date(DEMO_NOW - 20 * 86400000).toISOString(), updatedAt: new Date(DEMO_NOW - 20 * 86400000).toISOString() },
   { id: "tx-7", accountId: "acct-vacation", txType: "internal_in", sourceAmount: "500.00", sourceAsset: "USD", destinationAsset: "USD", status: "completed", createdAt: new Date(DEMO_NOW - 25 * 86400000).toISOString(), updatedAt: new Date(DEMO_NOW - 25 * 86400000).toISOString() },
 ];

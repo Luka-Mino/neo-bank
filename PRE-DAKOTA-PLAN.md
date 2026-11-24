@@ -22,7 +22,7 @@
 |---|---|---|
 | **Today** | A1 send the Dakota message · A3 make the quick decisions | ~~F1 draft the Dakota application text · C5 secrets check~~ ✅ |
 | **This week** | A2 find a lawyer · B1–B3 form the company, EIN, bank account · B5 gather KYB documents | ~~C1 · C2 · C3 · C4~~ ✅ (code; switch-on waits for a hosted backend, see Section 9) |
-| **Next week** | E1 supply the placeholder facts · E3 test on your phone | ~~C6 restore drill · separate keys from `AUTH_SECRET`~~ ✅ · D2 Insights · E2 quality pass · D1 old-dashboard switch-over (if you say yes) · ~~F2–F9~~ ✅ |
+| **Next week** | E1 supply the placeholder facts · E3 test on your phone | ~~C6 restore drill · separate keys from `AUTH_SECRET` · D2 Insights~~ ✅ · E2 quality pass · D1 old-dashboard switch-over (if you say yes) · ~~F2–F9~~ ✅ |
 | **When Dakota answers** | Forward the answers | Section 8, starting with the custody redesign |
 
 Nothing here waits on Dakota. If Dakota answers early, Section 8 jumps the queue.
@@ -299,7 +299,10 @@ Walk `DR-RUNBOOK.md` once:
 
 **Done when:** no old screen is reachable, every old URL lands on its new page, and tests and build pass.
 
-### D2 Move Insights to the new design (1 day)
+### D2 Move Insights to the new design ✅ done 2026-11-24
+
+> `/app/insights` (More → Insights): money in, money out, net and spending by category for this month, last month or 3 months, across all accounts or one. The numbers come from `src/lib/insights.ts` (6 tests). Left out on purpose: the old screen's hard-coded "AI insights" and its "Budget tracking" (no budgets exist); both are BACKLOG ideas. Also fixed: Activity listed each withdrawal's on-chain funding leg as an extra "Transaction" and counted the money out twice; `useTransactions` now hides `wallet_send` rows. Checked at phone and desktop widths in demo mode.
+
 Move it to `/app/insights` with the same API and categories, and link it from More.
 **Done when:** it works at 390px and 1440px, in demo and real mode.
 

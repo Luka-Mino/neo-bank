@@ -32,7 +32,7 @@ export default function AppMorePage() {
             {
               name: "Insights",
               hint: "Where your money goes each month",
-              href: "/insights",
+              href: "/app/insights",
               icon: BarChart3,
             },
           ],

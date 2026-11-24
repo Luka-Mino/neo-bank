@@ -96,3 +96,8 @@
   - [ ] Swiss payment-instrument-institution licence (still a draft, likely 2028+), or an EU MiCA CASP plus EMI.
   - [ ] Canada: FINTRAC MSB, Bank of Canada RPAA registration, Quebec MSB licence.
   - [ ] OCC national trust charter (about $10M capital) as the long-term route.
+
+## Insights (ideas cut from the old screen, 2026-11-24)
+- [ ] Monthly budgets per category: the old Insights showed "Budget tracking" with no budgets behind it; build real ones (set a cap, warn at 90%)
+- [ ] Insights from real data: the old screen had hard-coded "AI insights" text; generate observations (month-over-month change, recurring payments) from the user's own transactions
+- [ ] "vs previous period" comparison on Insights (the old label claimed it without computing it)

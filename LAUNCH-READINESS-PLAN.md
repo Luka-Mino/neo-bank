@@ -265,7 +265,7 @@ Today's list is an allowlist of *protected* paths, so every new page is public u
 - [x] New screens no longer link to old routes. Exceptions: Insights (2.9, P2, not ported) and the "Classic dashboard" comparison link, which stays until cut-over.
 - [ ] **Product decision: how to pay people.** Send pays a recipient's **USDC wallet on Base**, the only payee type the current API supports. To pay someone's *bank account* (third-party ACH/wire), or to make instant Moneta-to-Moneta transfers between users, we need a decision, plus a compliance check on third-party payouts.
 - [ ] Recipients: the API has no delete or edit, so people can't be removed yet. Add `DELETE /api/recipients/[id]`, which also removes the Dakota recipient.
-- [ ] 2.9 Insights (P2) is still on the old screen.
+- [x] 2.9 Insights moved to `/app/insights` (2026-11-24, `PRE-DAKOTA-PLAN.md` D2).
 - [ ] **2.14 Cut-over is ready to decide.** All P0 and P1 screens exist. Doing it removes the old dashboard, and with it the side-by-side comparison. It needs your go-ahead.
 
 ### 2.1–2.13 Screen inventory (old → new)
