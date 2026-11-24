@@ -66,7 +66,7 @@
 - [ ] Database connection pooling for production
 
 ## Dakota platform (ideas beyond the base integration — see DAKOTA-PLAN.md)
-- [ ] Passkey-endorsed transactions — register user passkeys as Dakota WEBAUTHN signers so users cryptographically approve their own sends (mixes with our platform ES256 signer in one signatures array)
+- [ ] Passkey-endorsed transactions — register user passkeys as Dakota WEBAUTHN signers so users cryptographically approve their own sends (mixes with our platform ES256 signer in one signatures array). **Now launch-relevant (2026-11-24):** if the user's passkey is required, we stop having sole control of funds, which bears on whether we're a money transmitter. See `LAUNCH-READINESS-PLAN.md` §1b, D11.
 - [ ] Tiered wallet policies — amount_threshold rule requiring 2-of-N approval above e.g. $10k (fraud/ops control)
 - [ ] Swap accounts / one-off swaps (USDC↔USDT cross-chain) — Dakota supports both reusable and one-off
 - [ ] Custom in-app KYC UI replacing Dakota's hosted form (application endpoints + document upload + attestation sequencing)
@@ -89,4 +89,10 @@
 - [ ] Terms of service
 - [ ] Privacy policy
 - [ ] Clear "not a bank" disclosures (UDAAP compliance)
-- [ ] FDIC pass-through insurance documentation
+- [ ] ~~FDIC pass-through insurance documentation~~. Not applicable while balances are USDC, which is not FDIC-insured. Revisit only if we add a bank-deposit product.
+- Licensing paths researched 2026-11-24 (`reports/Moneta licensing and permits.md`); decisions D9–D12 are in `LAUNCH-READINESS-PLAN.md` §1b. Deferred options:
+  - [ ] Offshore licensed entity for non-US customers (Bermuda / Cayman / Bahamas / Gibraltar / ADGM–VARA digital-asset licence plus a partner bank). Needs a hard block on US persons.
+  - [ ] Own US licences: FinCEN MSB plus NMLS multistate MTLs, NY BitLicense, CA DFAL.
+  - [ ] Swiss payment-instrument-institution licence (still a draft, likely 2028+), or an EU MiCA CASP plus EMI.
+  - [ ] Canada: FINTRAC MSB, Bank of Canada RPAA registration, Quebec MSB licence.
+  - [ ] OCC national trust charter (about $10M capital) as the long-term route.

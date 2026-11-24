@@ -55,6 +55,31 @@
 
 ---
 
+## 1b. Licensing and permits (researched 2026-11-24) ⛔
+
+> Full report: `reports/Moneta licensing and permits.md`. Source notes:
+> `research_notes/Moneta licensing and permits/` (8 files). This is research,
+> not legal advice; counsel decides.
+
+**Open decisions (not yet answered):**
+
+| # | Decision | Why it matters |
+|---|---|---|
+| D9 | Who are the customers: US residents, non-US retail (which region), or businesses? | Drives every licence. An offshore licence does **not** permit serving US residents |
+| D10 | Offshore entity or not (user leaning "probably offshore, not sure"), and where | Offshore deposit bank needs about US$10M+ capital; digital-asset licence about US$100k–2M plus a partner bank |
+| D11 | Custody design: keep the platform-only signer, or require the user's passkey? | Today the server holds the only key and P2P is internal book entries, so we are very likely a money transmitter ourselves, not covered by Dakota's licences |
+| D12 | Where the company and team are based (US / Canada / elsewhere) | Canadian staff or incorporation likely triggers FINTRAC MSB registration even with US-only users |
+
+**Findings that apply whichever path we pick:**
+- Running "under Dakota's licences" only holds if we neither control funds nor run our own ledger. Fix candidates: route user-to-user transfers through Dakota; register users' passkeys as required WebAuthn signers (BACKLOG item, now launch-relevant).
+- Dakota's public Terms (updated 2026-11-20) are commercial-only, and the Lead Bank agreement excludes consumer payments. Get written confirmation of a consumer programme.
+- New York cannot be served under a partner with app-held keys. California's crypto licence went live 2026-07-01 and we missed the window. Geo-block both until resolved.
+- Launching unlicensed first can disqualify us from NMLS multistate licensing later.
+- GENIUS Act takes effect 2027-01-18. Rewards on RD balances are a counsel question.
+- Copy: never call Moneta a bank (state laws, FDIC Part 328, Canada Bank Act s.983).
+
+---
+
 ## Phase 1 — Secure the base ✅ done 2026-11-23 (two follow-ups open)
 
 > **Result:**
@@ -367,6 +392,15 @@ Ask for:
 4. May our **platform signer** sign wallet card-enablement, and how should per-wallet policies be set up?
 5. Physical card timeline (sidetabled, but ask).
 
+Licensing questions (from §1b; the full list of 12 is at the end of `reports/Moneta licensing and permits.md`):
+
+6. Do you run a **consumer** programme? Your public Terms and the Lead Bank Funds Transfer Agreement say no personal or household use. What are the consumer terms?
+7. Can we be your **agent or authorised delegate**, and what contract covers it? With our server holding the only signing key and our own P2P ledger, counsel expects us to be a money transmitter ourselves.
+8. Your **licence footprint**: which 20 states? Do you hold a NY BitLicense, a California DFAL licence, or a Louisiana crypto licence?
+9. Who is the **1099-DA broker** for USDC redemptions: you or us?
+10. Who issues **RD**? Will it be a permitted issuer by 2027-01-18, and how are rewards funded?
+11. Would you onboard an **offshore** licensed entity as a platform, and from which countries?
+
 - [ ] The key goes into `.env.local` by you, never in chat.
 
 ### 5.2 Sandbox proof (ROADMAP M2)
@@ -415,5 +449,6 @@ Ask for:
 - [ ] 0 critical/high production vulnerabilities; protected-by-default routing; RLS enforced; signer key in a secrets manager
 - [ ] Every user path in the new app; no old screens; works on phone and desktop
 - [ ] Public site has no placeholders, and counsel has approved the disclosures and custody wording
+- [ ] Counsel's written view on our regulatory status (MSB or not, state licences, NY/CA) and Dakota's written confirmation of a consumer programme (§1b)
 - [ ] Sandbox drill (money + cards) passed; production readiness checklist (M3) complete
 - [ ] Monitoring and alerts live; runbook walked through once
