@@ -230,6 +230,7 @@ Steps:
 > - **2FA guessing:** login 2FA codes fall under the login tiers; email codes are single-use, expire, and are capped per code (`src/lib/auth/email-otp.ts`).
 > - **Fail closed:** a failed user lookup denies sign-in; the org/permission claim is dropped on any error (`src/lib/auth/config.ts` jwt callback). The session-revocation check keeps an existing token only while the database is unreachable, and then every org-scoped route denies anyway. Acceptable; noted.
 > - **Sign out everywhere:** password change and reset already revoked all sessions. **Gap fixed:** turning off the authenticator app or email codes didn't, though `src/lib/auth/sessions.ts` said it should. Now both revoke, and the settings screen signs out with a message in all three cases instead of leaving a dead session.
+> - **Found by the compliance review, fixed:** (1) magic-link sign-in skipped the email-code second factor, so for those accounts the inbox alone gave a session that could move money, and it skipped the deleted-account check. Email-code accounts must now sign in with password + code, and deleted accounts are refused. (2) Executing an approved payment and creating a recurring transfer didn't require verified email + 2FA like other money moves; now they do.
 > - **Still open:** separate keys from `AUTH_SECRET` (below), and your session-length decision.
 
 Each item gets evidence (code reference or test) written into `LAUNCH-READINESS-PLAN.md` §4.3.
@@ -238,7 +239,7 @@ Each item gets evidence (code reference or test) written into `LAUNCH-READINESS-
 - [x] **Fail closed.** See findings above.
 - [x] **Every auth endpoint is rate-limited.** Listed above; per-IP login tier added.
 - [x] **Lockout and backoff** on repeated failures. Per-email (two tiers) and per-IP at login; email codes capped per code.
-- [ ] **Separate keys from `AUTH_SECRET`.** Today it also derives the 2FA encryption key and the invite/approval HMACs (found in C5). Add dedicated, versioned keys (e.g. `TOTP_ENCRYPTION_KEYS` with key IDs) so each can rotate without locking users out.
+- [ ] **Separate keys from `AUTH_SECRET`.** Today it also roots the 2FA and phone-number encryption, the backup-code pepper, invite and approval HMACs and device fingerprints (found in C5 and the compliance review). Add dedicated, versioned keys (e.g. `FIELD_ENCRYPTION_KEYS` with key IDs) so each can rotate without locking users out.
 
 **Done when:** every box is ticked with evidence.
 

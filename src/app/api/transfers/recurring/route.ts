@@ -9,6 +9,7 @@ import { logAudit } from "@/lib/audit";
 import { accounts, recurringTransfers } from "@/lib/db/schema";
 import { addPeriod, type Frequency } from "@/lib/transfers";
 import { assertAccountOwnership, ownershipErr } from "@/lib/auth/ownership";
+import { assertEmailVerified, assertMfaEnabled } from "@/lib/auth/verification";
 
 export const GET = apiHandler({
   orgScoped: true,
@@ -61,6 +62,11 @@ export const POST = apiHandler({
   schema: createSchema,
   rateLimit: { limit: 30, window: "1h" },
   handler: async ({ user, body, db }) => {
+    // Same gate as one-off transfers: a schedule moves money on its own later.
+    const unverified = await assertEmailVerified(user.id);
+    if (unverified) return err(unverified.message, unverified.status);
+    const noMfa = await assertMfaEnabled(user.id);
+    if (noMfa) return err(noMfa.message, noMfa.status);
     if (body.fromAccountId === body.toAccountId) {
       return err("Choose two different accounts", 400);
     }

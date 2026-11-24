@@ -61,21 +61,24 @@ been committed (`git log --all -- .env.local` is empty).
 | Upstash (`UPSTASH_REDIS_REST_TOKEN`) | 90 days | New token in Upstash → Vercel | A missing or invalid token makes rate limits fall back and raise an ops alert |
 | `DATABASE_URL` password | 90 days | Rotate in Supabase → Vercel → redeploy | Update `MIGRATION_DATABASE_URL` too once it exists (plan C1) |
 | `DAKOTA_SIGNER_PRIVATE_KEY` | **Only on exposure** | See "Signer key loss" above: add the new signer to every signer group **before** detaching the old one | Detaching a wallet's last signer group bricks the wallet |
-| `AUTH_SECRET` | **Only on exposure, with the steps below** | See below | **Not a plain session key.** It also derives the AES key for stored TOTP secrets (`src/lib/auth/totp.ts`), the HMAC for invite tokens (`src/lib/orgs.ts`) and the approval payload hash (`src/lib/approvals.ts`) |
+| `AUTH_SECRET` | **Only on exposure, with the steps below** | See below | **Not a plain session key.** It also roots: the AES key for stored TOTP secrets (`src/lib/auth/totp.ts`), field encryption for phone numbers (`src/lib/crypto/field.ts`), the backup-code hash pepper (`src/lib/auth/backup-codes.ts`), invite-token HMACs (`src/lib/orgs.ts`), approval payload hashes (`src/lib/approvals.ts`) and device fingerprints (`src/lib/auth/login-devices.ts`) |
 
 ### Rotating `AUTH_SECRET` safely
 
 Swapping it alone would sign everyone out (fine), but also:
-- make every stored 2FA secret undecryptable, locking out every user with 2FA;
-- invalidate every pending team invite;
-- fail the integrity check on every pending approval.
+- make every stored 2FA secret and phone number undecryptable, locking out every user with an authenticator app;
+- make every 2FA backup code stop matching (they're stored as peppered hashes, so they can't be re-keyed);
+- invalidate every pending team invite and fail the integrity check on every pending approval;
+- change every device fingerprint, so every next sign-in sends a "new device" alert.
 
-Until key versioning exists (follow-up in `PRE-DAKOTA-PLAN.md` C3), do this:
+Until separate, versioned keys exist (follow-up in `PRE-DAKOTA-PLAN.md` C3), do this:
 1. Announce a short maintenance window.
-2. Run a one-off script that decrypts each `users.totp_secret` with the old key and re-encrypts it with the new one, in one transaction.
-3. Expire pending invitations (the inviters re-send them) and reject pending approval requests (the requesters re-submit).
-4. Set the new `AUTH_SECRET` in Vercel and redeploy.
-5. Check that a 2FA login works, then record the rotation.
+2. Run a one-off script that, in one transaction, decrypts each `users.totp_secret` and each encrypted phone number with the old key and re-encrypts it with the new one.
+3. Delete all 2FA backup codes and email the affected users to generate new ones in Settings.
+4. Expire pending invitations (the inviters re-send them) and reject pending approval requests (the requesters re-submit).
+5. Pause "new sign-in" alerts for 7 days, or warn users to expect one.
+6. Set the new `AUTH_SECRET` in Vercel and redeploy.
+7. Check that a 2FA login and a phone-number read work, then record the rotation.
 
 ## Recovery objectives
 

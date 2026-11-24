@@ -22,7 +22,7 @@ function MagicConsume() {
   const token = params.get("token");
   const attempted = useRef(false);
 
-  const [status, setStatus] = useState<"working" | "2fa" | "error">("working");
+  const [status, setStatus] = useState<"working" | "2fa" | "password" | "error">("working");
   const [totp, setTotp] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -47,6 +47,8 @@ function MagicConsume() {
     const errCode = (res as { code?: string })?.code;
     if (errCode === "2fa_required" || errCode === "2fa_invalid") {
       setStatus("2fa");
+    } else if (errCode === "password_required") {
+      setStatus("password");
     } else {
       setStatus("error");
     }
@@ -109,6 +111,27 @@ function MagicConsume() {
             {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Verify & sign in
           </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (status === "password") {
+    return (
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl font-bold">
+            <h1>Sign in with your password</h1>
+          </CardTitle>
+          <CardDescription>
+            Your account uses emailed codes for two-step sign-in, so a sign-in link on its own isn&apos;t enough.
+            Sign in with your password and we&apos;ll email you a code.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link href="/login" className="text-sm font-medium text-primary hover:underline">
+            Go to sign in →
+          </Link>
         </CardContent>
       </Card>
     );

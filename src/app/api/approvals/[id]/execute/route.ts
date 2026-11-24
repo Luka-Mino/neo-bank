@@ -12,12 +12,18 @@ import {
   ownershipErr,
 } from "@/lib/auth/ownership";
 import { logAudit } from "@/lib/audit";
+import { assertEmailVerified, assertMfaEnabled } from "@/lib/auth/verification";
 
 export const POST = apiHandler({
   orgScoped: true,
   requireMoveMoney: true,
   handler: async ({ user, params, db }) => {
     const { id } = params as { id: string };
+    // Executing releases money, so it needs the same gate as a direct transfer.
+    const unverified = await assertEmailVerified(user.id);
+    if (unverified) return err(unverified.message, unverified.status);
+    const noMfa = await assertMfaEnabled(user.id);
+    if (noMfa) return err(noMfa.message, noMfa.status);
 
     // Claim the request under a row lock (whole handler is one tx via withOrg).
     const [req] = await db

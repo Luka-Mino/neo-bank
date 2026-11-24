@@ -21,6 +21,12 @@ class TwoFactorRequired extends CredentialsSignin {
 class InvalidTwoFactorCode extends CredentialsSignin {
   code = "2fa_invalid";
 }
+// A sign-in link proves only access to the inbox. For an account whose second
+// factor is an emailed code, that's the same factor twice, so these accounts
+// must sign in with their password (+ code) instead.
+class PasswordRequired extends CredentialsSignin {
+  code = "password_required";
+}
 class TooManyAttempts extends CredentialsSignin {
   code = "rate_limited";
 }
@@ -179,8 +185,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .where(eq(users.id, consumed[0].userId))
           .limit(1);
         if (!row) return null;
+        if (row.deletedAt) return null; // deleted accounts can't sign in
 
-        if (row.totpEnabledAt && row.totpSecret) {
+        const hasTotp = Boolean(row.totpEnabledAt && row.totpSecret);
+        if (!hasTotp && row.emailOtpEnabled) throw new PasswordRequired();
+
+        if (hasTotp && row.totpSecret) {
           const code = (credentials?.totp as string | undefined)?.trim();
           if (!code) throw new TwoFactorRequired();
           const totpOk = verifyTotpCode(decryptSecret(row.totpSecret), code);
