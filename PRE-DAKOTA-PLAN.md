@@ -194,6 +194,8 @@ For the applicant, a control person (a senior officer who signs the attestations
 > 5. Sign in, open accounts and activity, and send a small internal transfer to
 >    confirm normal use still works.
 >
+> **Fixed 2026-11-24:** five routes that aren't orgScoped (they call Dakota mid-way) still queried protected tables through `ctx.db`, which has no org set: customer, rails, recipient, destination and wallet creation. Under RLS they'd have broken onboarding and adding payees. Each DB step now runs in its own `withOrg`; the CI guard also checks this pattern; `src/lib/payees.integration.test.ts` covers it as `moneta_app`.
+>
 > Follow-ups: card lookups (`src/lib/card-issuer.ts`) still use `systemDb`
 > per user until plan 5.3. `dakota_customers.user_id` stays unique until
 > business onboarding (1c.8).

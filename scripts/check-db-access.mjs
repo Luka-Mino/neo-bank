@@ -104,6 +104,25 @@ export function checkSource(path, rawSource) {
       }
     }
   }
+  // 3. Routes that aren't orgScoped get the plain app connection as ctx.db (no
+  //    org set). Under RLS it sees no protected rows, so such handlers must
+  //    use withOrg(orgId, tx => …) for those tables, not ctx.db.
+  if (!isTest && /\/route\.ts$/.test(path)) {
+    for (const m of src.matchAll(/export const (GET|POST|PATCH|PUT|DELETE) = apiHandler(?:<[^>]*>)?\(\{/g)) {
+      const start = m.index + m[0].length;
+      const next = src.indexOf("\nexport const", start);
+      const block = src.slice(start, next === -1 ? src.length : next);
+      if (/orgScoped:\s*true/.test(block)) continue;
+      if (!/handler:\s*async\s*\(\{[^}]*\bdb\b[^}]*\}\)/.test(block)) continue;
+      const used = globalDbQueries(block, "db");
+      if (used.length) {
+        problems.push(
+          `${path} ${m[1]}: not orgScoped, but queries protected table(s) ${used.join(", ")} on ctx.db, ` +
+            `which has no org set. Wrap those queries in withOrg(orgId, tx => …) or make the route orgScoped.`
+        );
+      }
+    }
+  }
   return problems;
 }
 

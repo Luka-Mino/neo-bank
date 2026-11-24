@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { logger } from "@/lib/logger";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { withOrg } from "@/lib/db/with-org";
 import { wallets, dakotaCustomers } from "@/lib/db/schema";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 
@@ -18,15 +19,17 @@ export const GET = apiHandler({
 // Not orgScoped: provisioning makes Dakota HTTP calls. Explicit org predicates.
 export const POST = apiHandler({
   rateLimit: { limit: 5, window: "1h" },
-  handler: async ({ user, db }) => {
+  handler: async ({ user }) => {
     if (!user.orgId) return err("No active organization", 403);
     const orgId = user.orgId;
 
-    const [customer] = await db
-      .select()
-      .from(dakotaCustomers)
-      .where(eq(dakotaCustomers.orgId, orgId))
-      .limit(1);
+    const [customer] = await withOrg(orgId, (tx) =>
+      tx
+        .select()
+        .from(dakotaCustomers)
+        .where(eq(dakotaCustomers.orgId, orgId))
+        .limit(1)
+    );
 
     if (
       !isKycBypassed() &&
@@ -35,11 +38,13 @@ export const POST = apiHandler({
       return err("KYC verification required before creating a wallet", 403);
     }
 
-    const existing = await db
-      .select()
-      .from(wallets)
-      .where(eq(wallets.orgId, orgId))
-      .limit(1);
+    const existing = await withOrg(orgId, (tx) =>
+      tx
+        .select()
+        .from(wallets)
+        .where(eq(wallets.orgId, orgId))
+        .limit(1)
+    );
 
     if (existing.length > 0) {
       return ok({ data: existing[0], message: "Wallet already exists" });
@@ -51,11 +56,13 @@ export const POST = apiHandler({
       const { provisionCustomer } = await import("@/lib/dakota/provisioning");
       await provisionCustomer(user.id);
 
-      const [wallet] = await db
-        .select()
-        .from(wallets)
-        .where(eq(wallets.orgId, orgId))
-        .limit(1);
+      const [wallet] = await withOrg(orgId, (tx) =>
+        tx
+          .select()
+          .from(wallets)
+          .where(eq(wallets.orgId, orgId))
+          .limit(1)
+      );
 
       return ok({ data: wallet }, 201);
     } catch (error) {

@@ -46,3 +46,17 @@ describe("check-db-access", () => {
     expect(check("src/lib/foo.integration.test.ts", src)).toEqual([]);
   });
 });
+
+describe("check-db-access: unscoped routes", () => {
+  it("flags ctx.db on protected tables in a route that isn't orgScoped", () => {
+    const src = `export const POST = apiHandler({\n  handler: async ({ user, db }) => {\n    await db.insert(recipients).values({});\n  },\n});`;
+    expect(check("src/app/api/x/route.ts", src)).toHaveLength(1);
+  });
+
+  it("allows it when the route is orgScoped, or when withOrg is used", () => {
+    const scoped = `export const POST = apiHandler({\n  orgScoped: true,\n  handler: async ({ user, db }) => db.insert(recipients).values({}),\n});`;
+    const wrapped = `export const POST = apiHandler({\n  handler: async ({ user }) => withOrg(orgId, (tx) => tx.insert(recipients).values({})),\n});`;
+    expect(check("src/app/api/a/route.ts", scoped)).toEqual([]);
+    expect(check("src/app/api/b/route.ts", wrapped)).toEqual([]);
+  });
+});

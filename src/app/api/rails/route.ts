@@ -3,6 +3,7 @@
 // for the user-facing concept (checking, savings, etc.).
 import { eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { withOrg } from "@/lib/db/with-org";
 import { dakotaRails, dakotaCustomers } from "@/lib/db/schema";
 import { createAccount as createDakotaAccount } from "@/lib/dakota/accounts";
 import { createRailSchema } from "@/lib/validators/rail";
@@ -27,13 +28,16 @@ export const GET = apiHandler({
 // Not orgScoped: makes a Dakota HTTP call. Explicit org predicates.
 export const POST = apiHandler({
   schema: createRailSchema,
-  handler: async ({ user, body, db }) => {
+  handler: async ({ user, body }) => {
     if (!user.orgId) return err("No active organization", 403);
-    const customer = await db
-      .select()
-      .from(dakotaCustomers)
-      .where(eq(dakotaCustomers.orgId, user.orgId))
-      .limit(1);
+    const orgId = user.orgId;
+    const customer = await withOrg(orgId, (tx) =>
+      tx
+        .select()
+        .from(dakotaCustomers)
+        .where(eq(dakotaCustomers.orgId, orgId))
+        .limit(1)
+    );
 
     if (
       !isKycBypassed() &&
@@ -54,18 +58,20 @@ export const POST = apiHandler({
       capabilities: body.capabilities,
     });
 
-    const [rail] = await db
-      .insert(dakotaRails)
-      .values({
-        orgId: user.orgId,
-        userId: user.id,
-        dakotaAccountId: dakotaAccount.id,
-        accountType: body.accountType,
-        sourceAsset: dakotaAccount.source_asset,
-        destinationAsset: dakotaAccount.destination_asset,
-        bankAccountInfo: dakotaAccount.bank_account,
-      })
-      .returning();
+    const [rail] = await withOrg(orgId, (tx) =>
+      tx
+        .insert(dakotaRails)
+        .values({
+          orgId,
+          userId: user.id,
+          dakotaAccountId: dakotaAccount.id,
+          accountType: body.accountType,
+          sourceAsset: dakotaAccount.source_asset,
+          destinationAsset: dakotaAccount.destination_asset,
+          bankAccountInfo: dakotaAccount.bank_account,
+        })
+        .returning()
+    );
 
     return ok(rail, 201);
   },

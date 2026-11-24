@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { withOrg } from "@/lib/db/with-org";
 import { destinations } from "@/lib/db/schema";
 import {
   createDestination as createDakotaDestination,
@@ -34,13 +35,14 @@ export const GET = apiHandler({
 // Not orgScoped: makes a Dakota HTTP call. Explicit org predicate via the helper.
 export const POST = apiHandler({
   schema: createDestinationSchema,
-  handler: async ({ user, params, body, db }) => {
+  handler: async ({ user, params, body }) => {
     if (!user.orgId) return err("No active organization", 403);
+    const orgId = user.orgId;
     const { id } = params as { id: string };
 
     let recipient;
     try {
-      recipient = await assertRecipientOwnership(db, id, user.orgId);
+      recipient = await withOrg(orgId, (tx) => assertRecipientOwnership(tx, id, orgId));
     } catch (e) {
       const o = ownershipErr(e);
       if (o) return err(o.message, o.status);
@@ -68,20 +70,22 @@ export const POST = apiHandler({
       capabilities: body.capabilities,
     });
 
-    const [destination] = await db
-      .insert(destinations)
-      .values({
-        orgId: user.orgId, // denormalized for RLS; matches the recipient's org
-        recipientId: id,
-        dakotaDestinationId: dakotaDestination.id,
-        destinationType: body.destinationType,
-        label: body.name,
-        details: {
-          ...body,
-          ...(body.destinationType === "crypto" && !body.networkId ? { networkId: defaultNetworkId() } : {}),
-        } as Record<string, unknown>,
-      })
-      .returning();
+    const [destination] = await withOrg(orgId, (tx) =>
+      tx
+        .insert(destinations)
+        .values({
+          orgId, // denormalized for RLS, matching the recipient's org
+          recipientId: id,
+          dakotaDestinationId: dakotaDestination.id,
+          destinationType: body.destinationType,
+          label: body.name,
+          details: {
+            ...body,
+            ...(body.destinationType === "crypto" && !body.networkId ? { networkId: defaultNetworkId() } : {}),
+          } as Record<string, unknown>,
+        })
+        .returning()
+    );
 
     return ok(destination, 201);
   },

@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { withOrg } from "@/lib/db/with-org";
 import { recipients, dakotaCustomers } from "@/lib/db/schema";
 import { createRecipient as createDakotaRecipient } from "@/lib/dakota/recipients";
 import { createRecipientSchema } from "@/lib/validators/recipient";
@@ -18,14 +19,17 @@ export const GET = apiHandler({
 // Not orgScoped: makes a Dakota HTTP call. Explicit org predicates instead.
 export const POST = apiHandler({
   schema: createRecipientSchema,
-  handler: async ({ user, body, db }) => {
+  handler: async ({ user, body }) => {
     if (!user.orgId) return err("No active organization", 403);
+    const orgId = user.orgId;
 
-    const [customer] = await db
-      .select()
-      .from(dakotaCustomers)
-      .where(eq(dakotaCustomers.orgId, user.orgId))
-      .limit(1);
+    const [customer] = await withOrg(orgId, (tx) =>
+      tx
+        .select()
+        .from(dakotaCustomers)
+        .where(eq(dakotaCustomers.orgId, orgId))
+        .limit(1)
+    );
     if (!customer) return err("No customer record", 404);
 
     const dakotaRecipient = await createDakotaRecipient({
@@ -34,15 +38,17 @@ export const POST = apiHandler({
       address: body.address,
     });
 
-    const [recipient] = await db
-      .insert(recipients)
-      .values({
-        orgId: user.orgId,
-        userId: user.id, // creator
-        dakotaRecipientId: dakotaRecipient.id,
-        name: body.name,
-      })
-      .returning();
+    const [recipient] = await withOrg(orgId, (tx) =>
+      tx
+        .insert(recipients)
+        .values({
+          orgId,
+          userId: user.id, // creator
+          dakotaRecipientId: dakotaRecipient.id,
+          name: body.name,
+        })
+        .returning()
+    );
 
     return ok(recipient, 201);
   },

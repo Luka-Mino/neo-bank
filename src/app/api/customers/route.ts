@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { logger } from "@/lib/logger";
 import { apiHandler, ok, err } from "@/lib/api-handler";
+import { withOrg } from "@/lib/db/with-org";
 import { dakotaCustomers } from "@/lib/db/schema";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 
@@ -45,13 +46,16 @@ export const GET = apiHandler({
 // is safely retryable via its deterministic idempotency key).
 export const POST = apiHandler({
   rateLimit: { limit: 5, window: "1h" },
-  handler: async ({ user, db }) => {
+  handler: async ({ user }) => {
     if (!user.orgId) return err("No active organization", 403);
-    const [existing] = await db
-      .select()
-      .from(dakotaCustomers)
-      .where(eq(dakotaCustomers.orgId, user.orgId))
-      .limit(1);
+    const orgId = user.orgId;
+    const [existing] = await withOrg(orgId, (tx) =>
+      tx
+        .select()
+        .from(dakotaCustomers)
+        .where(eq(dakotaCustomers.orgId, orgId))
+        .limit(1)
+    );
 
     if (existing) {
       return ok(existing);
@@ -72,24 +76,26 @@ export const POST = apiHandler({
         { idempotencyKey: provisioningIdempotencyKey(user.id, "customer") }
       );
 
-      const [row] = await db
-        .insert(dakotaCustomers)
-        .values({
-          orgId: user.orgId,
-          userId: user.id,
-          dakotaCustomerId: dakotaCustomer.id,
-          customerType: "individual",
-          kycStatus: dakotaCustomer.kyb_status || "pending",
-          applicationId: dakotaCustomer.application_id,
-          applicationUrl: dakotaCustomer.application_url,
-          // application_expires_at is a Unix timestamp in NANOSECONDS
-          applicationExpiresAt: dakotaCustomer.application_expires_at
-            ? new Date(Number(dakotaCustomer.application_expires_at) / 1e6)
-            : null,
-          externalId: user.id,
-        })
-        .onConflictDoNothing({ target: dakotaCustomers.userId })
-        .returning();
+      const [row] = await withOrg(orgId, (tx) =>
+        tx
+          .insert(dakotaCustomers)
+          .values({
+            orgId,
+            userId: user.id,
+            dakotaCustomerId: dakotaCustomer.id,
+            customerType: "individual",
+            kycStatus: dakotaCustomer.kyb_status || "pending",
+            applicationId: dakotaCustomer.application_id,
+            applicationUrl: dakotaCustomer.application_url,
+            // application_expires_at is a Unix timestamp in NANOSECONDS
+            applicationExpiresAt: dakotaCustomer.application_expires_at
+              ? new Date(Number(dakotaCustomer.application_expires_at) / 1e6)
+              : null,
+            externalId: user.id,
+          })
+          .onConflictDoNothing({ target: dakotaCustomers.userId })
+          .returning()
+      );
 
       return ok(row ?? existing, 201);
     } catch (error) {
