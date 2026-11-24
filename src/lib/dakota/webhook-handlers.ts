@@ -443,7 +443,7 @@ async function onAutoTransaction(object: EventObject) {
         type: "transaction_update",
         title: "Deposit completed",
         body: `$${amount} has been added to your account.`,
-        actionUrl: `/transactions/${row.id}`,
+        actionUrl: `/app/activity/${row.id}`,
       };
     }
 
@@ -471,7 +471,7 @@ async function onAutoTransaction(object: EventObject) {
           body: `A $${amount} deposit was returned by the sending bank (${
             (object.return_code as string) ?? "no code"
           }) and has been removed from your balance.`,
-          actionUrl: `/transactions/${row.id}`,
+          actionUrl: `/app/activity/${row.id}`,
         };
       }
     }
@@ -624,7 +624,7 @@ async function onOneOffTransaction(object: EventObject) {
         : refundedAmount
           ? `Your transfer did not complete — ${refundedAmount} has been returned to your account.`
           : `Your transfer status changed from ${row.status} to ${newStatus}.`,
-    actionUrl: `/transactions/${row.id}`,
+    actionUrl: `/app/activity/${row.id}`,
   });
 }
 

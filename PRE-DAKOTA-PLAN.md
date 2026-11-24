@@ -22,7 +22,7 @@
 |---|---|---|
 | **Today** | A1 send the Dakota message · A3 make the quick decisions | ~~F1 draft the Dakota application text · C5 secrets check~~ ✅ |
 | **This week** | A2 find a lawyer · B1–B3 form the company, EIN, bank account · B5 gather KYB documents | ~~C1 · C2 · C3 · C4~~ ✅ (code; switch-on waits for a hosted backend, see Section 9) |
-| **Next week** | E1 supply the placeholder facts · E3 test on your phone | ~~C6 restore drill · separate keys from `AUTH_SECRET` · D2 Insights~~ ✅ · ~~E2 quality pass~~ ✅ · D1 old-dashboard switch-over (if you say yes) · ~~F2–F9~~ ✅ |
+| **Next week** | E1 supply the placeholder facts · E3 test on your phone | ~~C6 restore drill · separate keys from `AUTH_SECRET` · D2 Insights~~ ✅ · ~~E2 quality pass~~ ✅ · ~~D1 old-dashboard switch-over~~ ✅ · ~~F2–F9~~ ✅ |
 | **When Dakota answers** | Forward the answers | Section 8, starting with the custody redesign |
 
 Nothing here waits on Dakota. If Dakota answers early, Section 8 jumps the queue.
@@ -83,7 +83,7 @@ Send this to your Dakota contact on Telegram. Edit freely. Questions 1–3 decid
 | D9 | First customers | US consumers · US businesses · non-US (which region) | Onboarding (Section 8), Dakota form answers |
 | D10 | Offshore entity? | Not now · later for non-US customers | Company structure (B1) |
 | D12 | Where are you and the team based? | US · Canada · elsewhere | Canada registrations; company structure |
-| D13 | Switch over to the new app and delete the old dashboard? | Yes now · after one more side-by-side look | D1 |
+| D13 | ~~Delete the old dashboard?~~ | ✅ Yes (2026-11-24), done | D1 |
 | D14 | ~~Support inbox address~~ | ⏸ Not until near launch (2026-11-24) | — |
 | D15 | ~~Vercel Pro~~ | ⏸ Not until near launch (2026-11-24) | — |
 
@@ -291,7 +291,10 @@ Walk `DR-RUNBOOK.md` once:
 
 ## 5. Finish the app (🤖 Claude)
 
-### D1 Switch over to the new app (1 day, needs D13 = yes)
+### D1 Switch over to the new app ✅ done 2026-11-24
+
+> You said yes (D13). The classic dashboard (`src/app/(dashboard)`, 17 screens) and 20 components only it used are deleted. Old URLs 308-redirect to their `/app` screens (`src/lib/legacy-routes.ts`, tested; query strings pass through). Repointed: the 404 page, sign-up's next step, notification links (transactions, recurring transfers) and email links. Removed the "Classic dashboard" button and the More → "Desktop dashboard" item. Checked on a production build: redirects, sign-in, and signed-out `/app` → `/login`.
+
 1. Redirect `/dashboard` and each old route to its `/app` page.
 2. Delete `src/app/(dashboard)` and the old sidebar and header components.
 3. Update route protection in `src/proxy.ts`.

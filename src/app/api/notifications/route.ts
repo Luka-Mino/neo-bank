@@ -7,7 +7,7 @@ export const GET = apiHandler({
   handler: async ({ user, request }) => {
     const unreadOnly = request.nextUrl.searchParams.get("unread") === "true";
 
-    let query = db
+    const query = db
       .select()
       .from(notifications)
       .where(

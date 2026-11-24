@@ -201,7 +201,7 @@ export async function sendNotificationEmail(params: {
         ${action}
         <p style="color: #999; font-size: 12px; margin-top: 32px;">
           Moneta is a financial technology company, not a bank. Manage email
-          preferences in <a href="${APP_URL}/settings" style="color: #999;">Settings</a>.
+          preferences in <a href="${APP_URL}/app/more/settings" style="color: #999;">Settings</a>.
         </p>
       </div>
     `,
@@ -221,7 +221,7 @@ export async function sendTransactionAlert(
         <p style="color: #555; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
           Your ${params.type} of ${params.amount} is now <strong>${params.status}</strong>.
         </p>
-        <a href="${APP_URL}/transactions" style="display: inline-block; background: #4ac280; color: #122e2e; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+        <a href="${APP_URL}/app/activity" style="display: inline-block; background: #4ac280; color: #122e2e; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
           View Details
         </a>
       </div>

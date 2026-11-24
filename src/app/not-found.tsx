@@ -10,10 +10,10 @@ export default function NotFound() {
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
         <Link
-          href="/dashboard"
+          href="/app"
           className="mt-6 inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"
         >
-          Go to Dashboard
+          Go to your accounts
         </Link>
       </div>
     </div>

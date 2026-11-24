@@ -133,7 +133,7 @@ async function handle(req: NextRequest) {
         body: insufficient
           ? `Your ${rule.frequency} transfer of $${rule.amount} was skipped — not enough balance in the source account. It will try again next period.`
           : `Your ${rule.frequency} transfer of $${rule.amount} could not be executed this period.`,
-        actionUrl: "/transfer-internal",
+        actionUrl: "/app/move/transfer",
       });
       if (!insufficient) {
         logger.error(`Recurring rule ${rule.id} execution error:`, { detail: e instanceof Error ? e.message : String(e) })

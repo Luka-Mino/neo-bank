@@ -53,7 +53,7 @@ export default function RegisterPage() {
     if (result?.error) {
       router.push("/login");
     } else {
-      router.push("/onboarding");
+      router.push("/app/onboarding");
       router.refresh();
     }
   }

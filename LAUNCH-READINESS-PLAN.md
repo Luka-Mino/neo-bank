@@ -266,7 +266,7 @@ Today's list is an allowlist of *protected* paths, so every new page is public u
 - [ ] **Product decision: how to pay people.** Send pays a recipient's **USDC wallet on Base**, the only payee type the current API supports. To pay someone's *bank account* (third-party ACH/wire), or to make instant Moneta-to-Moneta transfers between users, we need a decision, plus a compliance check on third-party payouts.
 - [ ] Recipients: the API has no delete or edit, so people can't be removed yet. Add `DELETE /api/recipients/[id]`, which also removes the Dakota recipient.
 - [x] 2.9 Insights moved to `/app/insights` (2026-11-24, `PRE-DAKOTA-PLAN.md` D2).
-- [ ] **2.14 Cut-over is ready to decide.** All P0 and P1 screens exist. Doing it removes the old dashboard, and with it the side-by-side comparison. It needs your go-ahead.
+- [x] **2.14 Cut-over done 2026-11-24.** All P0 and P1 screens exist. Doing it removes the old dashboard, and with it the side-by-side comparison. It needs your go-ahead.
 
 ### 2.1–2.13 Screen inventory (old → new)
 
@@ -295,8 +295,8 @@ Per-screen checklist (copy into each PR):
 - [ ] Unit tests for any new logic; screenshot check at both widths
 
 ### 2.14 Cut-over
-- [ ] All P0/P1 screens done → redirect `/dashboard*` and each old route to its `/app` equivalent.
-- [ ] Delete `src/app/(dashboard)` and the old sidebar/header components, then update route protection.
+- [x] All P0/P1 screens done → redirect `/dashboard*` and each old route to its `/app` equivalent (2026-11-24, `src/lib/legacy-routes.ts`).
+- [x] Delete `src/app/(dashboard)` and the old sidebar/header components, then update route protection (2026-11-24; protected-by-default needed no change).
 - [ ] Rename `/app` → keep, or move to `/` for signed-in users. Decide at cut-over.
 
 **Done when:** no user path reaches an old-style screen.

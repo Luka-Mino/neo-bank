@@ -145,12 +145,6 @@ function DesktopNav({ pathname }: { pathname: string }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <Link
-            href="/dashboard"
-            className="mr-2 rounded-full px-3 py-1.5 text-[12px] font-medium text-white/55 ring-1 ring-white/15 transition hover:text-white hover:ring-white/30"
-          >
-            Classic dashboard
-          </Link>
           <NotificationBell />
           <Link
             href="/app/more"
