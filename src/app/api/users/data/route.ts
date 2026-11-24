@@ -4,7 +4,10 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth/config";
-import { db } from "@/lib/db";
+// systemDb: background/system work with no single signed-in org. It bypasses
+// row-level security, so every query here must carry its own org/user filter.
+// Allowlisted in scripts/check-db-access.mjs.
+import { systemDb as db } from "@/lib/db";
 import { tryDecryptField } from "@/lib/crypto/field";
 import {
   users,

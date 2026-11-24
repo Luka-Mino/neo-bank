@@ -6,7 +6,10 @@
 // flight — the user must move funds out first.
 import { and, eq, ne, sql } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
-import { db } from "@/lib/db";
+// systemDb: background/system work with no single signed-in org. It bypasses
+// row-level security, so every query here must carry its own org/user filter.
+// Allowlisted in scripts/check-db-access.mjs.
+import { systemDb as db } from "@/lib/db";
 import { users, accounts, cards, transactions } from "@/lib/db/schema";
 import { logAudit } from "@/lib/audit";
 import { revokeSessions } from "@/lib/auth/sessions";

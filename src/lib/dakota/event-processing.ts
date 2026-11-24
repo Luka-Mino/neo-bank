@@ -1,5 +1,8 @@
 import { eq, sql } from "drizzle-orm";
-import { db } from "@/lib/db";
+// systemDb: background/system work with no single signed-in org. It bypasses
+// row-level security, so every query here must carry its own org/user filter.
+// Allowlisted in scripts/check-db-access.mjs.
+import { systemDb as db } from "@/lib/db";
 import { webhookEvents } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
 import { alertOps } from "@/lib/alerts";

@@ -27,6 +27,9 @@ jobs:
       # Dev-tooling advisories are tracked by Dependabot, not a merge blocker.
       - run: npm audit --omit=dev --audit-level=high
       - run: npx tsc --noEmit
+      # Row-level security guard: systemDb only in allowlisted files, and no
+      # protected-table queries on the global db (PRE-DAKOTA-PLAN C1).
+      - run: node scripts/check-db-access.mjs
       - run: npm test
       - run: npm run build
         env:
@@ -63,5 +66,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Migrations run as the owner (ci, a superuser).
       - run: npx drizzle-kit migrate
-      - run: INTEGRATION=1 npx vitest run src/lib/transfers.integration.test.ts
+      # Create the restricted app role and the RLS-bypassing system role, as
+      # production does (scripts/sql/db-roles.sql), with throwaway passwords.
+      - name: Create database roles
+        run: |
+          sed -e "s/REPLACE_WITH_A_LONG_RANDOM_PASSWORD/ci-app/" \
+              -e "s/REPLACE_WITH_A_DIFFERENT_LONG_RANDOM_PASSWORD/ci-system/" \
+              scripts/sql/db-roles.sql | psql "$DATABASE_URL" -v ON_ERROR_STOP=1
+      # Every integration test runs as moneta_app, so row-level security is
+      # really enforced. RLS_REQUIRED makes the RLS tests fail instead of skip.
+      - name: Integration tests (as moneta_app)
+        run: npx vitest run --dir src --testNamePattern integration
+        env:
+          DATABASE_URL: postgresql://moneta_app:ci-app@localhost:5432/moneta_test
+          SYSTEM_DATABASE_URL: postgresql://moneta_system:ci-system@localhost:5432/moneta_test
+          RLS_REQUIRED: "1"

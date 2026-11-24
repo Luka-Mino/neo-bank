@@ -3,9 +3,24 @@
 // and deploy gates.
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
-import { db } from "@/lib/db";
+import { db, systemDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+
+async function bypasses(conn: typeof db): Promise<boolean> {
+  const [r] = (await conn.execute(
+    sql`select (rolsuper or rolbypassrls) as bypass from pg_roles where rolname = current_user`
+  )) as unknown as { bypass: boolean }[];
+  return r?.bypass === true;
+}
+
+async function databaseRolesOk(): Promise<boolean> {
+  try {
+    return !(await bypasses(db)) && (await bypasses(systemDb));
+  } catch {
+    return false;
+  }
+}
 
 export async function GET() {
   const checks: Record<string, "ok" | "fail"> = {};
@@ -16,6 +31,13 @@ export async function GET() {
   } catch {
     checks.database = "fail";
   }
+
+  // Row-level security posture (migration 0021). The app connection must NOT
+  // bypass RLS, and the system connection (webhooks, crons) MUST, or system
+  // jobs see nothing. Counted toward health in production only: local dev
+  // usually runs as a superuser on purpose.
+  const roles = await databaseRolesOk();
+  if (process.env.NODE_ENV === "production") checks.databaseRoles = roles ? "ok" : "fail";
 
   const healthy = Object.values(checks).every((v) => v === "ok");
   return NextResponse.json(

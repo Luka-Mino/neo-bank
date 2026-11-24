@@ -248,7 +248,9 @@ export class DakotaCardProvider implements IssuerProvider {
 
 const defaultDakotaDeps: DakotaCardDeps = {
   async resolveIds(userId) {
-    const { db } = await import("@/lib/db");
+    // TEMPORARY systemDb: these lookups are per user and predate orgs. Move
+    // them to withOrg(orgId) with the card follow-ups (LAUNCH-READINESS-PLAN 5.3).
+    const { systemDb: db } = await import("@/lib/db");
     const { dakotaCustomers, wallets } = await import("@/lib/db/schema");
     const [customer] = await db
       .select()
@@ -269,7 +271,9 @@ const defaultDakotaDeps: DakotaCardDeps = {
     };
   },
   async saveCardholderId(userId, cardholderId) {
-    const { db } = await import("@/lib/db");
+    // TEMPORARY systemDb: these lookups are per user and predate orgs. Move
+    // them to withOrg(orgId) with the card follow-ups (LAUNCH-READINESS-PLAN 5.3).
+    const { systemDb: db } = await import("@/lib/db");
     const { dakotaCustomers } = await import("@/lib/db/schema");
     await db
       .update(dakotaCustomers)

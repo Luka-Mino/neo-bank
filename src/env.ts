@@ -4,6 +4,8 @@ import { z } from "zod";
 export const env = createEnv({
   server: {
     DATABASE_URL: z.string().url(),
+    // Role with BYPASSRLS for allowlisted system jobs (see src/lib/db/index.ts).
+    SYSTEM_DATABASE_URL: z.string().url().optional(),
     AUTH_SECRET: z.string().min(16),
     DAKOTA_API_KEY: z.string().min(1),
     DAKOTA_ENV: z.enum(["sandbox", "production"]).default("sandbox"),
@@ -18,6 +20,8 @@ export const env = createEnv({
     // Bearer token for the reconcile cron route; mandatory in production.
     CRON_SECRET: z.string().min(16).optional(),
     REDIS_URL: z.string().optional(),
+    UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
     SENTRY_DSN: z.string().url().optional(),
     RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
@@ -30,6 +34,7 @@ export const env = createEnv({
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
+    SYSTEM_DATABASE_URL: process.env.SYSTEM_DATABASE_URL,
     AUTH_SECRET: process.env.AUTH_SECRET,
     DAKOTA_API_KEY: process.env.DAKOTA_API_KEY,
     DAKOTA_ENV: process.env.DAKOTA_ENV,
@@ -40,6 +45,8 @@ export const env = createEnv({
     DAKOTA_NETWORK_ID: process.env.DAKOTA_NETWORK_ID,
     CRON_SECRET: process.env.CRON_SECRET,
     REDIS_URL: process.env.REDIS_URL,
+    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     SENTRY_DSN: process.env.SENTRY_DSN,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_PROVIDER: process.env.EMAIL_PROVIDER,

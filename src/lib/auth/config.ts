@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { withOrg } from "@/lib/db/with-org";
 import { users, dakotaCustomers, magicLinkTokens } from "@/lib/db/schema";
 import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 import { resolveActiveMembership, type Role } from "@/lib/orgs";
@@ -240,11 +241,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.kycStatus = "active";
         } else if (token.orgId) {
           try {
-            const customer = await db
-              .select({ kycStatus: dakotaCustomers.kycStatus })
-              .from(dakotaCustomers)
-              .where(eq(dakotaCustomers.orgId, token.orgId as string))
-              .limit(1);
+            const orgId = token.orgId as string;
+            const customer = await withOrg(orgId, (tx) =>
+              tx
+                .select({ kycStatus: dakotaCustomers.kycStatus })
+                .from(dakotaCustomers)
+                .where(eq(dakotaCustomers.orgId, orgId))
+                .limit(1)
+            );
             token.kycStatus = customer[0]?.kycStatus ?? "none";
           } catch {
             token.kycStatus = token.kycStatus ?? "none";

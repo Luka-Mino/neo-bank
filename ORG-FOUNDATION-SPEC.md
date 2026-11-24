@@ -81,7 +81,7 @@
 - **PR-3** `0017_org_backfill`.
 - **PR-4** flip ownership helpers + ~40 inline `eq(table.userId,…)` predicates → org, per resource; stamp `orgId` on inserts.
 - **PR-5** libraries — provisioning (per-org, single-flighted), transfers (both legs same org+asset), webhook-handlers (per-org resolution, dead-letter on mismatch), audit, notifications, issuing; cron re-verifies org per row + `CRON_SECRET` required non-local.
-- **PR-6** `0018_org_enforce` + RLS + non-owner DB role.
+- **PR-6** `0018_org_enforce` + RLS + non-owner DB role. **Shipped as `0021_org_enforce` (2026-11-24)**, since 0018–0020 were used for other work; see `PRE-DAKOTA-PLAN.md` C1.
 - **PR-7** feature routes: `orgs` (list/create/switch), members (role-lattice, ≥1 owner),
   invitations + accept, approval-policies, approvals + decisions + execute.
 - **Then**: adversarial security review (workflow) against the 17-point checklist below.

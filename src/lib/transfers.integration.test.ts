@@ -3,19 +3,25 @@
 // mocked. Gated on INTEGRATION=1 (with DATABASE_URL pointing at a disposable
 // DB) so the default unit run and credential-free CI stay green; the CI
 // integration job sets both.
+//
+// Fixtures and assertions use systemDb (bypasses row-level security); the
+// money movement itself runs through withOrg on the app connection, as in
+// production. CI runs this as the restricted moneta_app role.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const RUN = process.env.INTEGRATION === "1";
 
 describe.skipIf(!RUN)("performInternalTransfer (integration)", () => {
-  let db: typeof import("@/lib/db").db;
+  let db: typeof import("@/lib/db").systemDb;
+  let withOrg: typeof import("@/lib/db/with-org").withOrg;
   let schema: typeof import("@/lib/db/schema");
   let performInternalTransfer: typeof import("@/lib/transfers").performInternalTransfer;
   let INSUFFICIENT_FUNDS: string;
   const ids: { user?: string; org?: string; a1?: string; a2?: string } = {};
 
   beforeAll(async () => {
-    ({ db } = await import("@/lib/db"));
+    ({ systemDb: db } = await import("@/lib/db"));
+    ({ withOrg } = await import("@/lib/db/with-org"));
     schema = await import("@/lib/db/schema");
     ({ performInternalTransfer, INSUFFICIENT_FUNDS } = await import("@/lib/transfers"));
 
@@ -77,14 +83,19 @@ describe.skipIf(!RUN)("performInternalTransfer (integration)", () => {
 
   it("moves funds and writes a balanced double entry", async () => {
     const { eq, sql } = await import("drizzle-orm");
-    const result = await performInternalTransfer({
-      orgId: ids.org!,
-      userId: ids.user!,
-      fromAccountId: ids.a1!,
-      toAccountId: ids.a2!,
-      amount: "30",
-      currency: "USD",
-    });
+    const result = await withOrg(ids.org!, (tx) =>
+      performInternalTransfer(
+        {
+          orgId: ids.org!,
+          userId: ids.user!,
+          fromAccountId: ids.a1!,
+          toAccountId: ids.a2!,
+          amount: "30",
+          currency: "USD",
+        },
+        tx
+      )
+    );
     expect(result.pairId).toBeTruthy();
 
     const rows = await db
@@ -110,14 +121,19 @@ describe.skipIf(!RUN)("performInternalTransfer (integration)", () => {
 
   it("refuses to overdraw and leaves balances untouched", async () => {
     await expect(
-      performInternalTransfer({
-        orgId: ids.org!,
-        userId: ids.user!,
-        fromAccountId: ids.a1!,
-        toAccountId: ids.a2!,
-        amount: "999999",
-        currency: "USD",
-      })
+      withOrg(ids.org!, (tx) =>
+        performInternalTransfer(
+          {
+            orgId: ids.org!,
+            userId: ids.user!,
+            fromAccountId: ids.a1!,
+            toAccountId: ids.a2!,
+            amount: "999999",
+            currency: "USD",
+          },
+          tx
+        )
+      )
     ).rejects.toThrow(INSUFFICIENT_FUNDS);
 
     const { eq } = await import("drizzle-orm");

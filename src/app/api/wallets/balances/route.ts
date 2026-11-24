@@ -1,18 +1,20 @@
 import { eq } from "drizzle-orm";
 import { logger } from "@/lib/logger";
 import { apiHandler, ok, err } from "@/lib/api-handler";
-import { db } from "@/lib/db";
+import { withOrg } from "@/lib/db/with-org";
 import { wallets, walletBalances } from "@/lib/db/schema";
 import { getWalletBalances as fetchDakotaBalances } from "@/lib/dakota/wallets";
 
+// Not orgScoped: it calls Dakota once per wallet, so each DB step runs in its
+// own short withOrg(orgId, …) transaction instead of one request-long one.
 export const GET = apiHandler({
   handler: async ({ user }) => {
     if (!user.orgId) return err("No active organization", 403);
+    const orgId = user.orgId;
     // Get the org's wallets
-    const userWallets = await db
-      .select()
-      .from(wallets)
-      .where(eq(wallets.orgId, user.orgId));
+    const userWallets = await withOrg(orgId, (tx) =>
+      tx.select().from(wallets).where(eq(wallets.orgId, orgId))
+    );
 
     if (userWallets.length === 0) {
       return ok({ wallets: [], totalUsd: "0" });
@@ -39,25 +41,28 @@ export const GET = apiHandler({
         }));
 
         // Update cache
-        for (const b of balances) {
-          await db
-            .insert(walletBalances)
-            .values({
-              walletId: wallet.id,
-              networkId: b.networkId,
-              asset: b.asset,
-              balance: b.balance,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                walletBalances.walletId,
-                walletBalances.networkId,
-                walletBalances.asset,
-              ],
-              set: { balance: b.balance, updatedAt: new Date() },
-            });
-        }
+        await withOrg(orgId, async (tx) => {
+          for (const b of balances) {
+            await tx
+              .insert(walletBalances)
+              .values({
+                orgId,
+                walletId: wallet.id,
+                networkId: b.networkId,
+                asset: b.asset,
+                balance: b.balance,
+                updatedAt: new Date(),
+              })
+              .onConflictDoUpdate({
+                target: [
+                  walletBalances.walletId,
+                  walletBalances.networkId,
+                  walletBalances.asset,
+                ],
+                set: { balance: b.balance, updatedAt: new Date() },
+              });
+          }
+        });
 
         allBalances.push({
           walletId: wallet.id,
@@ -72,10 +77,9 @@ export const GET = apiHandler({
           `Failed to fetch balances for wallet ${wallet.dakotaWalletId}:`, { detail: error instanceof Error ? error.message : String(error) })
 
         // Fall back to cached balances
-        const cached = await db
-          .select()
-          .from(walletBalances)
-          .where(eq(walletBalances.walletId, wallet.id));
+        const cached = await withOrg(orgId, (tx) =>
+          tx.select().from(walletBalances).where(eq(walletBalances.walletId, wallet.id))
+        );
 
         allBalances.push({
           walletId: wallet.id,

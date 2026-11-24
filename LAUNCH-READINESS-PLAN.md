@@ -389,14 +389,15 @@ Per-screen checklist (copy into each PR):
 ## Phase 4 — Security hardening (parallel; all before real users) 🟥
 
 ### 4.1 Org isolation: finish the RLS enforce step (`ORG-FOUNDATION-SPEC.md`)
-- [ ] Route every org-scoped query through `withOrg(orgId, fn)` (sets `app.current_org_id` in a transaction). **Status 2026-11-24:** `apiHandler` runs `orgScoped` routes inside `withOrg`, and 27 of the 28 use `ctx.db`. But the database has **no RLS policies yet**, so the GUC isn't enforced and a missed `org_id` filter would still leak. Remaining: the one org-scoped route on the global `db`, plus the 31 non-scoped routes that touch class-A tables.
-- [ ] Add a CI check that fails on raw `db.select/insert/update/delete` against class-A tables outside `withOrg`.
-- [ ] Migration `0021_org_enforce` (0020 is taken by legal acceptance and support):
+> **Code done 2026-11-24** (`PRE-DAKOTA-PLAN.md` C1): migration 0021, `withOrg` everywhere, `systemDb` allowlist, CI guard (`scripts/check-db-access.mjs`) and RLS integration tests run as `moneta_app`. Remaining: the deploy steps.
+- [x] Route every org-scoped query through `withOrg(orgId, fn)` (sets `app.current_org_id` in a transaction). **Status 2026-11-24:** `apiHandler` runs `orgScoped` routes inside `withOrg`, and 27 of the 28 use `ctx.db`. But the database has **no RLS policies yet**, so the GUC isn't enforced and a missed `org_id` filter would still leak. Remaining: the one org-scoped route on the global `db`, plus the 31 non-scoped routes that touch class-A tables.
+- [x] Add a CI check that fails on raw `db.select/insert/update/delete` against class-A tables outside `withOrg`.
+- [x] Migration `0021_org_enforce` (0020 is taken by legal acceptance and support):
   - `NOT NULL org_id`
   - composite FKs (`UNIQUE(org_id,id)`)
   - `ENABLE` + `FORCE ROW LEVEL SECURITY`, with policies on the 11 class-A tables
-- [ ] Connect the app as a **non-owner, non-BYPASSRLS** database role.
-- [ ] Tests: cross-org read and write attempts return nothing or fail. Run the spec's invariants.
+- [ ] Connect the app as a **non-owner, non-BYPASSRLS** database role. Code and `scripts/sql/db-roles.sql` are ready; the deploy steps are in `PRE-DAKOTA-PLAN.md` C1.
+- [x] Tests: cross-org read and write attempts return nothing or fail. Run the spec's invariants.
 
 ### 4.2 Secrets and keys
 - [ ] Move `DAKOTA_SIGNER_PRIVATE_KEY` (authorizes wallet sends) from env into a secrets manager / KMS. The `SecretsProvider` pattern already exists.

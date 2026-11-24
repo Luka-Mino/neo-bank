@@ -298,9 +298,9 @@ export const dakotaCustomers = pgTable(
       .notNull()
       .unique()
       .references(() => users.id, { onDelete: "cascade" }),
-    // Nullable during the expand→backfill→enforce migration (0016→0018); set
-    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
-    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
+    // NOT NULL + row-level security since migration 0021 (ORG-FOUNDATION-SPEC.md):
+    // only visible inside withOrg(orgId, …) or through systemDb.
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
     dakotaCustomerId: text("dakota_customer_id").notNull().unique(),
     customerType: text("customer_type").notNull().default("individual"),
     kycStatus: text("kyc_status").notNull().default("pending"),
@@ -325,6 +325,9 @@ export const dakotaCustomers = pgTable(
   (table) => [
     index("idx_dakota_customers_user").on(table.userId),
     index("idx_dakota_customers_org").on(table.orgId),
+    // One Dakota customer per org (0021). user_id stays unique too until
+    // business onboarding gives an org its own customer (plan 1c.8).
+    uniqueIndex("dakota_customers_org_id_unique").on(table.orgId),
     index("idx_dakota_customers_dak_id").on(table.dakotaCustomerId),
   ]
 );
@@ -336,9 +339,9 @@ export const wallets = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    // Nullable during the expand→backfill→enforce migration (0016→0018); set
-    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
-    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
+    // NOT NULL + row-level security since migration 0021 (ORG-FOUNDATION-SPEC.md):
+    // only visible inside withOrg(orgId, …) or through systemDb.
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
     dakotaWalletId: text("dakota_wallet_id").notNull().unique(),
     family: text("family").notNull(),
     address: text("address").notNull(),
@@ -358,8 +361,8 @@ export const walletBalances = pgTable(
     walletId: uuid("wallet_id")
       .notNull()
       .references(() => wallets.id, { onDelete: "cascade" }),
-    // Denormalized org for RLS; composite FK (org_id,wallet_id)→wallets(org_id,id) in 0018.
-    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
+    // Denormalized org for RLS; composite FK (org_id,wallet_id)→wallets(org_id,id) in 0021.
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
     networkId: text("network_id").notNull(),
     asset: text("asset").notNull(),
     balance: numeric("balance", { precision: 30, scale: 18 }).notNull().default("0"),
@@ -384,9 +387,9 @@ export const dakotaRails = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    // Nullable during the expand→backfill→enforce migration (0016→0018); set
-    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
-    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
+    // NOT NULL + row-level security since migration 0021 (ORG-FOUNDATION-SPEC.md):
+    // only visible inside withOrg(orgId, …) or through systemDb.
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
     dakotaAccountId: text("dakota_account_id").notNull().unique(),
     accountType: text("account_type").notNull(),
     sourceAsset: text("source_asset"),
@@ -408,15 +411,15 @@ export const accounts = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    // Nullable during the expand→backfill→enforce migration (0016→0018); set
-    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
-    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
+    // NOT NULL + row-level security since migration 0021 (ORG-FOUNDATION-SPEC.md):
+    // only visible inside withOrg(orgId, …) or through systemDb.
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
     accountType: text("account_type").notNull(), // 'checking' | 'savings' | future
     nickname: text("nickname"),
     accountNumber: text("account_number").notNull().unique(),
     currency: text("currency").notNull().default("USD"),
     // The asset this account holds (multi-currency). References the assets
-    // registry (FK added in 0018). Deposits must credit a matching-asset account.
+    // registry (FK added in 0021). Deposits must credit a matching-asset account.
     asset: text("asset").notNull().default("USDC").references(() => assets.code),
     balance: numeric("balance", { precision: 30, scale: 18 }).notNull().default("0"),
     status: text("status").notNull().default("active"), // 'active' | 'frozen' | 'closed'
@@ -428,10 +431,10 @@ export const accounts = pgTable(
   },
   (table) => [
     index("idx_accounts_user").on(table.userId),
-    // Exactly one primary account per user (open accounts only). Allows a
-    // closed account to retain is_primary=false without conflict.
-    uniqueIndex("idx_accounts_one_primary_per_user")
-      .on(table.userId)
+    // Exactly one primary account per org (open accounts only), since 0021.
+    // Allows a closed account to retain is_primary=false without conflict.
+    uniqueIndex("idx_accounts_one_primary_per_org")
+      .on(table.orgId)
       .where(sql`${table.isPrimary} = true AND ${table.status} <> 'closed'`),
   ]
 );
@@ -445,9 +448,9 @@ export const cards = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    // Nullable during the expand→backfill→enforce migration (0016→0018); set
-    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
-    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
+    // NOT NULL + row-level security since migration 0021 (ORG-FOUNDATION-SPEC.md):
+    // only visible inside withOrg(orgId, …) or through systemDb.
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
     accountId: uuid("account_id")
       .notNull()
       .references(() => accounts.id, { onDelete: "restrict" }),
@@ -483,9 +486,9 @@ export const transactions = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    // Nullable during the expand→backfill→enforce migration (0016→0018); set
-    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
-    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
+    // NOT NULL + row-level security since migration 0021 (ORG-FOUNDATION-SPEC.md):
+    // only visible inside withOrg(orgId, …) or through systemDb.
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
     // Which of the user's accounts this transaction debited/credited.
     // Nullable during the backfill window; application requires it for new rows.
     accountId: uuid("account_id").references(() => accounts.id, {
@@ -526,9 +529,9 @@ export const recipients = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    // Nullable during the expand→backfill→enforce migration (0016→0018); set
-    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
-    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
+    // NOT NULL + row-level security since migration 0021 (ORG-FOUNDATION-SPEC.md):
+    // only visible inside withOrg(orgId, …) or through systemDb.
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
     dakotaRecipientId: text("dakota_recipient_id").notNull().unique(),
     name: text("name").notNull(),
     status: text("status").notNull().default("active"),
@@ -546,8 +549,8 @@ export const destinations = pgTable(
       .notNull()
       .references(() => recipients.id, { onDelete: "cascade" }),
     // Denormalized org for RLS (per-row). A composite FK (org_id,recipient_id)→
-    // recipients(org_id,id) added in 0018 makes it impossible to diverge from the parent.
-    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
+    // recipients(org_id,id) added in 0021 makes it impossible to diverge from the parent.
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
     dakotaDestinationId: text("dakota_destination_id").notNull().unique(),
     destinationType: text("destination_type").notNull(),
     label: text("label"),
@@ -589,9 +592,9 @@ export const recurringTransfers = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    // Nullable during the expand→backfill→enforce migration (0016→0018); set
-    // NOT NULL in 0018 once every query sets the RLS GUC. See ORG-FOUNDATION-SPEC.md.
-    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
+    // NOT NULL + row-level security since migration 0021 (ORG-FOUNDATION-SPEC.md):
+    // only visible inside withOrg(orgId, …) or through systemDb.
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
     fromAccountId: uuid("from_account_id")
       .notNull()
       .references(() => accounts.id, { onDelete: "cascade" }),
@@ -711,8 +714,8 @@ export const transactionStatusHistory = pgTable(
     transactionId: uuid("transaction_id")
       .notNull()
       .references(() => transactions.id, { onDelete: "cascade" }),
-    // Denormalized org for RLS; composite FK (org_id,transaction_id)→transactions(org_id,id) in 0018.
-    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "restrict" }),
+    // Denormalized org for RLS; composite FK (org_id,transaction_id)→transactions(org_id,id) in 0021.
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
     oldStatus: text("old_status"),
     newStatus: text("new_status").notNull(),
     reason: text("reason"),

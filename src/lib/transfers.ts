@@ -4,7 +4,6 @@
 // rows in one DB transaction.
 import { randomUUID } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
-import { db } from "@/lib/db";
 import type { DbTx } from "@/lib/db/with-org";
 import { accounts, transactions } from "@/lib/db/schema";
 import { categorizeTransaction } from "@/lib/categorize";
@@ -21,11 +20,11 @@ export async function performInternalTransfer(
     note?: string | null;
     currency: string;
   },
-  // Runs on the caller's executor so it shares the request's org-scoped
-  // transaction (RLS GUC) when one is provided; defaults to the global db
-  // (used by the cron executor). `.transaction` nests as a savepoint when
-  // the executor is already a transaction.
-  executor: typeof db | DbTx = db
+  // Runs on the caller's org-scoped executor (ctx.db, or a withOrg tx in the
+  // cron) so row-level security sees the request's org. `.transaction` nests
+  // as a savepoint when the executor is already a transaction. Required: a
+  // bare global db would see no rows once RLS is enforced (migration 0021).
+  executor: DbTx
 ) {
   const pairId = randomUUID();
   const category = categorizeTransaction({
@@ -136,7 +135,9 @@ export function addPeriod(from: Date, frequency: Frequency): Date {
 export async function findInternalLedgerDrift(): Promise<
   Array<{ accountId: string; internalNet: string; ledgerNet: string }>
 > {
-  const { db } = await import("@/lib/db");
+  // System-wide check across every org, so it needs the RLS-bypassing
+  // connection. Under the app role it would see zero rows and report "clean".
+  const { systemDb: db } = await import("@/lib/db");
   const { sql } = await import("drizzle-orm");
   // Sum internal_in as +, internal_out as - per account from the ledger, and
   // compare to the sum of completed internal movements. Any account where the

@@ -9,6 +9,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";
+import { withOrg } from "@/lib/db/with-org";
 import { supportRequests, transactions } from "@/lib/db/schema";
 import { logAudit } from "@/lib/audit";
 import { createNotification } from "@/lib/notifications";
@@ -60,12 +61,16 @@ export const POST = apiHandler({
   handler: async ({ user, body }) => {
     if (body.transactionId) {
       if (!user.orgId) return err("That payment wasn't found", 404);
-      const [tx] = await db
-        .select({ id: transactions.id })
-        .from(transactions)
-        .where(and(eq(transactions.id, body.transactionId), eq(transactions.orgId, user.orgId)))
-        .limit(1);
-      if (!tx) return err("That payment wasn't found", 404);
+      const orgId = user.orgId;
+      const txId = body.transactionId;
+      const [found] = await withOrg(orgId, (tx) =>
+        tx
+          .select({ id: transactions.id })
+          .from(transactions)
+          .where(and(eq(transactions.id, txId), eq(transactions.orgId, orgId)))
+          .limit(1)
+      );
+      if (!found) return err("That payment wasn't found", 404);
     }
 
     // A reference clash is about one in 900 million; retry rather than fail.

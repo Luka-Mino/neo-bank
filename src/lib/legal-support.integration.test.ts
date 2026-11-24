@@ -31,7 +31,9 @@ function req(url: string, method: string, body?: unknown) {
 }
 
 describe.skipIf(!RUN)("sign-up terms acceptance and support requests (integration)", () => {
-  let db: typeof import("@/lib/db").db;
+  // Fixtures and checks use systemDb (bypasses row-level security); the routes
+  // under test use their own connections, as in production.
+  let db: typeof import("@/lib/db").systemDb;
   let schema: typeof import("@/lib/db/schema");
   let LEGAL_DOCS: typeof import("@/lib/legal").LEGAL_DOCS;
   let register: typeof import("@/app/api/register/route").POST;
@@ -47,7 +49,7 @@ describe.skipIf(!RUN)("sign-up terms acceptance and support requests (integratio
   };
 
   beforeAll(async () => {
-    ({ db } = await import("@/lib/db"));
+    ({ systemDb: db } = await import("@/lib/db"));
     schema = await import("@/lib/db/schema");
     ({ LEGAL_DOCS } = await import("@/lib/legal"));
     ({ POST: register } = await import("@/app/api/register/route"));

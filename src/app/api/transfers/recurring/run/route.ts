@@ -10,7 +10,11 @@ import { timingSafeEqual } from "node:crypto";
 import { logger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq, lte } from "drizzle-orm";
-import { db } from "@/lib/db";
+// systemDb only for the cross-org scan of due rules; each rule then runs in
+// its own withOrg(rule.orgId, …) so row-level security applies to the money
+// movement. Allowlisted in scripts/check-db-access.mjs.
+import { systemDb } from "@/lib/db";
+import { withOrg } from "@/lib/db/with-org";
 import { accounts, recurringTransfers } from "@/lib/db/schema";
 import {
   addPeriod,
@@ -36,7 +40,7 @@ async function handle(req: NextRequest) {
   }
 
   const now = new Date();
-  const due = await db
+  const due = await systemDb
     .select()
     .from(recurringTransfers)
     .where(
@@ -51,56 +55,71 @@ async function handle(req: NextRequest) {
   let skipped = 0;
 
   for (const rule of due) {
-    // Claim: advance the schedule only if still due — the atomic gate.
+    // org_id is NOT NULL after migration 0021; a rule without one can't run.
+    if (!rule.orgId) {
+      skipped++;
+      logger.error(`Recurring rule ${rule.id} has no org; skipped`);
+      continue;
+    }
+    const orgId = rule.orgId;
+    // Claim: advance the schedule only if still due — the atomic gate. Its own
+    // committed transaction, so a crash after this skips a period rather
+    // than ever double-moving money.
     const nextRunAt = addPeriod(rule.nextRunAt, rule.frequency as Frequency);
-    const claimed = await db
-      .update(recurringTransfers)
-      .set({ nextRunAt, lastRunAt: now, updatedAt: now })
-      .where(
-        and(
-          eq(recurringTransfers.id, rule.id),
-          eq(recurringTransfers.status, "active"),
-          lte(recurringTransfers.nextRunAt, now),
-          // guard against a racing sweep having already advanced it
-          eq(recurringTransfers.nextRunAt, rule.nextRunAt)
+    const claimed = await withOrg(orgId, (tx) =>
+      tx
+        .update(recurringTransfers)
+        .set({ nextRunAt, lastRunAt: now, updatedAt: now })
+        .where(
+          and(
+            eq(recurringTransfers.id, rule.id),
+            eq(recurringTransfers.status, "active"),
+            lte(recurringTransfers.nextRunAt, now),
+            // guard against a racing sweep having already advanced it
+            eq(recurringTransfers.nextRunAt, rule.nextRunAt)
+          )
         )
-      )
-      .returning({ id: recurringTransfers.id });
+        .returning({ id: recurringTransfers.id })
+    );
     if (claimed.length === 0) continue; // another sweep won
 
     try {
-      // Re-verify BOTH legs still belong to the rule's org and are active
-      // before moving money (a member/account could have changed since setup).
-      const [from] = await db
-        .select({ orgId: accounts.orgId, currency: accounts.currency, status: accounts.status })
-        .from(accounts)
-        .where(eq(accounts.id, rule.fromAccountId))
-        .limit(1);
-      const [to] = await db
-        .select({ orgId: accounts.orgId, status: accounts.status })
-        .from(accounts)
-        .where(eq(accounts.id, rule.toAccountId))
-        .limit(1);
-      if (
-        !rule.orgId ||
-        !from ||
-        !to ||
-        from.orgId !== rule.orgId ||
-        to.orgId !== rule.orgId ||
-        from.status !== "active" ||
-        to.status !== "active"
-      ) {
-        throw new Error(INSUFFICIENT_FUNDS);
-      }
+      await withOrg(orgId, async (tx) => {
+        // Re-verify BOTH legs still belong to the rule's org and are active
+        // before moving money (a member/account could have changed since setup).
+        const [from] = await tx
+          .select({ orgId: accounts.orgId, currency: accounts.currency, status: accounts.status })
+          .from(accounts)
+          .where(eq(accounts.id, rule.fromAccountId))
+          .limit(1);
+        const [to] = await tx
+          .select({ orgId: accounts.orgId, status: accounts.status })
+          .from(accounts)
+          .where(eq(accounts.id, rule.toAccountId))
+          .limit(1);
+        if (
+          !from ||
+          !to ||
+          from.orgId !== orgId ||
+          to.orgId !== orgId ||
+          from.status !== "active" ||
+          to.status !== "active"
+        ) {
+          throw new Error(INSUFFICIENT_FUNDS);
+        }
 
-      await performInternalTransfer({
-        orgId: rule.orgId,
-        userId: rule.userId,
-        fromAccountId: rule.fromAccountId,
-        toAccountId: rule.toAccountId,
-        amount: rule.amount,
-        note: rule.note ?? `Recurring ${rule.frequency} transfer`,
-        currency: from.currency,
+        await performInternalTransfer(
+          {
+            orgId,
+            userId: rule.userId,
+            fromAccountId: rule.fromAccountId,
+            toAccountId: rule.toAccountId,
+            amount: rule.amount,
+            note: rule.note ?? `Recurring ${rule.frequency} transfer`,
+            currency: from.currency,
+          },
+          tx
+        );
       });
       executed++;
     } catch (e) {

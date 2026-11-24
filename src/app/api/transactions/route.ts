@@ -12,13 +12,13 @@
 //
 // NOTE: POST is intentionally NOT orgScoped (it interleaves Dakota HTTP calls
 // with short DB transactions — a single request-long tx would hold a connection
-// across external I/O). Isolation is enforced by explicit org predicates + the
-// ownership helpers below. Its RLS-GUC integration is handled in PR-6.
+// across external I/O). Each DB step runs in its own short withOrg(orgId, …)
+// transaction, so row-level security (migration 0021) sees the caller's org,
+// on top of the explicit org predicates and ownership helpers below.
 
 import { and, desc, eq, sql } from "drizzle-orm";
 import { logger } from "@/lib/logger";
 import { apiHandler, ok, err } from "@/lib/api-handler";
-import { db } from "@/lib/db";
 import {
   accounts,
   transactions,
@@ -44,7 +44,7 @@ import {
   assertDestinationOwnership,
   ownershipErr,
 } from "@/lib/auth/ownership";
-import type { DbTx } from "@/lib/db/with-org";
+import { withOrg } from "@/lib/db/with-org";
 
 export const GET = apiHandler({
   orgScoped: true,
@@ -92,13 +92,10 @@ export const POST = apiHandler({
       return err("You don't have permission to move money", 403);
     }
     const orgId = user.orgId;
-    const gdb = db as unknown as DbTx; // for ownership helpers (explicit org filter)
 
-    const [customer] = await db
-      .select()
-      .from(dakotaCustomers)
-      .where(eq(dakotaCustomers.orgId, orgId))
-      .limit(1);
+    const [customer] = await withOrg(orgId, (tx) =>
+      tx.select().from(dakotaCustomers).where(eq(dakotaCustomers.orgId, orgId)).limit(1)
+    );
 
     if (
       !isKycBypassed() &&
@@ -115,7 +112,7 @@ export const POST = apiHandler({
     // The org must own the account this tx will debit.
     let account;
     try {
-      account = await assertAccountOwnership(gdb, body.accountId, orgId);
+      account = await withOrg(orgId, (tx) => assertAccountOwnership(tx, body.accountId, orgId));
     } catch (e) {
       const o = ownershipErr(e);
       if (o) return err(o.message, o.status);
@@ -134,7 +131,7 @@ export const POST = apiHandler({
     // destination under our client key, so ownership is enforced here. This is
     // the check that stops a send to another tenant's payout endpoint.
     try {
-      await assertDestinationOwnership(gdb, body.destinationId, orgId);
+      await withOrg(orgId, (tx) => assertDestinationOwnership(tx, body.destinationId, orgId));
     } catch (e) {
       const o = ownershipErr(e);
       if (o) return err(o.message, o.status);
@@ -146,11 +143,9 @@ export const POST = apiHandler({
       body.paymentReference ??
       `MNTA ${randomBytes(4).readUIntBE(0, 4).toString(36).toUpperCase().padStart(5, "0").slice(-5)}`;
 
-    const [wallet] = await db
-      .select()
-      .from(wallets)
-      .where(eq(wallets.orgId, orgId))
-      .limit(1);
+    const [wallet] = await withOrg(orgId, (tx) =>
+      tx.select().from(wallets).where(eq(wallets.orgId, orgId)).limit(1)
+    );
     if (!wallet) {
       return err(
         "Account setup incomplete — no wallet found. Retry setup from the onboarding page.",
@@ -177,7 +172,7 @@ export const POST = apiHandler({
     // Hold: debit the source account and write the ledger row atomically.
     let ledger;
     try {
-      ledger = await db.transaction(async (tx) => {
+      ledger = await withOrg(orgId, async (tx) => {
         const debit = await tx
           .update(accounts)
           .set({
@@ -247,39 +242,41 @@ export const POST = apiHandler({
         idempotencyKey: deterministicIdempotencyKey(`wallet-send:${dakotaTx.id}`),
       });
 
-      await db
-        .insert(transactions)
-        .values({
-          orgId,
-          userId: user.id,
-          accountId: account.id,
-          dakotaTxId: walletTx.id,
-          txType: "wallet_send",
-          status: walletTx.status,
-          sourceAsset: body.sourceAsset,
-          sourceAmount: sendAmount,
-          sourceNetwork: sourceNetworkId,
-          transactionHash: walletTx.transaction_hash,
-          metadata: { one_off_id: dakotaTx.id, purpose: "withdrawal_funding" },
-        })
-        .onConflictDoNothing({ target: transactions.dakotaTxId });
+      await withOrg(orgId, async (tx) => {
+        await tx
+          .insert(transactions)
+          .values({
+            orgId,
+            userId: user.id,
+            accountId: account.id,
+            dakotaTxId: walletTx.id,
+            txType: "wallet_send",
+            status: walletTx.status,
+            sourceAsset: body.sourceAsset,
+            sourceAmount: sendAmount,
+            sourceNetwork: sourceNetworkId,
+            transactionHash: walletTx.transaction_hash,
+            metadata: { one_off_id: dakotaTx.id, purpose: "withdrawal_funding" },
+          })
+          .onConflictDoNothing({ target: transactions.dakotaTxId });
 
-      await db
-        .update(transactions)
-        .set({
-          metadata: {
-            ...(ledger.metadata as Record<string, unknown>),
-            wallet_tx_id: walletTx.id,
-          },
-        })
-        .where(eq(transactions.id, ledger.id));
+        await tx
+          .update(transactions)
+          .set({
+            metadata: {
+              ...(ledger.metadata as Record<string, unknown>),
+              wallet_tx_id: walletTx.id,
+            },
+          })
+          .where(eq(transactions.id, ledger.id));
+      });
 
       return ok({ transaction: ledger, sendAmount, walletTransaction: walletTx }, 201);
     } catch (e) {
       // Only refund when we KNOW the send was rejected (4xx). On 5xx/network
       // errors the send may have gone through — keep the hold, let webhooks settle.
       if (e instanceof DakotaApiError && e.status < 500) {
-        await db.transaction(async (tx) => {
+        await withOrg(orgId, async (tx) => {
           const [row] = await tx
             .select({ id: transactions.id, metadata: transactions.metadata })
             .from(transactions)
@@ -325,15 +322,17 @@ export const POST = apiHandler({
       logger.error("withdrawal.wallet_leg_uncertain", {
         detail: e instanceof Error ? e.message : String(e),
       });
-      await db
-        .update(transactions)
-        .set({
-          metadata: {
-            ...(ledger.metadata as Record<string, unknown>),
-            wallet_leg_pending_retry: true,
-          },
-        })
-        .where(eq(transactions.id, ledger.id));
+      await withOrg(orgId, (tx) =>
+        tx
+          .update(transactions)
+          .set({
+            metadata: {
+              ...(ledger.metadata as Record<string, unknown>),
+              wallet_leg_pending_retry: true,
+            },
+          })
+          .where(eq(transactions.id, ledger.id))
+      );
       return ok(
         {
           transaction: ledger,

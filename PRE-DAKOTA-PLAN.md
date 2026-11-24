@@ -152,7 +152,40 @@ For the applicant, a control person (a senior officer who signs the attestations
 
 ## 4. Security build (🤖 Claude): must be done before real users
 
-### C1 Keep each customer's data apart in the database (2–3 days)
+### C1 Keep each customer's data apart in the database (2–3 days) ✅ code done 2026-11-24
+
+> **Done:** migration `0021_org_enforce` adds row-level security on the 11
+> tables, `org_id NOT NULL`, the missing FKs to `organizations`, composite FKs
+> (a child must be in its parent's org) and per-org uniqueness. Two connections:
+> `db` (restricted `moneta_app`, used inside `withOrg`) and `systemDb` (bypass
+> role, only for the files allowlisted in `scripts/check-db-access.mjs`).
+> Request paths that queried without an org (send/withdraw, wallet balances,
+> the session KYC lookup, support, status history, the recurring cron) now run
+> inside `withOrg`. Bugs found on the way: the wallet-balance cache never set
+> `org_id`, and the ledger-drift check would have reported "clean" under RLS.
+> Tests: 7 new RLS integration tests, all integration tests run as `moneta_app`
+> in CI, and a unit-tested CI guard. `/api/health` reports `databaseRoles`.
+>
+> **👤 Deploy steps (staging, then production), in this order:**
+> 1. In Supabase's SQL editor, run `scripts/sql/db-roles.sql` once, after
+>    replacing both passwords with long random values from a password manager.
+>    The last query should show `moneta_app f f` and `moneta_system f t`. If
+>    creating the BYPASSRLS role is refused, see the note at the top of the file.
+> 2. In Vercel (Production and Preview), set `DATABASE_URL` to the
+>    `moneta_app` pooler URL (user `moneta_app.<project-ref>`) and add
+>    `SYSTEM_DATABASE_URL` with the `moneta_system` URL. Keep the owner URL in
+>    the password manager for migrations only. Redeploy.
+> 3. Apply migrations through 0021 with the **owner** URL:
+>    `DATABASE_URL=<owner url> npx drizzle-kit migrate`. 0021 stops with a clear
+>    message if any data breaks the new rules.
+> 4. Open `/api/health`. Production should show `"databaseRoles": "ok"`.
+> 5. Sign in, open accounts and activity, and send a small internal transfer to
+>    confirm normal use still works.
+>
+> Follow-ups: card lookups (`src/lib/card-issuer.ts`) still use `systemDb`
+> per user until plan 5.3. `dakota_customers.user_id` stays unique until
+> business onboarding (1c.8).
+
 **Why:** the app already passes the right customer (org) context, but the database doesn't enforce it. One missed filter would show one customer's data to another. Row-level security makes the database return nothing unless the request belongs to that customer. Spec: `ORG-FOUNDATION-SPEC.md`.
 
 Steps:
@@ -194,6 +227,7 @@ Each item gets evidence (code reference or test) written into `LAUNCH-READINESS-
 - [ ] **Fail closed.** Auth errors deny access and never let a request through (the next-auth advisory in §4.3).
 - [ ] **Every auth endpoint is rate-limited:** register, login, magic link, forgot/reset password, 2FA verify, email code. Make a list and fill any gaps.
 - [ ] **Lockout and backoff** on repeated failures. Login already has per-email limits; check 2FA and email codes too.
+- [ ] **Separate keys from `AUTH_SECRET`.** Today it also derives the 2FA encryption key and the invite/approval HMACs (found in C5). Add dedicated, versioned keys (e.g. `TOTP_ENCRYPTION_KEYS` with key IDs) so each can rotate without locking users out.
 
 **Done when:** every box is ticked with evidence.
 
@@ -212,7 +246,10 @@ Sentry is installed (`src/instrumentation*.ts`) with `sendDefaultPii: false`, bu
 
 **Done when:** tests pass, and on staging a test error appears in Sentry with no token or email in it.
 
-### C5 Secrets check (1 hour)
+### C5 Secrets check (1 hour) ✅ done 2026-11-24
+
+> No `.env*` file was ever committed. The 90-day rotation table is in `DR-RUNBOOK.md` → "Secret rotation". It found that `AUTH_SECRET` also encrypts 2FA secrets and signs invites and approvals, so it must never be rotated blindly; the runbook has the safe procedure. Follow-up: separate, versioned keys for 2FA encryption and HMACs (added to C3).
+
 - [ ] Confirm `.env.local` has never been committed: `git log --all -- .env.local` must be empty.
 - [ ] Add a 90-day key-rotation calendar to `DR-RUNBOOK.md`: Dakota API key, webhook key, `AUTH_SECRET`, Resend, Upstash.
 - Skip for now: moving the signer key into a key vault. The custody answer may remove the key (Section 8).
@@ -287,7 +324,7 @@ These go in a new `compliance/` folder. They are **drafts for the lawyer**, writ
 
 | # | Document | What it covers | Effort |
 |---|---|---|---|
-| F1 | **Dakota application text** | Business description, account-usage description, account purposes, source-of-funds wording; a placeholder for the lawyer's "unregulated justification" | 1 hour |
+| F1 ✅ | **Dakota application text** (`compliance/F1-dakota-application-text.md`, drafted 2026-11-24) | Business description, account-usage description, account purposes, source-of-funds wording; a placeholder for the lawyer's "unregulated justification" | 1 hour |
 | F2 | **Written information security programme** (GLBA Safeguards Rule, 16 CFR 314) | Qualified Individual, risk assessment, access control, encryption, MFA, secure development, logging and monitoring, yearly pen test and twice-yearly scans, training, vendor oversight, incident response, yearly report to the board. Mapped to what the code already does | 1 day |
 | F3 | **Complaints policy** | Intake (the Help & support form), categories, response times, escalation, forwarding card disputes to Dakota, record-keeping, monthly review. Flags the Reg E dispute timelines for the lawyer | half a day |
 | F4 | **Anti-money-laundering and sanctions policy** | Platform-level controls beside Dakota's programme: a named compliance contact, red flags staff report to Dakota, sanctioned-country blocking, training, record retention. Built with the AML skill | 1 day |
@@ -323,3 +360,4 @@ Q numbers refer to the message in A1.
 | Date | Done |
 |---|---|
 | 2026-11-24 | Plan written. Phase 1c items 1–3 shipped (no "banking" copy, terms acceptance, Help & support). |
+| 2026-11-24 | C5 secrets check + rotation table. F1 Dakota application text. C1 row-level security in code (deploy steps pending, see C1). |
