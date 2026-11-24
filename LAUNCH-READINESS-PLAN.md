@@ -5,6 +5,9 @@
 > the milestone view (M1–M5); this file is the detailed, tick-as-you-go work
 > list. Unused ideas still go to `BACKLOG.md`.
 >
+> **Until Dakota answers, work from `PRE-DAKOTA-PLAN.md`:** it lists
+> everything doable now, in order, with exact steps.
+>
 > How to use: work top-down within a phase. Every item has a **Done when**.
 > Items marked 🟥 are security-relevant; ⛔ means blocked on something outside
 > the codebase.
@@ -429,7 +432,7 @@ Per-screen checklist (copy into each PR):
 - [ ] Walk through `DR-RUNBOOK.md` once end to end.
 
 ### 4.6 Ongoing hygiene
-- [ ] Dependabot or Renovate; `npm audit --omit=dev` in CI (fail on high/critical).
+- [x] Dependabot or Renovate; `npm audit --omit=dev` in CI (fail on high/critical). Already in place: `.github/dependabot.yml`; `ci.yml` runs gitleaks and `npm audit --omit=dev --audit-level=high` (checked 2026-11-24).
 - [ ] Review every new dependency: no unknown or very new packages, guarding against AI-suggested "slopsquatting" names.
 - [ ] External pentest before public launch; bug bounty after.
 
