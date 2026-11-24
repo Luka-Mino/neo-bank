@@ -89,6 +89,8 @@ Send this to your Dakota contact on Telegram. Edit freely. Questions 1–3 decid
 | D13 | ~~Delete the old dashboard?~~ | ✅ Yes (2026-11-24), done | D1 |
 | D14 | ~~Support inbox address~~ | ⏸ Not until near launch (2026-11-24) | — |
 | D15 | ~~Vercel Pro~~ | ⏸ Not until near launch (2026-11-24) | — |
+| D16 / D17 | Native app approach and timing | See `NATIVE-APP-PLAN.md` | One-tap Apple/Google Pay |
+| D18 | Cards vs named accounts | See D5 below | Cards going live |
 
 **Done when:** each row has an answer, copied into `LAUNCH-READINESS-PLAN.md` §1b.
 
@@ -386,6 +388,14 @@ These go in a new `compliance/` folder. They are **drafts for the lawyer**, writ
 **Done when:** each draft is in `compliance/`, marked `DRAFT – for counsel`, and listed in a `compliance/README.md` with its review status. ✅ Drafted 2026-11-24; `compliance/README.md` has 22 questions for counsel. Next: the lawyer's review (A2).
 
 ---
+
+### D5 Pay in shops (like Rain) ✅ screen work done 2026-11-24
+
+> Direction: customers pay in shops with their balance, via Dakota Cards (Visa debit spending straight from the wallet) in Apple Pay / Google Pay.
+> - **Card screen:** "Available to spend" and "On hold" from Dakota's wallet `card` figures (`GET /api/cards/spending`, parsing tested against Dakota's documented example), with a plain explanation of why holds can exceed the bill (tips, fuel, hotels, foreign currency).
+> - **"Pay in shops with your phone":** iPhone and Android steps for adding the card to Apple Pay / Google Pay by typing in the details. Hidden outside demo mode until Dakota's Cards.js card-details viewer is wired (`CARD_DETAILS_REVEAL_READY`, plan 5.2), so customers are never shown steps they can't finish.
+> - **Native app:** `NATIVE-APP-PLAN.md`. One-tap "Add to Apple Wallet" needs Dakota's push-provisioning support plus Apple and Google approval. Recommended: a native shell around `/app` first. Decisions D16/D17 are there.
+> - **Open decision (D18): cards vs named accounts.** Dakota approves card payments against the customer's whole wallet, but Moneta splits the wallet into named accounts and the card "pays from" one of them. A card on a small account could therefore spend money that sits in another. Options: (a) cards always pay from the main account, and the screen says the card can use your whole balance; (b) one Dakota wallet per named account, so each account and its cards are truly separate (provisioning change); (c) per-card spend limits as a soft cap (Dakota limits are per period, not per balance). Decide before cards go live.
 
 ## 8. Don't build yet: waiting on Dakota
 

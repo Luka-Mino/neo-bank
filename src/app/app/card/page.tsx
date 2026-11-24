@@ -21,6 +21,8 @@ import { accountName, useActiveAccounts } from "@/components/app/account-picker"
 import { useDisplayName } from "@/components/app/data";
 import { useCardsQuery, type CardRow } from "@/components/account/use-accounts";
 import { Button, ButtonLink } from "@/components/brand/button";
+import { CardSpending } from "@/components/app/card-spending";
+import { CardPayInShops } from "@/components/app/card-pay-in-shops";
 import { Icon } from "@/components/brand/icon";
 import { MonetaCardArt } from "@/components/brand/moneta-card-art";
 import { DEMO_MODE } from "@/lib/demo-data";
@@ -200,6 +202,7 @@ export default function CardPage() {
                   Your card is being issued. This usually takes a moment, and we&apos;ll let you know when it&apos;s ready.
                 </Notice>
               )}
+              {!pending && <CardSpending />}
 
               <DetailList
                 className="mt-5"
@@ -235,6 +238,10 @@ export default function CardPage() {
                 <Notice tone="error" className="mt-4" title="That didn't work">
                   {error}
                 </Notice>
+              )}
+
+              {card.status === "active" && card.cardType !== "physical" && (
+                <CardPayInShops last4={card.last4} expMonth={card.expMonth} expYear={card.expYear} />
               )}
 
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-forest/[0.07] pt-4">
