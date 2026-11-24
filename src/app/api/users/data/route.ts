@@ -19,6 +19,7 @@ import {
   dakotaCustomers,
   userPreferences,
   loginDevices,
+  supportRequests,
 } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +56,7 @@ export async function GET() {
     customer,
     prefs,
     devices,
+    userSupport,
   ] = await Promise.all([
     db.select().from(accounts).where(eq(accounts.userId, userId)),
     db.select().from(cards).where(eq(cards.userId, userId)),
@@ -72,6 +74,8 @@ export async function GET() {
       })
       .from(loginDevices)
       .where(eq(loginDevices.userId, userId)),
+    // Help & support requests and complaints the user raised (plan 1c.3).
+    db.select().from(supportRequests).where(eq(supportRequests.userId, userId)),
   ]);
 
   const payload = {
@@ -87,6 +91,7 @@ export async function GET() {
     recipients: userRecipients,
     notifications: userNotifications,
     loginDevices: devices,
+    supportRequests: userSupport,
   };
 
   return new NextResponse(JSON.stringify(payload, null, 2), {

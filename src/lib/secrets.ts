@@ -15,12 +15,16 @@ export interface SecretsProvider {
 export const SECRET_NAMES = [
   "AUTH_SECRET",
   "DATABASE_URL",
+  "SYSTEM_DATABASE_URL",
   "DAKOTA_API_KEY",
   "DAKOTA_WEBHOOK_PUBLIC_KEY",
   "DAKOTA_SIGNER_PRIVATE_KEY",
   "CRON_SECRET",
   "RESEND_API_KEY",
+  "SMTP_URL",
   "SENTRY_DSN",
+  "UPSTASH_REDIS_REST_TOKEN",
+  "STRIPE_ISSUING_WEBHOOK_SECRET",
 ] as const;
 
 export type SecretName = (typeof SECRET_NAMES)[number];
