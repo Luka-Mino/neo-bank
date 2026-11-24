@@ -1,6 +1,7 @@
 // Server-side error monitoring. A complete no-op until SENTRY_DSN is set,
 // so this ships ahead of the Sentry account with zero effect.
 import * as Sentry from "@sentry/nextjs";
+import { scrubBreadcrumb, scrubEvent } from "@/lib/sentry-scrub";
 
 export async function register() {
   // Only run in the Node.js server runtime (not edge/browser).
@@ -18,6 +19,11 @@ export async function register() {
     // Never attach request bodies — they can contain money amounts,
     // account numbers, and 2FA codes.
     sendDefaultPii: false,
+    // Strip tokens, emails, credentials and card/account numbers before
+    // anything leaves the server (src/lib/sentry-scrub.ts).
+    beforeSend: (event) => scrubEvent(event),
+    beforeSendTransaction: (event) => scrubEvent(event),
+    beforeBreadcrumb: (breadcrumb) => scrubBreadcrumb(breadcrumb),
   });
 }
 

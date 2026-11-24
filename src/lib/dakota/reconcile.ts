@@ -1,15 +1,49 @@
-import { and, asc, eq, isNull, lt } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, lt, notInArray } from "drizzle-orm";
 // systemDb: background/system work with no single signed-in org. It bypasses
 // row-level security, so every query here must carry its own org/user filter.
 // Allowlisted in scripts/check-db-access.mjs.
 import { systemDb as db } from "@/lib/db";
-import { dakotaSyncState, webhookEvents } from "@/lib/db/schema";
+import { dakotaSyncState, transactions, webhookEvents } from "@/lib/db/schema";
+import { NOT_STUCK_STATUSES } from "./transaction-transitions";
 import { alertOps } from "@/lib/alerts";
 import { dakota } from "./client";
 import type { DakotaEventEnvelope } from "./webhooks";
 import { recordAndProcessEvent, type ProcessOutcome } from "./event-processing";
 
 export type EventsOrder = "oldest" | "newest";
+
+/**
+ * Transactions stuck in a non-final state (PRE-DAKOTA-PLAN C4): not updated
+ * for `olderThanHours`, excluding settled states and the ACH return/reversal
+ * windows. Across every org, so it runs on systemDb. Returns ids and states
+ * only, no customer data, so the result can go straight into an ops alert.
+ */
+export async function findStuckTransactions(
+  olderThanHours = 24,
+  limit = 50
+): Promise<{ count: number; sample: { id: string; status: string; txType: string; updatedAt: Date }[] }> {
+  const cutoff = new Date(Date.now() - olderThanHours * 60 * 60 * 1000);
+  const where = and(
+    notInArray(transactions.status, NOT_STUCK_STATUSES),
+    lt(transactions.updatedAt, cutoff)
+  );
+  const sample = await db
+    .select({
+      id: transactions.id,
+      status: transactions.status,
+      txType: transactions.txType,
+      updatedAt: transactions.updatedAt,
+    })
+    .from(transactions)
+    .where(where)
+    .orderBy(desc(transactions.updatedAt))
+    .limit(limit);
+  const count =
+    sample.length < limit
+      ? sample.length
+      : (await db.select({ id: transactions.id }).from(transactions).where(where)).length;
+  return { count, sample };
+}
 
 export interface FetchPageParams {
   startingAfter?: string;

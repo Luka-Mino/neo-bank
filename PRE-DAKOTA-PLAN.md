@@ -243,7 +243,10 @@ Each item gets evidence (code reference or test) written into `LAUNCH-READINESS-
 
 **Done when:** every box is ticked with evidence.
 
-### C4 Error tracking and alerts (half a day; live once B6 Sentry exists)
+### C4 Error tracking and alerts (half a day; live once B6 Sentry exists) ✅ code done 2026-11-24
+
+> **Done:** `src/lib/sentry-scrub.ts` runs in `beforeSend`, `beforeSendTransaction` and `beforeBreadcrumb` on server and browser. It redacts secret query values (magic-link, reset, verify and invite tokens, the Cards.js `session`, codes, keys) in URLs and inside messages; secret headers; cookies and request bodies; emails; bearer tokens; long digit runs; and user details except the id. 8 tests. **New alert:** a daily stuck-transaction sweep (`findStuckTransactions` in `src/lib/dakota/reconcile.ts`, run by the maintenance cron) raises `transaction_stuck` for anything non-final for over 24 h; ACH return windows are excluded. Integration-tested. Already in place: `webhook_dead_letter`, `reconcile_failed`, `ledger_drift`. **👤 To switch on:** add `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` in Vercel (B6). Alerts go to the logs and Sentry; a Slack/email channel can plug into `src/lib/alerts.ts` later.
+
 Sentry is installed (`src/instrumentation*.ts`) with `sendDefaultPii: false`, but there's no scrubbing.
 1. Add `beforeSend` and `beforeBreadcrumb` scrubbing for:
    - the Cards.js `session` URL parameter;
@@ -337,16 +340,16 @@ These go in a new `compliance/` folder. They are **drafts for the lawyer**, writ
 | # | Document | What it covers | Effort |
 |---|---|---|---|
 | F1 ✅ | **Dakota application text** (`compliance/F1-dakota-application-text.md`, drafted 2026-11-24) | Business description, account-usage description, account purposes, source-of-funds wording; a placeholder for the lawyer's "unregulated justification" | 1 hour |
-| F2 | **Written information security programme** (GLBA Safeguards Rule, 16 CFR 314) | Qualified Individual, risk assessment, access control, encryption, MFA, secure development, logging and monitoring, yearly pen test and twice-yearly scans, training, vendor oversight, incident response, yearly report to the board. Mapped to what the code already does | 1 day |
-| F3 | **Complaints policy** | Intake (the Help & support form), categories, response times, escalation, forwarding card disputes to Dakota, record-keeping, monthly review. Flags the Reg E dispute timelines for the lawyer | half a day |
-| F4 | **Anti-money-laundering and sanctions policy** | Platform-level controls beside Dakota's programme: a named compliance contact, red flags staff report to Dakota, sanctioned-country blocking, training, record retention. Built with the AML skill | 1 day |
-| F5 | **Key-management policy** | Signer key life cycle: creation, storage, access, rotation, loss. Revised after the custody answer | 2 hours |
-| F6 | **Wind-down plan** | If Moneta stops: customer notice, how people withdraw (USDC sits in wallets at Dakota), data export, timeline | half a day |
-| F7 | **Incident response plan** | Built from `DR-RUNBOOK.md`, plus breach notices: FTC within 30 days for 500+ people, and state laws (California and New York 30 days) | half a day |
-| F8 | **Vendor list and checks** | Dakota, Vercel, Supabase, Resend, Sentry, Upstash: what data each holds, SOC 2 status, contract owner | 2 hours |
-| F9 | **Marketing review checklist** | Banned claims ("bank", "banking", "FDIC-insured", "backed 1:1", "guaranteed", "legal tender", "payment stablecoin"), required disclosures, and who signs off | 1 hour |
+| F2 ✅ | **Written information security programme** (GLBA Safeguards Rule, 16 CFR 314) | Qualified Individual, risk assessment, access control, encryption, MFA, secure development, logging and monitoring, yearly pen test and twice-yearly scans, training, vendor oversight, incident response, yearly report to the board. Mapped to what the code already does | 1 day |
+| F3 ✅ | **Complaints policy** | Intake (the Help & support form), categories, response times, escalation, forwarding card disputes to Dakota, record-keeping, monthly review. Flags the Reg E dispute timelines for the lawyer | half a day |
+| F4 ✅ | **Anti-money-laundering and sanctions policy** | Platform-level controls beside Dakota's programme: a named compliance contact, red flags staff report to Dakota, sanctioned-country blocking, training, record retention. Built with the AML skill | 1 day |
+| F5 ✅ | **Key-management policy** | Signer key life cycle: creation, storage, access, rotation, loss. Revised after the custody answer | 2 hours |
+| F6 ✅ | **Wind-down plan** | If Moneta stops: customer notice, how people withdraw (USDC sits in wallets at Dakota), data export, timeline | half a day |
+| F7 ✅ | **Incident response plan** | Built from `DR-RUNBOOK.md`, plus breach notices: FTC within 30 days for 500+ people, and state laws (California and New York 30 days) | half a day |
+| F8 ✅ | **Vendor list and checks** | Dakota, Vercel, Supabase, Resend, Sentry, Upstash: what data each holds, SOC 2 status, contract owner | 2 hours |
+| F9 ✅ | **Marketing review checklist** | Banned claims ("bank", "banking", "FDIC-insured", "backed 1:1", "guaranteed", "legal tender", "payment stablecoin"), required disclosures, and who signs off | 1 hour |
 
-**Done when:** each draft is in `compliance/`, marked `DRAFT – for counsel`, and listed in a `compliance/README.md` with its review status.
+**Done when:** each draft is in `compliance/`, marked `DRAFT – for counsel`, and listed in a `compliance/README.md` with its review status. ✅ Drafted 2026-11-24; `compliance/README.md` has 22 questions for counsel. Next: the lawyer's review (A2).
 
 ---
 
@@ -374,3 +377,4 @@ Q numbers refer to the message in A1.
 | 2026-11-24 | Plan written. Phase 1c items 1–3 shipped (no "banking" copy, terms acceptance, Help & support). |
 | 2026-11-24 | C5 secrets check + rotation table. F1 Dakota application text. C1 row-level security in code (deploy steps pending, see C1). |
 | 2026-11-24 | C2 shared rate limits (needs Upstash keys). C3 sign-in review: per-IP login limit; 2FA turn-off now signs out everywhere. |
+| 2026-11-24 | Compliance drafts F2–F9 (`compliance/`). Fixed from their review: magic-link 2FA gap, 2FA on approvals and schedules, AUTH_SECRET runbook. C4 Sentry scrubbing + stuck-transaction alert. CI fixed (stale lock file had blocked every run since 2026-11-23). |

@@ -429,6 +429,7 @@ Per-screen checklist (copy into each PR):
   Fold its findings into this phase as new items.
 
 ### 4.5 Monitoring and incident response
+> **2026-11-24** (`PRE-DAKOTA-PLAN.md` C4): Sentry scrubbing on server and browser, including the Cards.js `session` param, and a daily stuck-transaction alert. Live once the Sentry DSNs are set. Incident response plan drafted in `compliance/F7-incident-response-plan.md`.
 - [ ] Sentry: DSN per environment, PII scrubbing, and **redact the Cards.js `session` query parameter**.
 - [ ] Alerts: webhook processing failures, stuck non-terminal transactions, reconcile drift.
 - [ ] Walk through `DR-RUNBOOK.md` once end to end.

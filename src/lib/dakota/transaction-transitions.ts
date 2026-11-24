@@ -28,6 +28,18 @@ const POST_COMPLETION = new Set([
   "reversed",
 ]);
 
+/**
+ * States a transaction may legitimately sit in for a long time: settled
+ * (hard-terminal or completed) or inside an ACH return/reversal window, which
+ * can stay open for weeks. Anything else that hasn't moved in a day is stuck.
+ */
+export const NOT_STUCK_STATUSES = [
+  ...HARD_TERMINAL,
+  "completed",
+  "pending_return",
+  "pending_reversal",
+];
+
 /** Clawback states: funds previously credited must be debited back. */
 export const CLAWBACK_STATUSES = new Set(["returned", "reversed"]);
 

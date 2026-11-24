@@ -93,10 +93,32 @@ async function handle(req: NextRequest) {
     });
   }
 
-  logger.info("maintenance.cleanup", { ...result, ledgerDrift: drift });
+  // Stuck-transaction sweep (PRE-DAKOTA-PLAN C4): anything in a non-final
+  // state for over 24h means a missed webhook or a Dakota-side problem.
+  let stuck = 0;
+  try {
+    const { findStuckTransactions } = await import("@/lib/dakota/reconcile");
+    const { alertOps } = await import("@/lib/alerts");
+    const found = await findStuckTransactions(24);
+    stuck = found.count;
+    if (stuck > 0) {
+      await alertOps("transaction_stuck", {
+        count: stuck,
+        olderThanHours: 24,
+        sample: found.sample.slice(0, 10),
+      });
+    }
+  } catch (e) {
+    logger.error("maintenance.stuck_check_failed", {
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
+
+  logger.info("maintenance.cleanup", { ...result, ledgerDrift: drift, stuckTransactions: stuck });
   return NextResponse.json({
     purged: result,
     ledgerDrift: drift,
+    stuckTransactions: stuck,
     time: now.toISOString(),
   });
 }
