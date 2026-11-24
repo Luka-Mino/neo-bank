@@ -9,7 +9,7 @@ import { isKycBypassed } from "@/lib/auth/kyc-bypass";
 import { resolveActiveMembership, type Role } from "@/lib/orgs";
 import { decryptSecret, verifyTotpCode } from "@/lib/auth/totp";
 import { consumeBackupCode } from "@/lib/auth/backup-codes";
-import { rateLimit } from "@/lib/rate-limit";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { logAudit } from "@/lib/audit";
 
 // Password was right but the account has 2FA — the login page shows the
@@ -34,11 +34,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Password", type: "password" },
         totp: { label: "2FA code", type: "text" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) return null;
 
         const email = (credentials.email as string).toLowerCase();
         const password = credentials.password as string;
+
+        // Per-IP tier: stops one address spraying passwords across many
+        // accounts, which the per-email tiers below can't see. Generous, so
+        // people behind a shared NAT aren't caught.
+        const ip = request instanceof Request ? getClientIp(request) : "unknown";
+        if (ip !== "unknown") {
+          const byIp = await rateLimit(`login:ip:${ip}`, 100, 15 * 60 * 1000);
+          if (!byIp.allowed) {
+            logAudit({
+              actorType: "system",
+              action: "login_rate_limited",
+              resourceType: "ip",
+              resourceId: ip,
+              metadata: { tier: "ip" },
+            });
+            throw new TooManyAttempts();
+          }
+        }
 
         // Progressive brute-force guard: two tiers, keyed by target email so
         // credential-stuffing one account stalls regardless of source IP.

@@ -11,6 +11,7 @@ import { isEmailDeliverable } from "@/lib/email";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { logAudit } from "@/lib/audit";
+import { revokeSessions } from "@/lib/auth/sessions";
 import { createNotification } from "@/lib/notifications";
 
 export const GET = apiHandler({
@@ -86,6 +87,8 @@ export const DELETE = apiHandler<z.infer<typeof disableSchema>>({
       .update(users)
       .set({ emailOtpEnabled: false, updatedAt: new Date() })
       .where(eq(users.id, user.id));
+    // Weaker sign-in now, so end every session, as for TOTP /disable.
+    await revokeSessions(user.id, "email_otp_disabled");
     await logAudit({
       actorType: "user",
       actorId: user.id,

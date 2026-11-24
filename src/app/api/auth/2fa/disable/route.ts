@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { decryptSecret, verifyTotpCode } from "@/lib/auth/totp";
 import { logAudit } from "@/lib/audit";
+import { revokeSessions } from "@/lib/auth/sessions";
 import { createNotification } from "@/lib/notifications";
 
 const schema = z.object({ code: z.string().regex(/^\d{6}$/, "6-digit code") });
@@ -32,6 +33,9 @@ export const POST = apiHandler({
       .update(users)
       .set({ totpSecret: null, totpEnabledAt: null, updatedAt: new Date() })
       .where(eq(users.id, user.id));
+    // Weaker sign-in now, so end every session (this one included): a
+    // session someone else holds must not survive the 2FA change.
+    await revokeSessions(user.id, "2fa_disabled");
 
     await logAudit({
       actorType: "user",

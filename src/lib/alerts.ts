@@ -11,7 +11,8 @@ export type OpsAlert =
   | "webhook_dead_letter"
   | "transaction_stuck"
   | "reconcile_failed"
-  | "ledger_drift";
+  | "ledger_drift"
+  | "rate_limit_degraded";
 
 export async function alertOps(
   alert: OpsAlert,

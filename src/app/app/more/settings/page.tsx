@@ -9,7 +9,7 @@
 import { useId, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import { APP_CONTAINER } from "@/components/app/app-shell";
@@ -22,6 +22,15 @@ import { Button, ButtonLink } from "@/components/brand/button";
 import { IconDisc, type IconName } from "@/components/brand/icon";
 import { DEMO_MODE, DEMO_SESSION } from "@/lib/demo-data";
 import { cn } from "@/lib/utils";
+
+// Password changes and turning off two-step sign-in end every session on the
+// server (tokenVersion bump). Sign out here too, with a message, instead of
+// leaving the page on a session that no longer works.
+async function signOutAfterSecurityChange() {
+  toast.message("For your security, you've been signed out on every device. Please sign in again.");
+  await new Promise((r) => setTimeout(r, 1800));
+  await signOut({ callbackUrl: "/login" });
+}
 
 export default function SettingsPage() {
 
@@ -219,6 +228,8 @@ function TwoStepSection() {
       refresh();
       setSheet(null);
       toast.success("Authenticator app turned off");
+      // The server ended every session (including this one) for safety.
+      if (!DEMO_MODE) await signOutAfterSecurityChange();
     });
 
   const regen = () =>
@@ -244,6 +255,7 @@ function TwoStepSection() {
       refresh();
       setSheet(null);
       toast.success("Email codes turned off");
+      if (!DEMO_MODE) await signOutAfterSecurityChange();
     });
 
   function downloadCodes(list: string[]) {
@@ -516,6 +528,8 @@ function PasswordSection() {
       setNext("");
       setConfirm("");
       toast.success("Password changed");
+      // The server ended every session (including this one) for safety.
+      if (!DEMO_MODE) await signOutAfterSecurityChange();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't change your password");
     } finally {

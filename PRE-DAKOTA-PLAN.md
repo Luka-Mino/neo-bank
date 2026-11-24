@@ -209,7 +209,10 @@ Steps:
 
 **Done when:** integration tests, run as `moneta_app`, prove cross-customer reads return nothing and cross-customer writes fail. The guard runs in CI.
 
-### C2 Rate limits shared across servers (half a day, needs B6 Upstash)
+### C2 Rate limits shared across servers (half a day, needs B6 Upstash) ✅ code done 2026-11-24
+
+> **Done:** `src/lib/rate-limit.ts` counts in Upstash over its REST API (`/pipeline`, `INCR` + `PEXPIRE`, no new package). Without Upstash, or if it errors or takes over 1.5 s, it falls back to memory and raises a `rate_limit_degraded` ops alert (at most every 5 minutes; in production also when the keys are missing). 4 tests in `src/lib/rate-limit.test.ts`. **👤 To switch on:** add `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in Vercel (B6) and redeploy.
+
 **Why:** limits live in each server's memory (`src/lib/rate-limit.ts`). Vercel runs many servers, so limits on login, 2FA and password reset are weak.
 
 Steps:
@@ -220,13 +223,21 @@ Steps:
 
 **Done when:** tests pass, and staging shows counts in Upstash after a few logins.
 
-### C3 Sign-in review (half a day to 1 day)
+### C3 Sign-in review (half a day to 1 day) ✅ reviewed 2026-11-24 (one decision left for you)
+
+> **Findings and fixes:**
+> - **Rate limits:** every auth endpoint has one (register 5/15m, forgot and reset password 5/15m, magic link 5/15m, verify email 10/15m, 2FA setup 5/15m, verify 10/15m, disable 10/15m, backup codes 5/15m, email codes 5/1h, invitations 10/15m, password change 5/1h). Login has per-email tiers (15/15m and 40/6h); **added** a per-IP tier (100/15m) against password spraying across accounts. All of these are shared across servers once C2's Upstash keys are set.
+> - **2FA guessing:** login 2FA codes fall under the login tiers; email codes are single-use, expire, and are capped per code (`src/lib/auth/email-otp.ts`).
+> - **Fail closed:** a failed user lookup denies sign-in; the org/permission claim is dropped on any error (`src/lib/auth/config.ts` jwt callback). The session-revocation check keeps an existing token only while the database is unreachable, and then every org-scoped route denies anyway. Acceptable; noted.
+> - **Sign out everywhere:** password change and reset already revoked all sessions. **Gap fixed:** turning off the authenticator app or email codes didn't, though `src/lib/auth/sessions.ts` said it should. Now both revoke, and the settings screen signs out with a message in all three cases instead of leaving a dead session.
+> - **Still open:** separate keys from `AUTH_SECRET` (below), and your session-length decision.
+
 Each item gets evidence (code reference or test) written into `LAUNCH-READINESS-PLAN.md` §4.3.
-- [ ] **Session length.** Today it's 7 days. Proposal: 12 hours maximum plus 30 minutes idle for money screens. You decide; finance apps usually go short.
-- [ ] **Password change** signs out every other session (via the `tokenVersion` bump). Verify with a test.
-- [ ] **Fail closed.** Auth errors deny access and never let a request through (the next-auth advisory in §4.3).
-- [ ] **Every auth endpoint is rate-limited:** register, login, magic link, forgot/reset password, 2FA verify, email code. Make a list and fill any gaps.
-- [ ] **Lockout and backoff** on repeated failures. Login already has per-email limits; check 2FA and email codes too.
+- [ ] **Session length (👤 your decision).** Today it's 7 days. Proposal: 12 hours maximum plus 30 minutes idle for money screens. Finance apps usually go short.
+- [x] **Password change** signs out every session (`revokeSessions`); so do 2FA turn-off (fixed) and password reset.
+- [x] **Fail closed.** See findings above.
+- [x] **Every auth endpoint is rate-limited.** Listed above; per-IP login tier added.
+- [x] **Lockout and backoff** on repeated failures. Per-email (two tiers) and per-IP at login; email codes capped per code.
 - [ ] **Separate keys from `AUTH_SECRET`.** Today it also derives the 2FA encryption key and the invite/approval HMACs (found in C5). Add dedicated, versioned keys (e.g. `TOTP_ENCRYPTION_KEYS` with key IDs) so each can rotate without locking users out.
 
 **Done when:** every box is ticked with evidence.
@@ -361,3 +372,4 @@ Q numbers refer to the message in A1.
 |---|---|
 | 2026-11-24 | Plan written. Phase 1c items 1–3 shipped (no "banking" copy, terms acceptance, Help & support). |
 | 2026-11-24 | C5 secrets check + rotation table. F1 Dakota application text. C1 row-level security in code (deploy steps pending, see C1). |
+| 2026-11-24 | C2 shared rate limits (needs Upstash keys). C3 sign-in review: per-IP login limit; 2FA turn-off now signs out everywhere. |

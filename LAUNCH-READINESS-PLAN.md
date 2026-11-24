@@ -405,6 +405,7 @@ Per-screen checklist (copy into each PR):
 - [ ] Confirm `.env*` is gitignored and never committed (`git log --all -- .env.local`).
 
 ### 4.3 Authentication review
+> **Reviewed 2026-11-24** (`PRE-DAKOTA-PLAN.md` C3): rate limits on every auth endpoint plus a new per-IP login tier; shared limits via Upstash (C2); 2FA turn-off now revokes all sessions. Open: session length (your decision) and separating keys from `AUTH_SECRET`.
 - [ ] After the 1.2 upgrade, review `src/lib/auth/config.ts` against the next-auth advisory: protected checks must **fail closed** on auth errors, never only test "session object exists".
 - [ ] Session lifetime and idle timeout appropriate for banking; logout everywhere on password change.
 - [ ] Rate limits on every auth endpoint; lockout/backoff on repeated failures.
