@@ -54,32 +54,47 @@ export const DEMO_BALANCE = {
 };
 
 // Cards: one virtual on Checking, one physical on Savings.
+// Every account has its own virtual card, and each card only spends its own
+// account's money (SIDE-ACCOUNTS-PLAN.md). One is frozen to show that state.
 export const DEMO_CARDS = [
   {
-    id: "card-virtual",
+    id: "card-main",
     userId: "demo-user",
     accountId: "acct-checking",
     cardType: "virtual" as const,
     last4: "7891",
     status: "active" as const,
-    nickname: "Virtual",
+    nickname: null,
     expMonth: 8,
     expYear: 2029,
     network: "visa" as const,
     createdAt: new Date(DEMO_NOW - 30 * 86400000).toISOString(),
   },
   {
-    id: "card-physical",
+    id: "card-rainy-day",
     userId: "demo-user",
     accountId: "acct-savings",
-    cardType: "physical" as const,
+    cardType: "virtual" as const,
     last4: "4422",
     status: "frozen" as const,
-    nickname: "Travel",
+    nickname: null,
     expMonth: 11,
     expYear: 2028,
     network: "visa" as const,
     createdAt: new Date(DEMO_NOW - 200 * 86400000).toISOString(),
+  },
+  {
+    id: "card-vacation",
+    userId: "demo-user",
+    accountId: "acct-vacation",
+    cardType: "virtual" as const,
+    last4: "3056",
+    status: "active" as const,
+    nickname: null,
+    expMonth: 2,
+    expYear: 2030,
+    network: "visa" as const,
+    createdAt: new Date(DEMO_NOW - 25 * 86400000).toISOString(),
   },
 ];
 

@@ -12,7 +12,7 @@ export type AccountRow = {
   accountNumber: string;
   currency: string;
   balance: string;
-  status: "active" | "frozen" | "closed";
+  status: "opening" | "active" | "frozen" | "closed"; // "opening": a side account whose wallet is being created
   isPrimary: boolean;
   goalAmount?: string | null;
   createdAt?: string;

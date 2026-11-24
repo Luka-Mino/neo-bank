@@ -133,13 +133,13 @@ export default function TransferPage() {
   return (
     <FlowScreen
       title="Transfer between accounts"
-      subtitle="Move money between your Moneta accounts. Instant and free."
+      subtitle="Move money between your Moneta accounts. Arrives in seconds, free."
       back={{ href: "/app/move", label: "Move money" }}
       aside={
         <>
           {!DEMO_MODE && <StandingOrders />}
           <HelpCard title="Good to know">
-            <p>Transfers between your own accounts are instant and never cost anything.</p>
+            <p>Transfers between your own accounts arrive in seconds and are free.</p>
             <p>Choose a repeat to move the same amount on a schedule, for example putting money toward a goal every payday.</p>
           </HelpCard>
         </>
@@ -271,7 +271,7 @@ export default function TransferPage() {
           rows={[
             { label: "From", value: `${accountName(from)} · ${formatUsd(Number(from.balance))}` },
             { label: "To", value: accountName(to) },
-            { label: "Arrives", value: "Instantly" },
+            { label: "Arrives", value: "In seconds" },
             { label: "Repeats", value: REPEAT_LABEL[repeat] },
             ...(note.trim() ? [{ label: "Note", value: note.trim() }] : []),
           ]}

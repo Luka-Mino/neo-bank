@@ -69,7 +69,7 @@ function Hero() {
           </h1>
           <p className="mt-4 max-w-[46ch] text-[16px] leading-relaxed text-forest/70">
             Separate accounts for everything you&apos;re putting money toward,
-            and a debit card. Move money between them instantly and always see
+            each with its own card. Move money between them in seconds and always see
             where it goes.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3">
@@ -255,7 +255,7 @@ const PRODUCTS: {
     lead: "Move money where it needs to go.",
     points: [
       "Send money to people you know",
-      "Transfer between your Moneta accounts instantly",
+      "Transfer between your Moneta accounts in seconds",
       "Schedule recurring transfers",
       "Deposit from or withdraw to your other bank by ACH (typically 1–3 business days) or same-day wire",
     ],

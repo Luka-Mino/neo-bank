@@ -1,8 +1,10 @@
 // GET  /api/cards   → list the org's cards (newest first)
-// POST /api/cards   → issue a new card on one of the org's accounts.
-//                     Mocked: generates last4 and exp, no real issuer call.
+// POST /api/cards   → issue the card for one of the org's accounts. One live
+//                     card per account (SIDE-ACCOUNTS-PLAN.md): a card only
+//                     spends its own account, so another card means a side
+//                     account. Mock issuer by default; Dakota when configured.
 
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, notInArray } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { logAudit } from "@/lib/audit";
 import { cards } from "@/lib/db/schema";
@@ -42,6 +44,19 @@ export const POST = apiHandler({
 
     if (target.status !== "active") {
       return err("Cannot issue a card on a non-active account", 409);
+    }
+
+    const [live] = await db
+      .select({ id: cards.id })
+      .from(cards)
+      .where(and(eq(cards.accountId, target.id), notInArray(cards.status, ["canceled", "replaced"])))
+      .limit(1);
+    if (live) {
+      return err(
+        "This account already has a card. For another card, open a side account.",
+        409,
+        { reason: "account_has_card" }
+      );
     }
 
     // Issue through the swappable provider (mock by default; Dakota Cards when

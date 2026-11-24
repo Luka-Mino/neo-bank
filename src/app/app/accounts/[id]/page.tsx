@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { useAccountsQuery } from "@/components/account/use-accounts";
 import { AccountManage } from "@/components/app/account-manage";
+import { AccountCard } from "@/components/app/account-card";
 import { ActivityRow } from "@/components/app/activity-row";
 import {
   statusLabel,
@@ -197,6 +198,7 @@ export default function AppAccountPage({
             <h2 className="mt-8 hidden text-[15px] font-semibold text-forest lg:block">
               Account details
             </h2>
+            <AccountCard account={account} />
             <DetailsList account={account} />
             <AccountManage account={account} />
           </div>
@@ -342,7 +344,7 @@ function DetailsList({
         </span>
       ),
     },
-    { label: "Primary account", value: account.isPrimary ? "Yes" : "No" },
+    { label: "Kind", value: account.isPrimary ? "Main account (deposits land here)" : "Side account" },
     {
       label: "Opened",
       value: account.createdAt

@@ -22,7 +22,7 @@ const steps = [
 
 const faster: { icon: IconName; title: string; body: string }[] = [
   { icon: "send", title: "Seconds, not days", body: "Payments to people you've saved settle in seconds. No cut-off times, and no waiting for Monday." },
-  { icon: "transfer", title: "Instant between your accounts", body: "Move money between your own Moneta accounts instantly, any time, for free." },
+  { icon: "transfer", title: "Seconds between your accounts", body: "Move money between your own Moneta accounts in seconds, any time, for free." },
   { icon: "fees", title: "The cost is on the receipt", body: "No spread hidden in an exchange rate. Every fee is itemised on your receipt." },
 ];
 

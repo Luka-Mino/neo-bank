@@ -6,14 +6,19 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { formatUsd } from "@/lib/money-input";
-import { DEMO_MODE } from "@/lib/demo-data";
+import { DEMO_ACCOUNTS, DEMO_MODE } from "@/lib/demo-data";
 
 type Spending =
   | { status: "ok"; available: number; held: number }
   | { status: "unavailable" | "no_wallet" };
 
-// Demo: a restaurant bill of $45 holding $58.50 until the tip is known.
-const DEMO_SPENDING: Spending = { status: "ok", available: 12399.82, held: 58.5 };
+// Demo: each card spends only its own account. The main card has a
+// restaurant bill of $45 holding $58.50 until the tip is known.
+function demoSpending(accountId: string): Spending {
+  const balance = Number(DEMO_ACCOUNTS.find((a) => a.id === accountId)?.balance ?? 0);
+  const held = accountId === "acct-checking" ? 58.5 : 0;
+  return { status: "ok", available: Math.max(0, balance - held), held };
+}
 
 export function CardSpending({ accountId }: { accountId: string }) {
   const q = useQuery({
@@ -27,7 +32,7 @@ export function CardSpending({ accountId }: { accountId: string }) {
     enabled: !DEMO_MODE,
     refetchInterval: 60_000,
   });
-  const data = DEMO_MODE ? DEMO_SPENDING : q.data;
+  const data = DEMO_MODE ? demoSpending(accountId) : q.data;
 
   // Quietly absent until there's something real to show: cards not enabled
   // yet, a slow read, or an error (the rest of the screen still works).

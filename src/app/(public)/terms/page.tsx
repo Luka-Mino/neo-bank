@@ -153,7 +153,7 @@ export default function TermsPage() {
           fees, which are itemised on your receipt.
         </Clause>
         <Clause n="5.4" title="Transfers between your accounts">
-          Transfers between your own Moneta Accounts are instant and free. Recurring transfers run on the schedule you set until you cancel
+          Transfers between your own Moneta Accounts are free and usually arrive within seconds. Recurring transfers run on the schedule you set until you cancel
           them.
         </Clause>
         <Clause n="5.5" title="When we may hold or decline">

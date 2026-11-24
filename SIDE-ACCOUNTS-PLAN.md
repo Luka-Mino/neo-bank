@@ -19,7 +19,7 @@
 
 Facts from Dakota's docs (2026-11-24): several wallets per customer; "a card is funded by one wallet"; many cards per person (unpublished maximum, `limit-reached`); card permission is "a one-time grant, signed by the customer for each wallet"; cards are virtual only and still sandbox-only.
 
-## Phase 1: build now (no Dakota sandbox needed) ✅ in progress
+## Phase 1: build now (no Dakota sandbox needed) ✅ done 2026-11-24
 
 Everything is tested with Dakota stubbed out and fully clickable in demo mode.
 A setting keeps today's behaviour until Phase 2 switches it on:
@@ -38,11 +38,37 @@ as today) or `dakota` (each side account gets its own Dakota wallet).
    - Demo: every account has its own virtual card.
 6. **Copy:** money moves between your accounts "in seconds" (no longer "instantly … never cost anything").
 
+**What shipped (2026-11-24):**
+- Migration 0022: `wallets.purpose` (`main`/`side`, one main per org) and `accounts.wallet_id`.
+- `src/lib/side-accounts.ts` covers opening a side account (resumable, idempotent wallet per account), finding the wallet behind an account, transfer routing and a cap of 10 side accounts.
+- Routes:
+  - `POST /api/accounts`: the org's first account is its main account; every later one is a side account.
+  - Cards: one live card per account (409 `account_has_card`); the card's wallet comes from its account.
+  - The main account can't be swapped (409 `main_fixed`), or closed while side accounts are open (409 `side_accounts_open`). It is no longer auto-promoted.
+  - `PATCH /api/cards/[id]/account` (move a card to another account) is removed.
+  - Withdrawals send from the source account's wallet. Provisioning and wallet setup only pick the main wallet. The card's "available / on hold" panel is per account.
+  - Transfers between different wallets are refused with a clear message in the transfer screen, approvals and recurring transfers.
+- Screens:
+  - "Open a side account" comes with its own virtual card.
+  - Each account page shows its card, or "Get its card".
+  - The home screen names cards by account and opens the right one.
+  - The card screen shows "Spends from" in place of the "Pays from" switch.
+  - "Make this my primary account" is gone.
+  - Account details show "Main account" or "Side account".
+  - Demo: every account has its own virtual card; the old physical "Travel" card is gone.
+- Copy changed to "in seconds" on the transfer screen, home page, How it works and terms 5.4.
+- Tests:
+  - Unit test: the card is issued on its account's wallet.
+  - Integration tests as `moneta_app`: shared vs dakota mode, resumable wallet creation, cross-wallet refusal, the cap, and the route rules above.
+
+**Decision to confirm before Phase 2 (D19): who pays the network fee between your own accounts.** Recommendation: Moneta covers it. On Base it is a fraction of a cent, and the site, app and terms already say moving money between your own accounts is free. If Dakota adds a per-transfer fee, revisit.
+
 ## Phase 2: with Dakota's sandbox
 
 1. **On-chain transfers between accounts:** hold the amount on the source, send wallet-to-wallet (signed like other wallet sends, idempotent per transfer), credit the destination when `wallet.transaction.updated` confirms, and refund the source if it fails. The same route serves approvals and recurring transfers.
 2. **Card permission per wallet:** the customer signs the one-time grant when a side account opens (part of the custody redesign: platform key or the customer's passkey), then its card is issued automatically.
-3. **Close a side account:** move the balance to the main account, close its cards, mark it closed (the Dakota wallet stays for records).
+3. **Close a side account:** move the balance to the main account, close its cards, mark it closed (the Dakota wallet stays for records). Today, closing requires a zero balance and the card cancelled first. Make it one step.
+3b. **Accounts stuck in `opening`:** retry `finishOpeningSideAccount` (on the account page, and from a sweep job) so a Dakota outage mid-open heals itself.
 4. **Balances:** reconcile each side account against its wallet's on-chain balance (`card.available` for spending).
 5. **Drill:** open a side account → card → move money in → spend → move money back → close it, then switch `SIDE_ACCOUNT_WALLETS=dakota` on.
 

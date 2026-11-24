@@ -22,8 +22,8 @@ export const updateAccountSchema = z
       .optional(),
     // Closing happens via DELETE; PATCH only toggles active/frozen.
     status: z.enum(["active", "frozen"]).optional(),
-    // Setting a non-primary account primary. The handler demotes the
-    // previous primary atomically; we never accept is_primary=false here.
+    // Refused by the handler: the main account is fixed (SIDE-ACCOUNTS-PLAN.md).
+    // Kept so old clients get a clear 409 rather than a validation error.
     setPrimary: z.literal(true).optional(),
   })
   .refine(

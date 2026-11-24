@@ -32,6 +32,3 @@ export const updateCardSchema = z
   });
 export type UpdateCardInput = z.infer<typeof updateCardSchema>;
 
-export const reassignCardSchema = z.object({
-  accountId: z.string().uuid(),
-});

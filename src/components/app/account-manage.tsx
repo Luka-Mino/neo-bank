@@ -1,10 +1,11 @@
 "use client";
 
-// Account management for /app (2.7): rename, goal, set primary,
-// close, and opening a new account. Same APIs as (dashboard)/accounts:
-// PATCH /api/accounts/[id] { nickname | goalAmount | setPrimary },
+// Account management for /app (2.7): rename, goal, close, and opening a side
+// account. PATCH /api/accounts/[id] { nickname | goalAmount },
 // DELETE /api/accounts/[id] (soft close — the server enforces the rules),
-// POST /api/accounts { accountType, nickname }.
+// POST /api/accounts { nickname } then POST /api/cards for its card.
+// The main account is fixed: deposits land there (SIDE-ACCOUNTS-PLAN.md), so
+// there's no "make this my main account".
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,7 +17,7 @@ import { TextField } from "@/components/app/fields";
 import { Notice } from "@/components/app/states";
 import { postJson } from "@/components/app/api";
 import { accountName } from "@/components/app/account-picker";
-import type { AccountRow } from "@/components/account/use-accounts";
+import type { AccountRow, CardRow } from "@/components/account/use-accounts";
 import { Button } from "@/components/brand/button";
 import { Icon, type IconName } from "@/components/brand/icon";
 import { DEMO_MODE } from "@/lib/demo-data";
@@ -68,7 +69,7 @@ export function AccountManage({ account }: { account: AccountRow }) {
   const balance = Number(account.balance);
 
   const patch = useMutation({
-    mutationFn: async (body: { nickname?: string; goalAmount?: string | null; setPrimary?: true }) => {
+    mutationFn: async (body: { nickname?: string; goalAmount?: string | null }) => {
       if (DEMO_MODE) {
         patchDemo(account.id, {
           ...(body.nickname !== undefined ? { nickname: body.nickname } : {}),
@@ -116,7 +117,6 @@ export function AccountManage({ account }: { account: AccountRow }) {
       hint: goalNum > 0 ? formatUsd(goalNum) : "Watch a fund grow",
       onClick: () => open("goal"),
     },
-    { icon: "reserve", label: "Make this my primary account", hint: "Deposits land here", onClick: () => patch.mutate({ setPrimary: true }), hidden: account.isPrimary },
     { icon: "withdraw", label: "Close account", onClick: () => open("close"), hidden: account.isPrimary, danger: true },
   ];
 
@@ -215,10 +215,12 @@ export function AccountManage({ account }: { account: AccountRow }) {
   );
 }
 
-export function OpenAccountButton({ className }: { className?: string }) {
+// Side accounts (SIDE-ACCOUNTS-PLAN.md): each has its own balance and its own
+// virtual card, so its card only spends its own money.
+export function OpenAccountButton({ className, autoOpen = false }: { className?: string; autoOpen?: boolean }) {
   const qc = useQueryClient();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -237,41 +239,75 @@ export function OpenAccountButton({ className }: { className?: string }) {
           status: "active",
           isPrimary: false,
         };
+        const card: CardRow = {
+          id: `card-${Date.now()}`,
+          accountId: fresh.id,
+          cardType: "virtual",
+          last4: String(1000 + Math.floor(Math.random() * 9000)),
+          status: "active",
+          nickname: null,
+          expMonth: 11,
+          expYear: 2030,
+          network: "visa",
+        };
         qc.setQueryData<AccountRow[]>(queryKeys.accounts.list, (old) => [...(old ?? []), fresh]);
-        return fresh;
+        qc.setQueryData<CardRow[]>(queryKeys.cards.list, (old) => [...(old ?? []), card]);
+        return { account: fresh, cardIssued: true, cardNote: null as string | null };
       }
-      return postJson<AccountRow>("/api/accounts", { nickname: name });
+      const account = await postJson<AccountRow>("/api/accounts", { nickname: name });
+      // Each side account comes with its own virtual card. If cards aren't
+      // ready yet (verification, terms, Dakota), the account still opens.
+      let cardIssued = false;
+      let cardNote: string | null = null;
+      if (account.status === "active") {
+        try {
+          await postJson("/api/cards", { accountId: account.id, cardType: "virtual" });
+          cardIssued = true;
+        } catch (e) {
+          cardNote = e instanceof Error ? e.message : null;
+        }
+      }
+      return { account, cardIssued, cardNote };
     },
     onMutate: () => setError(null),
-    onSuccess: (acct) => {
+    onSuccess: ({ account, cardIssued, cardNote }) => {
       setOpen(false);
       setNickname("");
-      toast.success(`${accountName(acct)} is open`);
-      if (acct?.id) router.push(`/app/accounts/${encodeURIComponent(acct.id)}`);
+      if (account.status === "opening") {
+        toast.success(`We're setting up ${accountName(account)}. It'll be ready in a moment.`);
+      } else {
+        toast.success(cardIssued ? `${accountName(account)} is open, with its own card` : `${accountName(account)} is open`);
+        if (!cardIssued && cardNote) toast.message(`Its card isn't ready yet. ${cardNote}`);
+      }
+      if (account?.id) router.push(`/app/accounts/${encodeURIComponent(account.id)}`);
     },
     onError: (e) => setError(e instanceof Error ? e.message : "We couldn't open the account."),
-    onSettled: () => !DEMO_MODE && qc.invalidateQueries({ queryKey: queryKeys.accounts.all }),
+    onSettled: () => {
+      if (DEMO_MODE) return;
+      qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      qc.invalidateQueries({ queryKey: queryKeys.cards.all });
+    },
   });
 
   return (
     <>
       <Button variant="secondary" size="sm" className={className} onClick={() => setOpen(true)}>
-        Open an account
+        Open a side account
       </Button>
       <AppSheet
         open={open}
         onOpenChange={setOpen}
-        title="Open an account"
-        description="Free to open, no minimum balance."
+        title="Open a side account"
+        description="Its own balance and its own virtual card, so spending from it never touches your main account. Free to open."
         busy={create.isPending}
         footer={
           <Button block loading={create.isPending} onClick={() => create.mutate()} arrow>
-            Open account
+            Open side account
           </Button>
         }
       >
         <div className="space-y-5">
-          <TextField label="Name" placeholder="e.g. Bills, Holiday fund" maxLength={40} value={nickname} onChange={(e) => setNickname(e.target.value)} hint="Use separate accounts to keep money apart. You can rename them any time." />
+          <TextField label="Name" placeholder="e.g. Bills, Holiday fund" maxLength={40} value={nickname} onChange={(e) => setNickname(e.target.value)} hint="Move money in from your main account any time. You can rename it later." />
           {error && <Notice tone="error">{error}</Notice>}
         </div>
       </AppSheet>

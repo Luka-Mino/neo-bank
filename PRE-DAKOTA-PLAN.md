@@ -94,7 +94,8 @@ Send this to your Dakota contact on Telegram. Edit freely. Questions 1–3 decid
 | D14 | ~~Support inbox address~~ | ⏸ Not until near launch (2026-11-24) | — |
 | D15 | ~~Vercel Pro~~ | ⏸ Not until near launch (2026-11-24) | — |
 | D16 / D17 | Native app approach and timing | See `NATIVE-APP-PLAN.md` | One-tap Apple/Google Pay |
-| D18 | Cards vs named accounts | See D5 below | Cards going live |
+| D18 | Cards vs named accounts | ✅ Main + side accounts, one card each (`SIDE-ACCOUNTS-PLAN.md`) | Cards going live |
+| D19 | Who pays the network fee when money moves between your own accounts | Recommend: Moneta covers it (fraction of a cent on Base) | Side accounts Phase 2 |
 
 **Done when:** each row has an answer, copied into `LAUNCH-READINESS-PLAN.md` §1b.
 
@@ -420,7 +421,9 @@ Q numbers refer to the message in A1.
 
 ---
 
-### Side accounts (D18): build once Dakota's sandbox is available
+### Side accounts (D18): Phase 1 done 2026-11-24; the rest waits on Dakota's sandbox
+
+The step-by-step is in `SIDE-ACCOUNTS-PLAN.md` (Phase 1 shipped behind `SIDE_ACCOUNT_WALLETS=shared`; Phase 2 needs the sandbox). The outline below is the original decision.
 
 1. **Provisioning:** one Dakota wallet per Moneta account. The main account's wallet is created at onboarding, as today. Opening a side account creates a new wallet with the same signer and policy setup (fits the custody redesign).
 2. **Open a side account:** name it → create the wallet → the customer signs the one-time card permission → issue its virtual card. Optionally pick a card design per account (Dakota allows approved designs per card).
@@ -453,3 +456,4 @@ Decided 2026-11-24: no hosted backend, support inbox, emails or outside services
 | 2026-11-24 | C5 secrets check + rotation table. F1 Dakota application text. C1 row-level security in code (deploy steps pending, see C1). |
 | 2026-11-24 | C2 shared rate limits (needs Upstash keys). C3 sign-in review: per-IP login limit; 2FA turn-off now signs out everywhere. |
 | 2026-11-24 | Compliance drafts F2–F9 (`compliance/`). Fixed from their review: magic-link 2FA gap, 2FA on approvals and schedules, AUTH_SECRET runbook. C4 Sentry scrubbing + stuck-transaction alert. CI fixed (stale lock file had blocked every run since 2026-11-23). |
+| 2026-11-24 | Side accounts Phase 1 (D18): main + side accounts, each with its own card; per-account wallets behind `SIDE_ACCOUNT_WALLETS` (off until the sandbox). Fixed RLS on five routes that queried protected tables without an org. |

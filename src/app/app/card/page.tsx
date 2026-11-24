@@ -1,10 +1,11 @@
 "use client";
 
-// Card — /app version of (dashboard)/card, Dakota-ready.
-// Same APIs: GET /api/cards, POST /api/cards (issue a virtual card),
+// Card — Dakota-ready. GET /api/cards, POST /api/cards (issue a virtual card),
 // PATCH /api/cards/[id] { status } (freeze/unfreeze — the issuer is called
-// first for Dakota cards and its refusals come back as plain messages),
-// PATCH /api/cards/[id]/account (link to another account).
+// first for Dakota cards and its refusals come back as plain messages).
+// A card belongs to one account and only spends that account's money
+// (SIDE-ACCOUNTS-PLAN.md): there's no "pays from" switch. A card for a
+// different pot comes with a side account. ?card=<id> preselects a card.
 //
 // Deliberately NOT carried over from the old screen: the Online /
 // Contactless / International switches (they never called an API) and PIN
@@ -12,10 +13,10 @@
 // Cards.js (LAUNCH-READINESS-PLAN 5.2), so it isn't offered here yet.
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { APP_CONTAINER } from "@/components/app/app-shell";
-import { Picker } from "@/components/app/picker";
-import { DetailList, EmptyState, ErrorState, GlyphBadge, LoadingRows, Notice } from "@/components/app/states";
+import { DetailList, EmptyState, ErrorState, LoadingRows, Notice } from "@/components/app/states";
 import { postJson } from "@/components/app/api";
 import { accountName, useActiveAccounts } from "@/components/app/account-picker";
 import { useDisplayName } from "@/components/app/data";
@@ -42,7 +43,7 @@ export default function CardPage() {
   const cardsQ = useCardsQuery();
   const { accounts } = useActiveAccounts();
   const { firstName } = useDisplayName();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(useSearchParams().get("card"));
   const [demoCards, setDemoCards] = useState<Card[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +53,7 @@ export default function CardPage() {
   );
   const card = cards.find((c) => c.id === selectedId) ?? cards[0];
   const linked = accounts.find((a) => a.id === card?.accountId);
+  const cardLabel = (c: Card) => accountName(accounts.find((a) => a.id === c.accountId) ?? { nickname: c.nickname });
 
   const refresh = () => qc.invalidateQueries({ queryKey: queryKeys.cards.all });
 
@@ -66,20 +68,6 @@ export default function CardPage() {
     },
     onMutate: () => setError(null),
     onError: (e) => setError(e instanceof Error ? e.message : "We couldn't update your card."),
-    onSettled: refresh,
-  });
-
-  const relink = useMutation({
-    mutationFn: async (accountId: string) => {
-      if (!card) return;
-      if (DEMO_MODE) {
-        setDemoCards(cards.map((c) => (c.id === card.id ? { ...c, accountId } : c)));
-        return;
-      }
-      await postJson(`/api/cards/${encodeURIComponent(card.id)}/account`, { accountId }, { method: "PATCH" });
-    },
-    onMutate: () => setError(null),
-    onError: (e) => setError(e instanceof Error ? e.message : "We couldn't link the card to that account."),
     onSettled: refresh,
   });
 
@@ -152,7 +140,7 @@ export default function CardPage() {
                         c.id === card.id ? "bg-forest text-marble" : "bg-white text-forest/70 ring-1 ring-forest/10"
                       )}
                     >
-                      {c.nickname || (c.cardType === "physical" ? "Physical" : "Virtual")} ···· {c.last4 ?? "—"}
+                      {cardLabel(c)} ···· {c.last4 ?? "—"}
                     </button>
                   ))}
                 </div>
@@ -207,6 +195,7 @@ export default function CardPage() {
               <DetailList
                 className="mt-5"
                 rows={[
+                  { label: "Spends from", value: linked ? accountName(linked) : "—", strong: true },
                   { label: "Type", value: card.cardType === "physical" ? "Physical Visa debit" : "Virtual Visa debit" },
                   { label: "Number", value: <span className="font-mono">···· {card.last4 ?? "—"}</span> },
                   {
@@ -217,22 +206,11 @@ export default function CardPage() {
                 ]}
               />
 
-              <div className="mt-4 border-t border-forest/[0.07] pt-4">
-                <Picker
-                  label="Pays from"
-                  sheetTitle="Link this card to"
-                  options={accounts.map((a) => ({
-                    id: a.id,
-                    title: accountName(a),
-                    leading: <GlyphBadge name={Number(a.goalAmount ?? 0) > 0 ? "goals" : "accounts"} />,
-                  }))}
-                  value={card.accountId}
-                  onChange={(id) => id !== card.accountId && relink.mutate(id)}
-                  loading={relink.isPending}
-                  disabled={pending}
-                />
-                {linked && <p className="mt-2 text-[12.5px] text-forest/65">Card payments come out of {accountName(linked)}.</p>}
-              </div>
+              {linked && (
+                <p className="mt-3 text-[13px] text-forest/65">
+                  This card can only spend money in {accountName(linked)}. To pay from a different pot, use that account&apos;s card.
+                </p>
+              )}
 
               {error && (
                 <Notice tone="error" className="mt-4" title="That didn't work">
@@ -246,9 +224,9 @@ export default function CardPage() {
 
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-forest/[0.07] pt-4">
                 <p className="text-[13px] text-forest/65">Lost it or seeing payments you don&apos;t recognise? Freeze it first.</p>
-                <Button size="sm" variant="quiet" loading={issue.isPending} onClick={() => issue.mutate()}>
-                  Add another virtual card
-                </Button>
+                <ButtonLink size="sm" variant="quiet" href="/app?open=side">
+                  Open a side account with its own card
+                </ButtonLink>
               </div>
             </>
           )}

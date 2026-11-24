@@ -1,8 +1,8 @@
 // GET    /api/accounts/[id]  → fetch one of the org's accounts
-// PATCH  /api/accounts/[id]  → rename, freeze/activate, or set as primary
+// PATCH  /api/accounts/[id]  → rename, set a goal, freeze/activate
 // DELETE /api/accounts/[id]  → soft-close (status = 'closed')
 
-import { and, eq, ne, sql } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { logAudit } from "@/lib/audit";
 import { accounts, cards } from "@/lib/db/schema";
@@ -43,39 +43,10 @@ export const PATCH = apiHandler({
       return err("Closed accounts cannot be modified", 409);
     }
 
-    // setPrimary requires demoting the org's existing primary. The whole
-    // handler already runs inside the withOrg transaction, so these two writes
-    // are atomic without a nested transaction.
+    // The main account is fixed: deposits land in it and its money lives in
+    // the main wallet (SIDE-ACCOUNTS-PLAN.md), so it can't be swapped.
     if (body.setPrimary === true && !current.isPrimary) {
-      await db
-        .update(accounts)
-        .set({ isPrimary: false, updatedAt: new Date() })
-        .where(
-          and(
-            eq(accounts.orgId, user.orgId!),
-            eq(accounts.isPrimary, true),
-            ne(accounts.id, current.id)
-          )
-        );
-      const [updated] = await db
-        .update(accounts)
-        .set({
-          isPrimary: true,
-          ...(body.nickname !== undefined ? { nickname: body.nickname } : {}),
-          ...(body.status !== undefined ? { status: body.status } : {}),
-          updatedAt: new Date(),
-        })
-        .where(and(eq(accounts.id, current.id), eq(accounts.orgId, user.orgId!)))
-        .returning();
-      await logAudit({
-        actorType: "user",
-        actorId: user.id,
-        action: "account_updated",
-        resourceType: "account",
-        resourceId: current.id,
-        metadata: { nickname: body.nickname, status: body.status, setPrimary: body.setPrimary, goalAmount: body.goalAmount },
-      });
-      return ok(updated);
+      return err("Your main account can't be changed. Deposits always land there.", 409, { reason: "main_fixed" });
     }
 
     // Plain rename / freeze / unfreeze.
@@ -123,10 +94,26 @@ export const DELETE = apiHandler({
         and(eq(cards.accountId, current.id), ne(cards.status, "canceled"))
       );
     if (activeCards.length > 0) {
-      return err(
-        "Account has active cards. Cancel or reassign them before closing.",
-        409
-      );
+      return err("Cancel this account's card before closing it.", 409);
+    }
+
+    // The main account goes last: side accounts are funded from it, and
+    // deposits land in it. (No more promoting another account to main.)
+    if (current.isPrimary) {
+      const sides = await db
+        .select({ id: accounts.id })
+        .from(accounts)
+        .where(
+          and(
+            eq(accounts.orgId, user.orgId!),
+            eq(accounts.isPrimary, false),
+            ne(accounts.status, "closed")
+          )
+        )
+        .limit(1);
+      if (sides.length > 0) {
+        return err("Close your side accounts before closing your main account.", 409, { reason: "side_accounts_open" });
+      }
     }
 
     const [row] = await db
@@ -138,22 +125,6 @@ export const DELETE = apiHandler({
       })
       .where(and(eq(accounts.id, current.id), eq(accounts.orgId, user.orgId!)))
       .returning();
-
-    // If we just closed the primary, promote the next-oldest open org account.
-    if (current.isPrimary) {
-      await db
-        .update(accounts)
-        .set({ isPrimary: true, updatedAt: new Date() })
-        .where(
-          eq(
-            accounts.id,
-            sql`(select id from ${accounts}
-                 where org_id = ${user.orgId!}
-                 and status <> 'closed'
-                 order by created_at asc limit 1)`
-          )
-        );
-    }
 
     await logAudit({
       actorType: "user",

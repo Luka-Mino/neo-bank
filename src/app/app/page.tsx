@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ChevronRight, Eye, EyeOff } from "lucide-react";
 import { IconDisc, type IconName } from "@/components/brand/icon";
 import { MonetaCardArt } from "@/components/brand/moneta-card-art";
@@ -35,6 +36,8 @@ const ACTIONS = [
 ] as const satisfies readonly { name: string; href: string; glyph: IconName }[];
 
 export default function AppHomePage() {
+  // /app?open=side opens the "Open a side account" sheet (linked from the card screen).
+  const openSide = useSearchParams().get("open") === "side";
   const { firstName, initials } = useDisplayName();
 
   const [shown, setShown] = useState(true);
@@ -170,7 +173,7 @@ export default function AppHomePage() {
               )}
             </Section>
             <div className="mx-4 mt-3 flex justify-end lg:mx-0">
-              <OpenAccountButton />
+              <OpenAccountButton autoOpen={openSide} />
             </div>
 
             {/* ── Cards ───────────────────────────────────────────────────── */}
@@ -338,15 +341,11 @@ function CardListRow({
   accountName: string | null;
 }) {
   const frozen = card.status === "frozen";
-  const kind = card.cardType === "virtual" ? "Virtual card" : "Debit card";
-  // Skip the nickname when it just repeats the kind ("Virtual" → "Virtual card").
-  const title =
-    card.nickname && !kind.toLowerCase().startsWith(card.nickname.toLowerCase())
-      ? `${card.nickname} · ${kind}`
-      : kind;
+  // A card belongs to one account (SIDE-ACCOUNTS-PLAN.md), so name it by its account.
+  const title = accountName ? `${accountName} card` : "Card";
   return (
     <Link
-      href="/app/card"
+      href={`/app/card?card=${encodeURIComponent(card.id)}`}
       className="flex items-center gap-3 border-b border-forest/[0.06] px-4 py-4 transition-colors last:border-b-0 hover:bg-forest/[0.02] active:bg-forest/[0.04]"
     >
       <span aria-hidden className={cn("w-16 shrink-0", frozen && "opacity-60 grayscale-[0.6]")}>
@@ -358,7 +357,7 @@ function CardListRow({
         </div>
         <div className="mt-0.5 text-[12px] text-forest/65">
           <span className="font-mono">•••• {card.last4}</span>
-          {accountName ? ` · ${accountName}` : ""}
+          {card.cardType === "physical" ? " · Physical" : " · Virtual"}
         </div>
       </div>
       <span
