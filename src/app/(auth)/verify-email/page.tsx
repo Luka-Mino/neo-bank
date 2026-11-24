@@ -11,17 +11,14 @@ import { cn } from "@/lib/utils";
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  // No token → error from the first render (no setState inside the effect).
   const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading"
+    token ? "loading" : "error"
   );
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(token ? "" : "Missing verification token.");
 
   useEffect(() => {
-    if (!token) {
-      setStatus("error");
-      setMessage("Missing verification token.");
-      return;
-    }
+    if (!token) return;
 
     fetch("/api/auth/verify-email", {
       method: "POST",
