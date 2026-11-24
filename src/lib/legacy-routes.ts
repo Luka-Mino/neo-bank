@@ -1,10 +1,12 @@
-// The original signed-in app ("classic dashboard", src/app/(dashboard)) was
-// replaced by /app and deleted on 2026-11-24 (PRE-DAKOTA-PLAN D1). These
-// redirects keep old bookmarks, emails and notifications working. Query
+// Old URLs that moved. The original signed-in app ("classic dashboard",
+// src/app/(dashboard)) was replaced by /app and deleted on 2026-11-24
+// (PRE-DAKOTA-PLAN D1); /personal became the homepage. These redirects keep
+// old bookmarks, emails and notifications working. Query
 // strings pass through (e.g. /send?to=… → /app/move/send?to=…).
 // Used by next.config.ts; tested in legacy-routes.test.ts.
 
 export const LEGACY_ROUTES: { source: string; destination: string }[] = [
+  { source: "/personal", destination: "/" }, // the retail page is the homepage now
   { source: "/dashboard", destination: "/app" },
   { source: "/accounts", destination: "/app" },
   { source: "/loans", destination: "/app" }, // loans were dropped (D7)

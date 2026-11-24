@@ -6,7 +6,6 @@
 //                      straight from the customer's Dakota wallet. Lead option
 //                      since 2026-11-23 (see CARD-ISSUING-PLAN.md and
 //                      DAKOTA-CARDS-SPEC.md). Dakota marks Cards sandbox-only.
-//   stripe           — Stripe Issuing fallback; not built (throws).
 //
 // Same pattern as SecretsProvider / email provider: one interface,
 // env-selected implementation, dark until configured.
@@ -39,7 +38,7 @@ export interface IssueCardRequest {
 }
 
 export interface IssuedCard {
-  // The issuer's own card id (Dakota card id, Stripe `ic_...`). Null for mock.
+  // The issuer's own card id (Dakota card id). Null for mock.
   externalCardId: string | null;
   // Dakota creates cards `pending` with last4 null until activation.
   last4: string | null;
@@ -97,7 +96,7 @@ export { mapDakotaCardStatus } from "@/lib/dakota/cards";
 class MockIssuerProvider implements IssuerProvider {
   readonly name = "mock";
 
-  async issueCard(_req: IssueCardRequest): Promise<IssuedCard> {
+  async issueCard(): Promise<IssuedCard> {
     const exp = nextExpiry();
     return {
       externalCardId: null,
@@ -296,44 +295,18 @@ const defaultDakotaDeps: DakotaCardDeps = {
   },
 };
 
-// --- Stripe Issuing: documented fallback, not built ---------------------------
-
-class StripeIssuingProvider implements IssuerProvider {
-  readonly name = "stripe";
-
-  async issueCard(_req: IssueCardRequest): Promise<IssuedCard> {
-    // Fallback path (needs a registered corp + live Stripe Issuing account):
-    //   1. Find-or-create a Stripe Cardholder (name, email, billing address).
-    //   2. stripe.issuing.cards.create({ cardholder, type, currency: "usd" }).
-    //   3. Authorization decisioning in /api/webhooks/stripe-issuing.
-    throw new Error(
-      "StripeIssuingProvider is not configured — Dakota Cards is the lead option. " +
-        "See CARD-ISSUING-PLAN.md."
-    );
-  }
-
-  async setCardStatus(): Promise<{ issuerVersion: number | null }> {
-    throw new Error("StripeIssuingProvider is not configured.");
-  }
-}
-
 // --- Selector ---------------------------------------------------------------
 
 let cached: IssuerProvider | null = null;
 
 /**
  * Returns the active issuer provider. Defaults to the mock so nothing breaks
- * until real credentials exist. ISSUING_PROVIDER=dakota | stripe | mock.
+ * until real credentials exist. ISSUING_PROVIDER=dakota | mock.
  */
 export function getIssuerProvider(): IssuerProvider {
   if (cached) return cached;
   const which = process.env.ISSUING_PROVIDER ?? "mock";
-  cached =
-    which === "dakota"
-      ? new DakotaCardProvider()
-      : which === "stripe"
-        ? new StripeIssuingProvider()
-        : new MockIssuerProvider();
+  cached = which === "dakota" ? new DakotaCardProvider() : new MockIssuerProvider();
   return cached;
 }
 

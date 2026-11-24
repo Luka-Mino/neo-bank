@@ -32,13 +32,4 @@ describe("card issuer provider", () => {
     expect(card.externalCardId).toBeNull();
     expect(card.panToken).toBeNull();
   });
-
-  it("selects the Stripe provider when flagged, which is dark until configured", async () => {
-    process.env.ISSUING_PROVIDER = "stripe";
-    __resetIssuerProvider();
-    const provider = getIssuerProvider();
-    expect(provider.name).toBe("stripe");
-    // Not wired yet — must fail loudly rather than silently mock.
-    await expect(provider.issueCard(req)).rejects.toThrow(/not configured/i);
-  });
 });

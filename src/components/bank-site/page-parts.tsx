@@ -9,7 +9,7 @@ import { SiteFooter } from "./site-footer";
 import { cn } from "@/lib/utils";
 
 // Shared chrome + building blocks for the retail-bank style public site
-// (/personal, /security, /how-it-works, legal pages).
+// (homepage, /security, /how-it-works, legal pages).
 
 export async function SiteShell({ children }: { children: React.ReactNode }) {
   const session = await auth();

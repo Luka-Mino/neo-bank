@@ -6,7 +6,6 @@
 /** Pages (and their sub-paths) that signed-out visitors may open. */
 export const PUBLIC_PATHS = [
   // Marketing / legal
-  "/personal",
   "/security",
   "/how-it-works",
   "/privacy",

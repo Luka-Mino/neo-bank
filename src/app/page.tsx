@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 // Retail-bank style homepage (D1). Never describe Moneta as a bank or as
 // "banking"; see LAUNCH-READINESS-PLAN 1b and 1c.1.
 // Copy is original; anything needing a real fact or photo is an amber
-// <Ph>/<PhotoPlaceholder>. Claims here are checked against the code — see
+// <Ph>. Claims here are checked against the code — see
 // LAUNCH-READINESS-PLAN 3.4 before adding new ones.
 export default function HomePage() {
   return (

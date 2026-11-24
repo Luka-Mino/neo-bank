@@ -1,7 +1,7 @@
 import { SiteShell } from "@/components/bank-site/page-parts";
 
 // Shared chrome for standalone public pages (/security, /how-it-works) —
-// the retail-bank style header/footer used by /personal.
+// the site header and footer used by the homepage.
 export default function MarketingLayout({
   children,
 }: {

@@ -65,21 +65,6 @@ export async function createTransaction(
   );
 }
 
-export async function getTransaction(txId: string): Promise<DakotaTransaction> {
-  return dakota.get<DakotaTransaction>(`/transactions/${txId}`);
-}
-
-export async function listTransactions(params?: {
-  limit?: number;
-  startingAfter?: string;
-}): Promise<{ data: DakotaTransaction[]; total_count: number; has_more_after: boolean }> {
-  const queryParams: Record<string, string> = {};
-  if (params?.limit) queryParams.limit = params.limit.toString();
-  if (params?.startingAfter) queryParams.starting_after = params.startingAfter;
-
-  return dakota.get("/transactions", queryParams);
-}
-
 // 204 on success; 400 when the transaction is no longer cancellable.
 export async function cancelTransaction(txId: string): Promise<void> {
   await dakota.post<void>(`/transactions/${txId}/cancellations`);

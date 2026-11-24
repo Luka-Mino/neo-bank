@@ -46,14 +46,7 @@ export const DEMO_ACCOUNTS = [
   },
 ];
 
-export const DEMO_BALANCE = {
-  totalUsd: DEMO_ACCOUNTS.reduce(
-    (s, a) => s + Number(a.balance),
-    0
-  ).toFixed(2),
-};
 
-// Cards: one virtual on Checking, one physical on Savings.
 // Every account has its own virtual card, and each card only spends its own
 // account's money (SIDE-ACCOUNTS-PLAN.md). One is frozen to show that state.
 export const DEMO_CARDS = [

@@ -471,7 +471,7 @@ export const cards = pgTable(
     expYear: smallint("exp_year"),
     network: text("network"), // 'visa' | 'mastercard'
     panToken: text("pan_token"), // placeholder for issuer PAN reference
-    // Issuer's own card id (e.g. Stripe `ic_...`). Null for mock-issued cards.
+    // Issuer's own card id (e.g. the Dakota card id). Null for mock-issued cards.
     // The auth webhook maps an incoming authorization back to our card by this.
     externalCardId: text("external_card_id"),
     // Issuer's monotonically increasing card version (Dakota `version`); events

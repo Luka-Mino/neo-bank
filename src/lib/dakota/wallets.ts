@@ -80,12 +80,6 @@ export function parseCardSpending(r: Pick<WalletBalancesResponse, "card">): Card
   };
 }
 
-interface WalletBalance {
-  network_id: string;
-  asset: string;
-  balance: string;
-}
-
 export async function createWallet(
   params: CreateWalletParams,
   opts?: { idempotencyKey?: string }

@@ -27,13 +27,14 @@ jobs:
       # Dev-tooling advisories are tracked by Dependabot, not a merge blocker.
       - run: npm audit --omit=dev --audit-level=high
       - run: npx tsc --noEmit
+      - run: npm run lint
       # Row-level security guard: systemDb only in allowlisted files, and no
       # protected-table queries on the global db (PRE-DAKOTA-PLAN C1).
       - run: node scripts/check-db-access.mjs
       - run: npm test
       - run: npm run build
         env:
-          # Build-time env validation needs shapes, not real secrets.
+          # Placeholders: modules read these at import time; no real secrets.
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
           AUTH_SECRET: ci-only-secret-not-real-1234
           DAKOTA_API_KEY: ci-placeholder

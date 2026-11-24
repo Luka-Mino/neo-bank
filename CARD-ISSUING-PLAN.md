@@ -23,7 +23,9 @@
 > **Implications.** No separate issuer, no Stripe Issuing application, and no
 > 2-second authorization webhook of our own. `ISSUING_PROVIDER=dakota` selects
 > the new `DakotaCardProvider` in `src/lib/card-issuer.ts`. The Stripe Issuing
-> path below stays as the documented **fallback**.
+> path below stays as the documented **fallback**. Its unbuilt stub (provider,
+> authorization webhook, `src/lib/issuing/`) was removed on 2026-11-24; it is
+> in git history at commit `e9ec4fe` if the fallback is ever needed.
 >
 > **Open questions for Dakota:**
 > - Physical cards. The docs describe virtual only, and our card designs are physical.

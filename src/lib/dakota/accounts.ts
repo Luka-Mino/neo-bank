@@ -66,20 +66,3 @@ export async function createAccount(
     opts
   );
 }
-
-export async function getAccount(accountId: string): Promise<DakotaAccount> {
-  return dakota.get<DakotaAccount>(`/accounts/${accountId}`);
-}
-
-export async function listAccounts(params?: {
-  accountType?: string;
-  limit?: number;
-  startingAfter?: string;
-}): Promise<{ data: DakotaAccount[]; total_count: number; has_more_after: boolean }> {
-  const queryParams: Record<string, string> = {};
-  if (params?.accountType) queryParams.account_type = params.accountType;
-  if (params?.limit) queryParams.limit = params.limit.toString();
-  if (params?.startingAfter) queryParams.starting_after = params.startingAfter;
-
-  return dakota.get("/accounts", queryParams);
-}

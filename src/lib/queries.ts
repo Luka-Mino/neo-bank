@@ -1,4 +1,4 @@
-// Query key factory + fetch helper — adapted from Lawzy
+// Client-side data fetching: the JSON fetch helper and shared React Query keys.
 
 // ─── Fetcher utility ────────────────────────────────────────────────────────
 
@@ -19,61 +19,18 @@ export async function fetchApi<T>(
   return json;
 }
 
-// ─── Query key factory ──────────────────────────────────────────────────────
+// ─── Shared query keys ──────────────────────────────────────────────────────
+// Keys for data that several screens read and invalidate (opening an account
+// also adds its card, for example). A query used by one screen only keeps an
+// inline key next to its useQuery.
 
 export const queryKeys = {
-  customer: {
-    all: ["customer"] as const,
-    me: ["customer", "me"] as const,
-  },
-
-  // User-facing banking accounts (checking, savings, ...)
   accounts: {
     all: ["accounts"] as const,
     list: ["accounts", "list"] as const,
-    balances: ["accounts", "balances"] as const,
-    detail: (id: string) => ["accounts", "detail", id] as const,
-    transactions: (id: string) => ["accounts", "transactions", id] as const,
   },
-
-  // Issued cards belonging to the user
   cards: {
     all: ["cards"] as const,
     list: ["cards", "list"] as const,
-    detail: (id: string) => ["cards", "detail", id] as const,
-  },
-
-  // Dakota on-ramp / off-ramp rail config (NOT user-facing accounts)
-  rails: {
-    all: ["rails"] as const,
-    byType: (type: string) => ["rails", "type", type] as const,
-  },
-
-  // Custodial Dakota wallet (one per user). Kept for the existing dashboard
-  // query during the migration window; the dashboard reads accounts/balances
-  // for new code.
-  wallets: {
-    all: ["wallets"] as const,
-    balances: ["wallets", "balances"] as const,
-    detail: (id: string) => ["wallets", "detail", id] as const,
-  },
-
-  transactions: {
-    all: ["transactions"] as const,
-    list: (params?: { accountId?: string; status?: string; type?: string }) =>
-      ["transactions", "list", params ?? {}] as const,
-    detail: (id: string) => ["transactions", "detail", id] as const,
-  },
-
-  recipients: {
-    all: ["recipients"] as const,
-    detail: (id: string) => ["recipients", "detail", id] as const,
-    destinations: (id: string) =>
-      ["recipients", "destinations", id] as const,
-  },
-
-  notifications: {
-    all: ["notifications"] as const,
-    unread: ["notifications", "unread"] as const,
   },
 };

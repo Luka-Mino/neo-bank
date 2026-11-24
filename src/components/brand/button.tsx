@@ -178,36 +178,3 @@ export function TextLink({
     </Link>
   );
 }
-
-/** Square icon button. `label` is required: it is the accessible name. */
-export function IconButton({
-  label,
-  size = "sm",
-  tone = "light",
-  className,
-  children,
-  type = "button",
-  ...props
-}: { label: string; size?: "sm" | "md"; tone?: "light" | "dark"; children: ReactNode } & Omit<
-  ComponentProps<"button">,
-  "children" | "aria-label"
->) {
-  return (
-    <button
-      type={type}
-      aria-label={label}
-      className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-[12px] transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.96]",
-        "outline-none focus-visible:shadow-[0_0_0_2px_#fff,0_0_0_4px_#4ac280]",
-        size === "sm" ? "h-10 w-10" : "h-12 w-12",
-        tone === "light"
-          ? "border-[1.5px] border-forest/15 bg-white text-forest hover:border-forest/30"
-          : "text-white/80 hover:bg-white/10 hover:text-white focus-visible:shadow-[0_0_0_2px_#122e2e,0_0_0_4px_#4ac280]",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-}

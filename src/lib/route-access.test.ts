@@ -4,7 +4,6 @@ import { isAuthEntryPath, isPublicPath } from "./route-access";
 describe("isPublicPath (protected by default)", () => {
   it.each([
     "/",
-    "/personal",
     "/security",
     "/how-it-works",
     "/privacy",
@@ -37,7 +36,7 @@ describe("isPublicPath (protected by default)", () => {
     // Old classic-dashboard URLs redirect to /app (next.config.ts) and stay private.
     "/dashboard",
     "/send",
-    "/design/hero",
+    "/design/og",
     "/some-new-page",
   ])("requires a session for %s", (p) => {
     expect(isPublicPath(p)).toBe(false);

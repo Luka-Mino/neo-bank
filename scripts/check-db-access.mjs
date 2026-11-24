@@ -40,7 +40,6 @@ export const SYSTEM_ALLOWLIST = {
   "src/app/api/transfers/recurring/run/route.ts": "cron scan of due rules across orgs; each rule then runs in withOrg",
   "src/app/api/users/route.ts": "account deletion: user-level, across the user's orgs",
   "src/app/api/users/data/route.ts": "data export: user-level, across the user's orgs",
-  "src/app/api/webhooks/stripe-issuing/route.ts": "legacy issuer webhook: no signed-in org",
   "src/lib/transfers.ts": "findInternalLedgerDrift: system-wide ledger check",
   "src/lib/card-issuer.ts": "TEMPORARY: per-user card lookups predate orgs; move to withOrg in plan 5.3",
 };

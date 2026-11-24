@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { eq, and, isNull, gt } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { db } from "@/lib/db";

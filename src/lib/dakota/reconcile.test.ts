@@ -28,7 +28,10 @@ function deps(
     const page = pages.shift() ?? { data: [] };
     return { data: page.data, meta: { has_more_after: page.has_more_after ?? false } };
   });
-  const processEvent = vi.fn(async (_e: DakotaEventEnvelope) => ({ outcome }));
+  const processEvent = vi.fn(async (e: DakotaEventEnvelope) => {
+    void e;
+    return { outcome };
+  });
   return { fetchPage, processEvent } satisfies SweepDeps & {
     fetchPage: ReturnType<typeof vi.fn>;
     processEvent: ReturnType<typeof vi.fn>;

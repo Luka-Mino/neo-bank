@@ -11,20 +11,21 @@ function pageExists(route: string): boolean {
   return existsSync(join(appDir, ...segs, "page.tsx"));
 }
 
-describe("legacy (classic dashboard) redirects", () => {
-  it("every destination is a real /app page", () => {
+describe("legacy redirects", () => {
+  it("every destination is a real page", () => {
     for (const { destination } of LEGACY_ROUTES) {
-      expect(destination.startsWith("/app")).toBe(true);
       expect(pageExists(destination), destination).toBe(true);
     }
   });
 
   it("no old page is left behind to shadow a redirect", () => {
     expect(existsSync(join(appDir, "(dashboard)"))).toBe(false);
+    expect(existsSync(join(appDir, "personal"))).toBe(false);
   });
 
   it("maps old paths, including dynamic ones", () => {
     expect(resolveLegacyPath("/dashboard")).toBe("/app");
+    expect(resolveLegacyPath("/personal")).toBe("/");
     expect(resolveLegacyPath("/transactions/abc-123")).toBe("/app/activity/abc-123");
     expect(resolveLegacyPath("/transfer-out")).toBe("/app/move/withdraw");
     expect(resolveLegacyPath("/app")).toBeNull();

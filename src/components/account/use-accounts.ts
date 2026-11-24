@@ -19,22 +19,7 @@ export type AccountRow = {
   updatedAt?: string;
 };
 
-export type AccountBalanceRow = Pick<
-  AccountRow,
-  | "id"
-  | "accountType"
-  | "nickname"
-  | "currency"
-  | "balance"
-  | "status"
-  | "isPrimary"
->;
-
 type ListResp = { success: true; data: { data: AccountRow[] } };
-type BalancesResp = {
-  success: true;
-  data: { data: { totalUsd: string; accounts: AccountBalanceRow[] } };
-};
 
 export function useAccountsQuery() {
   return useQuery<AccountRow[]>({
@@ -46,27 +31,6 @@ export function useAccountsQuery() {
     },
   });
 }
-
-export function useAccountBalances() {
-  return useQuery({
-    queryKey: queryKeys.accounts.balances,
-    queryFn: async () => {
-      if (DEMO_MODE) {
-        const accts = DEMO_ACCOUNTS as unknown as AccountBalanceRow[];
-        const totalUsd = accts
-          .reduce((s, a) => s + Number(a.balance), 0)
-          .toFixed(2);
-        return { totalUsd, accounts: accts };
-      }
-      const res = await fetchApi<BalancesResp>("/api/accounts/balances");
-      return res.data.data;
-    },
-  });
-}
-
-// useSelectedAccount lives in ./use-selected-account-url. Re-export for
-// back-compat with existing callers that still import from here.
-export { useSelectedAccountUrl as useSelectedAccount } from "./use-selected-account-url";
 
 // ─── Cards ──────────────────────────────────────────────────────────────────
 
