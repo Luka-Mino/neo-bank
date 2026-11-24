@@ -57,6 +57,10 @@ Send this to your Dakota contact on Telegram. Edit freely. Questions 1–3 decid
 >    Google Pay by typing it in, and do you support one-tap "Add to Apple
 >    Wallet" (push provisioning) for a native app? Are physical cards coming,
 >    and when does Cards leave sandbox?
+>    We plan side accounts, each its own wallet with its own virtual card:
+>    what's the maximum number of active cards per person, are there
+>    per-wallet fees, can each wallet have its own deposit details, and can a
+>    card move to another wallet?
 > 7. **RD.** Which entity issues it, will it be a permitted issuer by
 >    18 Jan 2027, and how are rewards funded?
 > 8. **Tax.** Who files 1099-DA for USDC redemptions: you or the platform?
@@ -395,7 +399,7 @@ These go in a new `compliance/` folder. They are **drafts for the lawyer**, writ
 > - **Card screen:** "Available to spend" and "On hold" from Dakota's wallet `card` figures (`GET /api/cards/spending`, parsing tested against Dakota's documented example), with a plain explanation of why holds can exceed the bill (tips, fuel, hotels, foreign currency).
 > - **"Pay in shops with your phone":** iPhone and Android steps for adding the card to Apple Pay / Google Pay by typing in the details. Hidden outside demo mode until Dakota's Cards.js card-details viewer is wired (`CARD_DETAILS_REVEAL_READY`, plan 5.2), so customers are never shown steps they can't finish.
 > - **Native app:** `NATIVE-APP-PLAN.md`. One-tap "Add to Apple Wallet" needs Dakota's push-provisioning support plus Apple and Google approval. Recommended: a native shell around `/app` first. Decisions D16/D17 are there.
-> - **Open decision (D18): cards vs named accounts.** Dakota approves card payments against the customer's whole wallet, but Moneta splits the wallet into named accounts and the card "pays from" one of them. A card on a small account could therefore spend money that sits in another. Options: (a) cards always pay from the main account, and the screen says the card can use your whole balance; (b) one Dakota wallet per named account, so each account and its cards are truly separate (provisioning change); (c) per-card spend limits as a soft cap (Dakota limits are per period, not per balance). Decide before cards go live.
+> - **Decided (D18), 2026-11-24: a main account plus side accounts, Rain-style.** Everyone starts with one account and one card. Customers can open **side accounts**, each with **its own balance and its own virtual card** (digital only). Each account is its own Dakota wallet, so a card can only spend its own account's money. Paying from a different pot means picking that account's card in Apple Pay / Google Pay. Dakota supports this: several wallets per customer, each card funded by one wallet, many cards per person (up to an unpublished maximum), and a one-time card permission the customer signs per wallet. Build steps are in §8 under "Side accounts".
 
 ## 8. Don't build yet: waiting on Dakota
 
@@ -413,6 +417,18 @@ Q numbers refer to the message in A1.
 | RD and any rewards | Dakota Q7 + the lawyer | GENIUS Act rules from 18 Jan 2027 |
 
 ---
+
+### Side accounts (D18): build once Dakota's sandbox is available
+
+1. **Provisioning:** one Dakota wallet per Moneta account. The main account's wallet is created at onboarding, as today. Opening a side account creates a new wallet with the same signer and policy setup (fits the custody redesign).
+2. **Open a side account:** name it → create the wallet → the customer signs the one-time card permission → issue its virtual card. Optionally pick a card design per account (Dakota allows approved designs per card).
+3. **Moving money between your own accounts:** a Dakota wallet-to-wallet transfer (seconds, small network fee) replaces today's database book entry. That also removes our internal money ledger, which the licensing research flagged.
+4. **Balances:** each account's balance comes from its own wallet (`card.available` for spending).
+5. **Card screen:** one card belongs to one account; the "Pays from" switch goes away.
+6. **Close a side account:** move what's left to the main account, close its cards, then close the wallet.
+7. **Copy:** "move money between them instantly" becomes "in seconds".
+
+Dakota questions (added to A1 Q6): the maximum active cards per person; any per-wallet fees; whether each wallet can have its own deposit details; whether a card can move to another wallet.
 
 ## 9. Near launch: switch-ons that need a hosted backend
 
