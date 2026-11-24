@@ -92,23 +92,33 @@
 > Before any real customer money moves. The sandbox drill (5.2) can still run
 > on the current design, since sandbox funds aren't real.
 
-### Can start now (no Dakota answers needed)
+### What Dakota already does (checked against docs.dakota.xyz on 2026-11-24): don't build
 
-- [ ] **1c.1 Drop "banking" as a self-description.** Page titles "Moneta | Personal banking" (`src/app/layout.tsx`, `src/app/page.tsx`), eyebrows and headlines in `src/app/page.tsx` ("Personal banking", "Banking that keeps up with you", "Everyday banking", "Banking with Moneta"), the footer column and tagline (`site-footer.tsx`), the auth layout, the header aria-label, `page-parts.tsx` and the design/og pages. **Done when:** "banking" appears only in references to Dakota's partners.
-- [ ] **1c.2 Residence gate before KYC.** Collect state of residence first. Allow only Dakota's licensed states (a config list, filled in from Dakota Q8) minus CA and NY. Block Dakota's 35 prohibited jurisdictions, and hide RD in FL, GA, NY, TX, WA and LA. **Done when:** a CA or NY address can't start KYC.
-- [ ] **1c.3 Passkeys (WebAuthn) for sign-in and step-up.** Today MFA is TOTP only. Passkeys are the groundwork for user signing in 1c.7. **Done when:** a user can register two or more passkeys and confirm a send with one.
-- [ ] **1c.4 Consent records.** Get E-SIGN consent before any electronic disclosure. Store which version of each document every user accepted, and when: Moneta Terms and Privacy, plus Dakota's Terms, Funds Transfer Agreement, privacy policies and accuracy attestation.
-- [ ] **1c.5 Complaints intake.** An in-app form, logged with a status, and forwarded to Dakota per the contract. Partners ask for this.
-- [ ] **1c.6 Hold the line.** No rewards, no RD, no Moneta-to-Moneta book transfers, no new server-initiated on-chain sends.
+- **KYC/KYB, ID documents, sanctions screening, transaction monitoring, wallet-address screening.** Dakota runs these on every customer and payment. A blocked send comes back as `compliance-blocked` (422); we only show it.
+- **The six consent attestations** (E-Sign first, then Dakota Terms, Privacy, Funds Transfer Agreement, Lead Bank privacy, accuracy). The hosted form at `application_url` collects them. If we ever build a custom KYC UI, we'd have to collect them ourselves, which is one more reason to stay on the hosted form.
+- **Proof of address.** Dakota freezes anyone over $3,000 in a rolling 7 days without approved proof of address, and the hosted link lets them upload it later. We only show the status (`poa_status`, the `pending_proof_of_address` webhook).
+- **RD geofencing.** Dakota blocks RD by state itself (`state-restricted-rd`; the docs now list GA, NY, TX, WA and LA, without FL). We aren't offering RD anyway.
+- **Prohibited countries.** Covered by Dakota's screening and terms.
+- **Cards terms.** Only the customer can accept, on Dakota's hosted page. There's no API for it.
+- **Card dispute filing.** The cardholder tells us, we report it with `POST /card_dispute_reports`, and Dakota files it with Visa.
+- Note: Dakota Cards is still **sandbox-only** per their docs.
 
-### After Dakota answers on the wallet model and consumer programme (§5.1 Q6, Q7, Q12)
+### Can start now (needed whatever Dakota answers)
 
-- [ ] **1c.7 Custody redesign.** One of two options:
-  - **(a) Dakota is the custodian.** If Dakota offers wallets it hosts for platform end users, switch wallet creation to that model. Least code.
-  - **(b) Users hold the key.** Register each user's passkey as a Dakota `WEBAUTHN` signer, with a per-wallet policy that needs the user's signature (user-only, or 2-of-2 with the platform key). The browser signs each send intent. Governance changes also need the user. Recovery is a second passkey, never platform-only.
-  - **Touches:** `src/lib/dakota/{signing,wallets,wallet-transactions,provisioning}.ts`, `scripts/dakota-bootstrap.ts`, the send and withdraw routes, and `review-sheet.tsx` (the signing step).
-- [ ] **1c.8 Team approvals enforced by Dakota.** Under (b), each approver's passkey joins the org's Dakota signer group with threshold M. Dakota then enforces M-of-N for on-chain sends, not our database.
-- [ ] **1c.9 Onboarding for the chosen segment (D9).** Business-first uses Dakota KYB (`customerType: "business"` already exists in `src/lib/dakota/customers.ts`). Consumer-first waits until Dakota confirms a consumer programme in writing.
+- [ ] **1c.1 Drop "banking" as a self-description.** Page titles "Moneta | Personal banking" (`src/app/layout.tsx`, `src/app/page.tsx`), eyebrows and headlines in `src/app/page.tsx` ("Personal banking", "Banking that keeps up with you", "Everyday banking", "Banking with Moneta"), the footer column and tagline (`site-footer.tsx`), the auth layout, the header aria-label, `page-parts.tsx` and the design/og pages. Dakota can't do this for us. **Done when:** "banking" appears only in references to Dakota's partners.
+- [ ] **1c.2 Accept Moneta's own Terms and Privacy at sign-up.** Dakota's attestations cover only Dakota's documents. Today the register flow records no acceptance of ours. Store the document version and timestamp. **Done when:** every new user row has an accepted terms version.
+- [ ] **1c.3 Support and complaints intake.** Dakota's split puts support on us ("your team owns the customer relationship … support"), and card disputes reach us first. A simple in-app form, logged with a status, that can be forwarded to Dakota (cards: `POST /card_dispute_reports`).
+- [ ] **1c.4 Hold the line.** No rewards, no RD, no Moneta-to-Moneta book transfers, no new server-initiated on-chain sends.
+
+### Wait for Dakota's answers before building (§5.1 Q6, Q7, Q8, Q12)
+
+- [ ] **1c.5 Residence gate (Q8).** Dakota's docs show no state geofence for USDC; their examples even onboard CA and NY addresses. Its licences page lists 20 states but says "licensed **or otherwise authorized**". Ask whether Dakota enforces state eligibility at KYC. If it does, build nothing; if not, gate sign-up to the states Dakota names.
+- [ ] **1c.6 Custody redesign (Q7, Q12).** Dakota's public docs offer only non-custodial wallets, so "(a) Dakota is the custodian" exists only if Dakota offers it privately.
+  - **(a) Dakota hosts the wallet** (e.g., the three-shard "Dakota-Supported Wallet" in their Terms). Least code: change wallet creation.
+  - **(b) Users hold the key.** Dakota verifies passkey signatures but doesn't host the passkey ceremony. We build browser registration and signing (`navigator.credentials`, with `@simplewebauthn/server` for the COSE key, per Dakota's WebAuthn guide). We use Dakota's TypeScript SDK for signer-group governance. Per-wallet policy needs the user's signature. The same passkey can also be the login factor. Recovery is a second passkey, never platform-only. Dakota's card enablement already assumes the customer holds the key, so (b) fits cards too.
+  - **Touches:** `src/lib/dakota/{signing,wallets,wallet-transactions,provisioning}.ts`, `scripts/dakota-bootstrap.ts`, the send and withdraw routes, and `review-sheet.tsx`.
+- [ ] **1c.7 Team approvals enforced by Dakota (only under b).** Each approver's passkey joins the org's signer group with threshold M, so Dakota's policy engine enforces M-of-N for on-chain sends.
+- [ ] **1c.8 Onboarding for the chosen segment (D9, Q6).** Business-first uses Dakota's hosted KYB (`customerType: "business"` already exists in `src/lib/dakota/customers.ts`). Consumer-first waits until Dakota confirms a consumer programme in writing.
 
 ---
 
@@ -428,7 +438,7 @@ Licensing questions (from §1b; the full list of 12 is at the end of `reports/Mo
 
 6. Do you run a **consumer** programme? Your public Terms and the Lead Bank Funds Transfer Agreement say no personal or household use. What are the consumer terms?
 7. Can we be your **agent or authorised delegate**, and what contract covers it? With our server holding the only signing key, the research says we'd likely be a money transmitter ourselves.
-8. Your **licence footprint**: which 20 states? Do you hold a NY BitLicense, a California DFAL licence, or a Louisiana crypto licence?
+8. Your **licence footprint**: which states can our users live in for USDC (your licences page lists 20, "or otherwise authorized")? Do you enforce that at KYC, or must we? Do you hold a NY BitLicense, a California DFAL licence, or a Louisiana crypto licence?
 9. Who is the **1099-DA broker** for USDC redemptions: you or us?
 10. Who issues **RD**? Will it be a permitted issuer by 2027-01-18, and how are rewards funded?
 11. Would you onboard an **offshore** licensed entity as a platform, and from which countries?

@@ -71,7 +71,7 @@
 - [ ] Swap accounts / one-off swaps (USDC↔USDT cross-chain) — Dakota supports both reusable and one-off
 - [ ] Custom in-app KYC UI replacing Dakota's hosted form (application endpoints + document upload + attestation sequencing)
 - [ ] Sumsub token import — onboard users already KYC'd elsewhere without re-verification (needs tri-party Sumsub agreement)
-- [ ] RD stablecoin support on Base (blocked: state-restricted in FL/GA/NY/TX/WA/LA)
+- [ ] RD stablecoin support on Base (blocked: Dakota geofences RD by state; docs list GA/NY/TX/WA/LA as of 2026-11-24, FL dropped. Also a counsel question on rewards)
 - [ ] Fedwire same-day withdrawals as a premium feature (one-off transfers support per-txn rail override)
 - [ ] Dakota MCP server in dev tooling (read-only sandbox inspection from Claude Code)
 - [ ] Adopt official @dakota-xyz/ts-sdk if our hand-rolled client drifts from their OpenAPI
