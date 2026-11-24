@@ -42,6 +42,12 @@ export const users = pgTable("users", {
   // but transaction/audit records are RETAINED — AML/BSA require multi-year
   // retention, so "delete" is anonymize-and-close, not a hard row delete.
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  // Moneta's own Terms and Privacy versions accepted at sign-up (see
+  // src/lib/legal.ts). Set server-side from LEGAL_DOCS, never from the
+  // request. NULL for users created before migration 0020.
+  termsVersion: text("terms_version"),
+  privacyVersion: text("privacy_version"),
+  legalAcceptedAt: timestamp("legal_accepted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -761,4 +767,38 @@ export const notifications = pgTable(
     index("idx_notifications_user").on(table.userId),
     index("idx_notifications_unread").on(table.userId, table.readAt),
   ]
+);
+
+// ─── Support requests and complaints ────────────────────────────────────────
+// Support sits with Moneta under Dakota's model, and card disputes reach us
+// before we report them to Dakota (POST /card_dispute_reports). Category and
+// status values are CHECK-constrained in migration 0020; keep them in step
+// with src/lib/support.ts.
+
+export const supportRequests = pgTable(
+  "support_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // Short human-facing reference quoted in emails and to Dakota, e.g. "SUP-7K2Q9X".
+    reference: text("reference").notNull().unique(),
+    orgId: uuid("org_id").references(() => organizations.id, { onDelete: "set null" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    category: text("category").notNull(),
+    subject: text("subject").notNull(),
+    message: text("message").notNull(),
+    // Optional link to the payment the request is about (not an FK: the row
+    // may be in another org's view or later archived).
+    transactionId: uuid("transaction_id"),
+    status: text("status").notNull().default("open"),
+    // Set when we pass the request to a partner, e.g. "dakota".
+    forwardedTo: text("forwarded_to"),
+    forwardedAt: timestamp("forwarded_at", { withTimezone: true }),
+    externalReference: text("external_reference"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("idx_support_requests_user").on(table.userId, table.createdAt)]
 );

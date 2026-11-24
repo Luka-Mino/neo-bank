@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   History,
   LayoutDashboard,
+  LifeBuoy,
   LogOut,
   Settings,
   ShieldCheck,
@@ -61,6 +62,12 @@ export default function AppMorePage() {
               hint: "Profile, password, two-step sign-in",
               href: "/app/more/settings",
               icon: Settings,
+            },
+            {
+              name: "Help & support",
+              hint: "Questions, complaints and problems with a payment",
+              href: "/app/more/help",
+              icon: LifeBuoy,
             },
             {
               name: "Security",

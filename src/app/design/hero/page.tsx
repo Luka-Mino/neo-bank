@@ -35,7 +35,7 @@ function VariantA() {
       <div className="absolute inset-0 bg-gradient-to-r from-[#0a1717] via-[#0a1717]/80 to-[#0a1717]/20" />
       <div className="relative mx-auto flex min-h-[620px] max-w-6xl flex-col justify-center px-6 py-20 lg:px-10">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#4ac280]">
-          Regulated stablecoin banking
+          Digital dollars on regulated rails
         </p>
         <h1 className="font-display mt-5 max-w-2xl text-5xl font-semibold leading-[1.02] tracking-tight text-white md:text-6xl lg:text-7xl">
           Money that holds its value, and moves in seconds.
@@ -77,7 +77,7 @@ function VariantB() {
             Open an account <ArrowRight className="h-4 w-4" />
           </Link>
           <span className="text-sm text-white/45">
-            Bank-grade encryption · No hidden fees
+            Two-step sign-in · Fees itemised on every receipt
           </span>
         </div>
       </div>
@@ -93,7 +93,7 @@ function VariantC() {
       <div className="mx-auto grid min-h-[620px] max-w-6xl grid-cols-1 items-center gap-12 px-6 py-20 lg:grid-cols-[1.1fr_0.9fr] lg:px-10">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#4ac280]">
-            Stablecoin banking, regulated rails
+            Digital dollars, regulated rails
           </p>
           <h1 className="font-display mt-5 text-5xl font-semibold leading-[1.03] tracking-tight text-white md:text-6xl">
             Real dollars, moving in real time.

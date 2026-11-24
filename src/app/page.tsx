@@ -10,17 +10,18 @@ import { Icon, IconDisc, type IconName } from "@/components/brand/icon";
 import { CoinSeal, MonetaCardArt, MonetaCardPair } from "@/components/brand/moneta-card-art";
 
 export const metadata: Metadata = {
-  title: "Moneta | Personal banking",
+  title: "Moneta | Everyday money",
   description:
     "Checking, savings, a debit card with real controls, and simple ways to send and track your money.",
   alternates: { canonical: "/" },
 };
 
-// Retail-bank style personal banking home (D1: this is the homepage).
+// Retail-bank style homepage (D1). Never describe Moneta as a bank or as
+// "banking"; see LAUNCH-READINESS-PLAN 1b and 1c.1.
 // Copy is original; anything needing a real fact or photo is an amber
 // <Ph>/<PhotoPlaceholder>. Claims here are checked against the code — see
 // LAUNCH-READINESS-PLAN 3.4 before adding new ones.
-export default function PersonalBankingPage() {
+export default function HomePage() {
   return (
     <SiteShell>
       <Hero />
@@ -62,9 +63,9 @@ function Hero() {
       />
       <div className="relative mx-auto grid max-w-[1200px] items-center gap-8 px-4 py-10 lg:grid-cols-[1.1fr_1fr] lg:gap-12 lg:px-8 lg:py-16">
         <div className="engraved bg-white/90 p-8 shadow-[0_24px_60px_-34px_rgba(18,46,46,0.45)] backdrop-blur-sm [--r:24px] lg:p-11">
-          <p className="eyebrow text-copper">Personal banking</p>
+          <p className="eyebrow text-copper">Personal accounts</p>
           <h1 className="mt-4 font-display text-[34px] font-semibold leading-[1.08] tracking-[-0.015em] lg:text-[46px]">
-            Banking that keeps up with you
+            Money that keeps up with you
           </h1>
           <p className="mt-4 max-w-[46ch] text-[16px] leading-relaxed text-forest/70">
             Checking, savings and a debit card in one place. Move money between
@@ -118,7 +119,7 @@ function Welcome() {
   return (
     <section className="mx-auto max-w-[1200px] px-4 py-16 lg:px-8 lg:py-20">
       <div className="text-center">
-        <p className="eyebrow text-copper">Everyday banking</p>
+        <p className="eyebrow text-copper">Everyday money</p>
         <h2 className="mt-3 font-display text-[30px] font-semibold tracking-[-0.01em] lg:text-[38px]">
           Your money, in one clear place
         </h2>
@@ -281,9 +282,9 @@ function Products() {
       />
       <div className="relative mx-auto max-w-[1200px] px-4 py-16 lg:px-8 lg:py-24">
         <div className="max-w-[60ch]">
-          <p className="eyebrow text-copper-light">Banking with Moneta</p>
+          <p className="eyebrow text-copper-light">With Moneta</p>
           <h2 className="mt-3 font-display text-[30px] font-semibold tracking-[-0.01em] lg:text-[38px]">
-            Everything for everyday banking
+            Everything for your everyday money
           </h2>
           <p className="mt-3 text-[16px] leading-relaxed text-white/65">
             No mortgages, loans or investment products — just the accounts,

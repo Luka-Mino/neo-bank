@@ -122,6 +122,34 @@ export default function RegisterPage() {
               <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
             )}
           </div>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2.5">
+              <input
+                id="acceptTerms"
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-primary"
+                aria-invalid={errors.acceptTerms ? true : undefined}
+                aria-describedby={errors.acceptTerms ? "acceptTerms-error" : undefined}
+                {...register("acceptTerms")}
+              />
+              <Label htmlFor="acceptTerms" className="text-sm font-normal leading-snug text-muted-foreground">
+                I agree to Moneta&apos;s{" "}
+                <Link href="/terms" target="_blank" className="text-primary underline underline-offset-4">
+                  Terms of use
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" target="_blank" className="text-primary underline underline-offset-4">
+                  Privacy policy
+                </Link>
+                .
+              </Label>
+            </div>
+            {errors.acceptTerms && (
+              <p id="acceptTerms-error" className="text-sm text-destructive">
+                {errors.acceptTerms.message}
+              </p>
+            )}
+          </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button type="submit" className="w-full" disabled={isSubmitting}>

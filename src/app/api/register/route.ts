@@ -8,12 +8,15 @@ import { users, emailVerificationTokens } from "@/lib/db/schema";
 import { createPersonalOrg } from "@/lib/orgs";
 import { registerSchema } from "@/lib/validators/auth";
 import { sendVerificationEmail } from "@/lib/email";
+import { logAudit } from "@/lib/audit";
+import { LEGAL_DOCS } from "@/lib/legal";
+import { getClientIp } from "@/lib/rate-limit";
 
 export const POST = apiHandler({
   auth: false,
   rateLimit: { limit: 5, window: "15m" },
   schema: registerSchema,
-  handler: async ({ body }) => {
+  handler: async ({ body, request }) => {
     const { fullName, email, password } = body;
     const normalizedEmail = email.toLowerCase();
 
@@ -34,14 +37,40 @@ export const POST = apiHandler({
     // Create the user + their personal org (owner membership) atomically, then
     // point the user at that org. Every user belongs to at least one org.
     const passwordHash = await bcrypt.hash(password, 12);
+    // The schema already required acceptTerms === true. Record which versions
+    // were accepted from the server's copy, never from the request.
+    const acceptedAt = new Date();
     const user = await db.transaction(async (tx) => {
       const [u] = await tx
         .insert(users)
-        .values({ email: normalizedEmail, passwordHash, fullName })
+        .values({
+          email: normalizedEmail,
+          passwordHash,
+          fullName,
+          termsVersion: LEGAL_DOCS.terms.version,
+          privacyVersion: LEGAL_DOCS.privacy.version,
+          legalAcceptedAt: acceptedAt,
+        })
         .returning({ id: users.id });
       const orgId = await createPersonalOrg(tx, u.id, fullName);
       await tx.update(users).set({ activeOrgId: orgId }).where(eq(users.id, u.id));
-      return u;
+      return { ...u, orgId };
+    });
+
+    await logAudit({
+      orgId: user.orgId,
+      actorId: user.id,
+      actorType: "user",
+      action: "legal.accepted",
+      resourceType: "user",
+      resourceId: user.id,
+      metadata: {
+        termsVersion: LEGAL_DOCS.terms.version,
+        privacyVersion: LEGAL_DOCS.privacy.version,
+        acceptedAt: acceptedAt.toISOString(),
+        context: "sign_up",
+      },
+      ipAddress: getClientIp(request),
     });
 
     // Send verification email

@@ -87,9 +87,9 @@ export function Header() {
             <div className="flex items-start gap-2 rounded-lg bg-white/5 px-3 py-2">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#4ac280]" />
               <div>
-                <p className="text-xs font-medium text-white">Bank-grade security</p>
+                <p className="text-xs font-medium text-white">Two-step sign-in</p>
                 <p className="text-[10px] leading-tight text-white/60">
-                  Funds protected up to $250K
+                  Balances are USDC, not FDIC-insured
                 </p>
               </div>
             </div>

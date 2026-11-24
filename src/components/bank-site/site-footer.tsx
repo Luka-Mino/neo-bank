@@ -4,7 +4,7 @@ import { SectionLink } from "./section-link";
 
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
-    title: "Banking",
+    title: "Accounts",
     links: [
       { label: "Checking & savings", href: "/#accounts" },
       { label: "Debit cards", href: "/#cards" },
@@ -47,7 +47,7 @@ export function SiteFooter() {
           <div>
             <Logo variant="full" tone="reverse" size={26} />
             <p className="mt-4 max-w-[30ch] text-[13px] leading-relaxed text-white/55">
-              Everyday banking on regulated infrastructure, with your balance
+              Everyday money on regulated infrastructure, with your balance
               held as fully reserved digital dollars.
             </p>
           </div>

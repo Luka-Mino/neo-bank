@@ -29,7 +29,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   // Absolute URLs for Open Graph / Twitter images and canonical links.
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
-  title: "Moneta | Personal banking",
+  title: "Moneta | Everyday money",
   description:
     "Checking, savings and a debit card in one place, built on regulated infrastructure.",
   applicationName: "Moneta",

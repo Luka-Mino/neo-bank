@@ -197,7 +197,7 @@ export default function DashboardPage() {
         >
           <ShieldCheck className="h-3.5 w-3.5" />
           <span className="text-[12px] font-medium">
-            Bank-grade security
+            Two-step sign-in
           </span>
         </div>
       </div>

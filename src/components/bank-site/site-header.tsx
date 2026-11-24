@@ -60,7 +60,7 @@ export function SiteHeader({
 
       {/* Main bar */}
       <div className="mx-auto flex h-[72px] max-w-[1200px] items-center justify-between px-4 lg:px-8">
-        <Link href="/" aria-label="Moneta personal banking home">
+        <Link href="/" aria-label="Moneta home">
           <Logo variant="full" tone="forest" size={30} priority />
         </Link>
 

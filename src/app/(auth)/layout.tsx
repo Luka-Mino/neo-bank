@@ -24,7 +24,7 @@ export default function AuthLayout({
           </div>
         </div>
         <div className="mx-auto flex h-[68px] max-w-[1200px] items-center justify-between px-4 lg:px-8">
-          <Link href="/" aria-label="Moneta personal banking home">
+          <Link href="/" aria-label="Moneta home">
             <Logo variant="full" tone="forest" size={28} priority />
           </Link>
           <div className="flex items-center gap-5 text-[13px] font-medium">
@@ -34,7 +34,7 @@ export default function AuthLayout({
             </Link>
             <Link href="/" className="flex items-center gap-1 text-forest/70 hover:text-forest">
               <ChevronLeft className="h-4 w-4" />
-              Personal banking
+              Moneta home
             </Link>
           </div>
         </div>

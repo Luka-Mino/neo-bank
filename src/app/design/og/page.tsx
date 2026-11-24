@@ -18,7 +18,7 @@ export default function OgFrame() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/moneta-full-forest.svg" alt="Moneta" className="h-auto w-[170px]" />
         <h1 className="mt-10 font-display text-[60px] font-semibold leading-[1.04] tracking-[-0.02em]">
-          Banking that keeps up with you
+          Money that keeps up with you
         </h1>
         <p className="mt-6 max-w-[30ch] text-[24px] leading-snug text-forest/70">
           Checking, savings and a debit card, built on regulated infrastructure.

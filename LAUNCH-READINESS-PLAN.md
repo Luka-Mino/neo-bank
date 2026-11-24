@@ -105,9 +105,20 @@
 
 ### Can start now (needed whatever Dakota answers)
 
-- [ ] **1c.1 Drop "banking" as a self-description.** Page titles "Moneta | Personal banking" (`src/app/layout.tsx`, `src/app/page.tsx`), eyebrows and headlines in `src/app/page.tsx` ("Personal banking", "Banking that keeps up with you", "Everyday banking", "Banking with Moneta"), the footer column and tagline (`site-footer.tsx`), the auth layout, the header aria-label, `page-parts.tsx` and the design/og pages. Dakota can't do this for us. **Done when:** "banking" appears only in references to Dakota's partners.
-- [ ] **1c.2 Accept Moneta's own Terms and Privacy at sign-up.** Dakota's attestations cover only Dakota's documents. Today the register flow records no acceptance of ours. Store the document version and timestamp. **Done when:** every new user row has an accepted terms version.
-- [ ] **1c.3 Support and complaints intake.** Dakota's split puts support on us ("your team owns the customer relationship … support"), and card disputes reach us first. A simple in-app form, logged with a status, that can be forwarded to Dakota (cards: `POST /card_dispute_reports`).
+> **1c.1–1c.3 done 2026-11-24.** Unit tests (209) and integration tests
+> (`src/lib/legal-support.integration.test.ts`, run against a local DB
+> migrated through 0020) pass. Migration `0020_legal_acceptance_and_support`
+> is applied **only to the local dev DB**: apply it to staging/prod with
+> 0019. Set `SUPPORT_EMAIL` in Vercel, or requests are saved without an inbox
+> copy.
+
+- [x] **1c.1 Drop "banking" as a self-description.** Titles, hero, eyebrows, footer, auth layout, breadcrumb, aria-labels and the social image are now "Everyday money" / "Money that keeps up with you"; the social image (`src/app/opengraph-image.png`, `twitter-image.png`) was re-rendered from `/design/og`. Also fixed: the old dashboard menu said **"Funds protected up to $250K"** (reads as FDIC insurance, which USDC doesn't have). It now says "Balances are USDC, not FDIC-insured". "Bank-grade security" is now "Two-step sign-in".
+  - [ ] **Follow-up for counsel: "Checking" and "Savings".** They are bank deposit-account names, used in the hero copy, the footer, the meta description, the social image and the account types. Ask counsel whether non-bank use is OK in our target states. If not, rename them (e.g., "Everyday" / "Set-aside"), which touches the account types in the data model.
+- [x] **1c.2 Accept Moneta's own Terms and Privacy at sign-up.** A required checkbox on `/register`. The server stores `terms_version`, `privacy_version` and `legal_accepted_at` from `src/lib/legal.ts` (also the source of each page's "Last updated"), plus a `legal.accepted` audit entry. Users created before 0020 have NULLs.
+  - [ ] Later: a re-acceptance prompt when `LEGAL_DOCS` versions change. Needs counsel's view on which changes require it.
+- [x] **1c.3 Support and complaints intake.** `/app/more/help` (More → Help & support), plus "Report a problem with this payment" on each transaction. The `support_requests` table holds a `SUP-XXXXXX` reference, a category (question, complaint, card dispute, fraud) and a status. `GET`/`POST /api/support` check that a linked payment is in the caller's org. Each request triggers an in-app notification, an escaped copy to `SUPPORT_EMAIL`, and an audit entry.
+  - [ ] No staff view yet: work requests from the inbox and update `status` in the DB. Build an ops screen when volume needs it.
+  - [ ] Card disputes are forwarded to Dakota by hand until Cards leaves Dakota's sandbox; then wire `POST /card_dispute_reports` (see 5.3).
 - [ ] **1c.4 Hold the line.** No rewards, no RD, no Moneta-to-Moneta book transfers, no new server-initiated on-chain sends.
 
 ### Wait for Dakota's answers before building (§5.1 Q6, Q7, Q8, Q12)
@@ -471,6 +482,7 @@ Licensing questions (from §1b; the full list of 12 is at the end of `reports/Mo
 - [ ] Per-wallet policy and wallet card-enablement signing flow (`DAKOTA-CARDS-SPEC.md` §2.3).
 - [ ] Cards terms-acceptance UI (fresh hosted link at render).
 - [ ] `card_transaction.*` ledger posting (holds, clears, refunds) per spec §4, with drill invariants.
+- [ ] Card disputes: when a Help & support request is a `card_dispute`, report it with `POST /card_dispute_reports` (card id, card transaction id, our `SUP-` reference as `client_reference`), then set `forwarded_to = 'dakota'`, `forwarded_at` and `external_reference`.
 
 ### 5.4 Production readiness (ROADMAP M3)
 - [ ] Production keys and network, hosted Postgres decision, domain, monitoring, and a low-value real-money test.

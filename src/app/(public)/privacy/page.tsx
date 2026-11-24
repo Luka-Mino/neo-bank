@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Ph } from "@/components/bank-site/placeholder";
 import { Clause, LegalPage, LegalSection, LegalSummary, Term, type LegalSection as Section } from "@/components/bank-site/legal-layout";
+import { LEGAL_DOCS } from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "Privacy policy — Moneta",
@@ -31,7 +32,7 @@ export default function PrivacyPage() {
       current="/privacy"
       title="Privacy policy"
       subtitle="What we collect, how we use it, and your choices."
-      updated="November 23, 2026"
+      updated={LEGAL_DOCS.privacy.updated}
       draft
       sections={S}
     >

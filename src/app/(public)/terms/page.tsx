@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Ph } from "@/components/bank-site/placeholder";
 import { Caps, CapsBox, Clause, LegalPage, LegalSection, LegalSummary, Term, type LegalSection as Section } from "@/components/bank-site/legal-layout";
+import { LEGAL_DOCS } from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "Terms of use — Moneta",
@@ -43,7 +44,7 @@ export default function TermsPage() {
       current="/terms"
       title="Terms of use"
       subtitle="The terms for opening and using a Moneta account."
-      updated="November 23, 2026"
+      updated={LEGAL_DOCS.terms.updated}
       draft
       sections={S}
     >

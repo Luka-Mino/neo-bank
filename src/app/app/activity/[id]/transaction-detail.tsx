@@ -6,6 +6,7 @@
 // fee lines, Fedwire IMAD/OMAD. Returns/reversals explain what happened to
 // the money. Demo mode reads DEMO_TRANSACTIONS (the old page had no demo path).
 
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FlowScreen, HelpCard } from "@/components/app/flow-screen";
 import { DetailList, ErrorState, LoadingRows, Notice, type DetailRow } from "@/components/app/states";
@@ -269,6 +270,14 @@ export function TransactionDetail({ id }: { id: string }) {
         </label>
         {recategorize.isError && <p className="mt-2 text-[13px] text-[#b42f34]">{(recategorize.error as Error).message}</p>}
       </div>
+
+      <Link
+        href={`/app/more/help?tx=${encodeURIComponent(tx.id)}`}
+        className="mt-2 flex items-center justify-between gap-3 border-t border-forest/[0.07] pt-4 text-[14px] font-medium text-turquoise-700 hover:text-forest"
+      >
+        Report a problem with this payment
+        <span aria-hidden>→</span>
+      </Link>
     </FlowScreen>
   );
 }
