@@ -202,7 +202,7 @@ export default function CardPage() {
                   Your card is being issued. This usually takes a moment, and we&apos;ll let you know when it&apos;s ready.
                 </Notice>
               )}
-              {!pending && <CardSpending />}
+              {!pending && <CardSpending accountId={card.accountId} />}
 
               <DetailList
                 className="mt-5"

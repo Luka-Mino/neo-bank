@@ -7,7 +7,7 @@
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { logAudit } from "@/lib/audit";
 import { internalTransferSchema } from "@/lib/validators/transfer";
-import { INSUFFICIENT_FUNDS, performInternalTransfer } from "@/lib/transfers";
+import { CROSS_WALLET_MESSAGE, CROSS_WALLET_TRANSFER, INSUFFICIENT_FUNDS, performInternalTransfer } from "@/lib/transfers";
 import { assertEmailVerified, assertMfaEnabled } from "@/lib/auth/verification";
 import {
   resolveRequiredApprovals,
@@ -125,6 +125,9 @@ export const POST = apiHandler({
     } catch (e) {
       if (e instanceof Error && e.message === INSUFFICIENT_FUNDS) {
         return err("Insufficient balance", 402);
+      }
+      if (e instanceof Error && e.message === CROSS_WALLET_TRANSFER) {
+        return err(CROSS_WALLET_MESSAGE, 409, { reason: "cross_wallet" });
       }
       throw e;
     }

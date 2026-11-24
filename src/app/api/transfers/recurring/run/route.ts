@@ -18,6 +18,7 @@ import { withOrg } from "@/lib/db/with-org";
 import { accounts, recurringTransfers } from "@/lib/db/schema";
 import {
   addPeriod,
+  CROSS_WALLET_TRANSFER,
   INSUFFICIENT_FUNDS,
   performInternalTransfer,
   type Frequency,
@@ -126,16 +127,19 @@ async function handle(req: NextRequest) {
       skipped++;
       const insufficient =
         e instanceof Error && e.message === INSUFFICIENT_FUNDS;
+      const crossWallet = e instanceof Error && e.message === CROSS_WALLET_TRANSFER;
       await createNotification({
         userId: rule.userId,
         type: "transaction_update",
         title: "Recurring transfer skipped",
         body: insufficient
           ? `Your ${rule.frequency} transfer of $${rule.amount} was skipped — not enough balance in the source account. It will try again next period.`
-          : `Your ${rule.frequency} transfer of $${rule.amount} could not be executed this period.`,
+          : crossWallet
+            ? `Your ${rule.frequency} transfer of $${rule.amount} was skipped: moving money between these accounts isn't available yet.`
+            : `Your ${rule.frequency} transfer of $${rule.amount} could not be executed this period.`,
         actionUrl: "/app/move/transfer",
       });
-      if (!insufficient) {
+      if (!insufficient && !crossWallet) {
         logger.error(`Recurring rule ${rule.id} execution error:`, { detail: e instanceof Error ? e.message : String(e) })
       }
     }

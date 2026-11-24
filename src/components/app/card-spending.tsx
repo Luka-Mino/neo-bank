@@ -15,11 +15,11 @@ type Spending =
 // Demo: a restaurant bill of $45 holding $58.50 until the tip is known.
 const DEMO_SPENDING: Spending = { status: "ok", available: 12399.82, held: 58.5 };
 
-export function CardSpending() {
+export function CardSpending({ accountId }: { accountId: string }) {
   const q = useQuery({
-    queryKey: ["card-spending"],
+    queryKey: ["card-spending", accountId],
     queryFn: async (): Promise<Spending> => {
-      const r = await fetch("/api/cards/spending");
+      const r = await fetch(`/api/cards/spending?accountId=${encodeURIComponent(accountId)}`);
       if (!r.ok) throw new Error("card-spending");
       const j = await r.json();
       return (j?.data ?? j) as Spending;

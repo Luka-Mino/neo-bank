@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { logger } from "@/lib/logger";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { withOrg } from "@/lib/db/with-org";
@@ -42,7 +42,7 @@ export const POST = apiHandler({
       tx
         .select()
         .from(wallets)
-        .where(eq(wallets.orgId, orgId))
+        .where(and(eq(wallets.orgId, orgId), eq(wallets.purpose, "main")))
         .limit(1)
     );
 
@@ -60,7 +60,7 @@ export const POST = apiHandler({
         tx
           .select()
           .from(wallets)
-          .where(eq(wallets.orgId, orgId))
+          .where(and(eq(wallets.orgId, orgId), eq(wallets.purpose, "main")))
           .limit(1)
       );
 

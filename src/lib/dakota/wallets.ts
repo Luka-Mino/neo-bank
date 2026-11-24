@@ -1,6 +1,6 @@
 import { dakota } from "./client";
 
-interface CreateWalletParams {
+export interface CreateWalletParams {
   customerId: string;
   name: string;
   family: "evm" | "solana";
@@ -10,7 +10,7 @@ interface CreateWalletParams {
   policies: string[];
 }
 
-interface DakotaWallet {
+export interface DakotaWallet {
   id: string;
   client_id: string;
   customer_id: string;

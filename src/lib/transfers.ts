@@ -3,12 +3,18 @@
 // this function owns atomicity: optimistic-lock debit + credit + two ledger
 // rows in one DB transaction.
 import { randomUUID } from "node:crypto";
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
+import { transferRoute } from "@/lib/side-accounts";
 import type { DbTx } from "@/lib/db/with-org";
 import { accounts, transactions } from "@/lib/db/schema";
 import { categorizeTransaction } from "@/lib/categorize";
 
 export const INSUFFICIENT_FUNDS = "INSUFFICIENT_FUNDS_RACE";
+/** The two accounts live in different Dakota wallets (a side account with its
+ *  own wallet). That's an on-chain transfer: SIDE-ACCOUNTS-PLAN.md Phase 2. */
+export const CROSS_WALLET_TRANSFER = "CROSS_WALLET_TRANSFER_NOT_READY";
+export const CROSS_WALLET_MESSAGE =
+  "Moving money between these accounts isn't available yet. It's coming with side accounts.";
 
 export async function performInternalTransfer(
   params: {
@@ -33,6 +39,19 @@ export async function performInternalTransfer(
   });
 
   return executor.transaction(async (tx) => {
+    // A book entry only moves money inside one wallet. Accounts in different
+    // wallets need an on-chain transfer (Phase 2), so refuse rather than let
+    // the ledger and the wallets drift apart.
+    const legs = await tx
+      .select({ id: accounts.id, walletId: accounts.walletId })
+      .from(accounts)
+      .where(inArray(accounts.id, [params.fromAccountId, params.toAccountId]));
+    const from = legs.find((l) => l.id === params.fromAccountId);
+    const to = legs.find((l) => l.id === params.toAccountId);
+    if (from && to && transferRoute(from, to) === "onchain") {
+      throw new Error(CROSS_WALLET_TRANSFER);
+    }
+
     // Debit source. WHERE balance >= amount is the optimistic lock: a
     // concurrent drain makes this match zero rows and we abort.
     const debit = await tx

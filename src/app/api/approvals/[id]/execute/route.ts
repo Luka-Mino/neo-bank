@@ -6,7 +6,7 @@ import { and, eq } from "drizzle-orm";
 import { apiHandler, ok, err } from "@/lib/api-handler";
 import { approvalRequests } from "@/lib/db/schema";
 import { payloadHashMatches } from "@/lib/approvals";
-import { performInternalTransfer, INSUFFICIENT_FUNDS } from "@/lib/transfers";
+import { performInternalTransfer, INSUFFICIENT_FUNDS, CROSS_WALLET_MESSAGE, CROSS_WALLET_TRANSFER } from "@/lib/transfers";
 import {
   assertAccountOwnership,
   ownershipErr,
@@ -107,6 +107,9 @@ export const POST = apiHandler({
       } catch (e) {
         if (e instanceof Error && e.message === INSUFFICIENT_FUNDS) {
           return err("Insufficient balance to execute this transfer", 402);
+        }
+        if (e instanceof Error && e.message === CROSS_WALLET_TRANSFER) {
+          return err(CROSS_WALLET_MESSAGE, 409, { reason: "cross_wallet" });
         }
         throw e;
       }

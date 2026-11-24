@@ -80,10 +80,12 @@ export async function provisionCustomer(userId: string): Promise<ProvisioningRes
   const networkId = defaultNetworkId();
 
   // Step 1: wallet
+  // The org's MAIN wallet (deposits land here). Side accounts have their own
+  // wallets (purpose 'side'), which provisioning must never pick up.
   let [wallet] = await db
     .select()
     .from(wallets)
-    .where(eq(wallets.userId, userId))
+    .where(and(eq(wallets.orgId, orgId), eq(wallets.purpose, "main")))
     .limit(1);
 
   if (!wallet) {

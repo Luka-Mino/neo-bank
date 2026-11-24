@@ -142,3 +142,25 @@ describe("DakotaCardProvider.issueCard", () => {
     });
   });
 });
+
+describe("DakotaCardProvider: a card spends its own account (side accounts)", () => {
+  it("resolves the wallet from the card's account, not just the user", async () => {
+    api.getCardsCapability.mockResolvedValue({ capability: "cards", status: "available", requirements: [] });
+    api.createCardholder.mockResolvedValue({ id: "ch_1", customer_id: "cus_1", status: "active" });
+    api.getCardEnablement.mockResolvedValue({ state: "active" });
+    api.createCard.mockResolvedValue({
+      id: "card_2",
+      cardholder_id: "ch_1",
+      customer_id: "cus_1",
+      wallet_id: "wal_side",
+      status: "pending",
+      version: 1,
+      last4: null,
+    });
+    const resolveIds = vi.fn(async () => ({ customerId: "cus_1", walletId: "wal_side", cardholderId: null }));
+    const p = new DakotaCardProvider(deps({ resolveIds }));
+    await p.issueCard({ ...req, accountId: "acct-side" });
+    expect(resolveIds).toHaveBeenCalledWith(req.userId, "acct-side");
+    expect(api.createCard.mock.calls.at(-1)?.[1]).toMatchObject({ wallet_id: "wal_side" });
+  });
+});

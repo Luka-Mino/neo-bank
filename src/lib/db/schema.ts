@@ -346,6 +346,9 @@ export const wallets = pgTable(
     family: text("family").notNull(),
     address: text("address").notNull(),
     name: text("name").notNull(),
+    // 'main' = the org's onboarding wallet (deposits land here; one per org);
+    // 'side' = a side account's own wallet (SIDE-ACCOUNTS-PLAN.md, 0022).
+    purpose: text("purpose").notNull().default("main"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
@@ -422,8 +425,13 @@ export const accounts = pgTable(
     // registry (FK added in 0021). Deposits must credit a matching-asset account.
     asset: text("asset").notNull().default("USDC").references(() => assets.code),
     balance: numeric("balance", { precision: 30, scale: 18 }).notNull().default("0"),
-    status: text("status").notNull().default("active"), // 'active' | 'frozen' | 'closed'
+    status: text("status").notNull().default("active"), // 'opening' | 'active' | 'frozen' | 'closed'
+    // The main account (deposits land here). Fixed once side accounts exist.
     isPrimary: boolean("is_primary").notNull().default(false),
+    // Where this account's money lives (0022). NULL = the org's main wallet;
+    // a side account's own wallet when SIDE_ACCOUNT_WALLETS=dakota.
+    // Same-org composite FK in SQL (accounts_org_wallet_fk).
+    walletId: uuid("wallet_id"),
     // Savings goal — display-only target for progress UI; null = no goal.
     goalAmount: numeric("goal_amount", { precision: 30, scale: 18 }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

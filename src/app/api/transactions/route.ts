@@ -23,7 +23,6 @@ import {
   accounts,
   transactions,
   dakotaCustomers,
-  wallets,
 } from "@/lib/db/schema";
 import {
   createTransaction as createDakotaTransaction,
@@ -45,6 +44,7 @@ import {
   ownershipErr,
 } from "@/lib/auth/ownership";
 import { withOrg } from "@/lib/db/with-org";
+import { walletForAccount } from "@/lib/side-accounts";
 
 export const GET = apiHandler({
   orgScoped: true,
@@ -143,9 +143,9 @@ export const POST = apiHandler({
       body.paymentReference ??
       `MNTA ${randomBytes(4).readUIntBE(0, 4).toString(36).toUpperCase().padStart(5, "0").slice(-5)}`;
 
-    const [wallet] = await withOrg(orgId, (tx) =>
-      tx.select().from(wallets).where(eq(wallets.orgId, orgId)).limit(1)
-    );
+    // The wallet that holds the source account's money: a side account's own
+    // wallet, or the main wallet (SIDE-ACCOUNTS-PLAN.md).
+    const wallet = await withOrg(orgId, (tx) => walletForAccount(tx, account));
     if (!wallet) {
       return err(
         "Account setup incomplete — no wallet found. Retry setup from the onboarding page.",

@@ -125,8 +125,10 @@ export interface DakotaIds {
 }
 
 export interface DakotaCardDeps {
-  /** Look up the user's Dakota customer, wallet and cardholder ids. */
-  resolveIds(userId: string): Promise<DakotaIds | null>;
+  /** Look up the user's Dakota customer and cardholder ids, and the wallet
+   *  that holds the card's ACCOUNT's money (a side account's own wallet, or
+   *  the main wallet). SIDE-ACCOUNTS-PLAN.md: a card spends its account. */
+  resolveIds(userId: string, accountId: string): Promise<DakotaIds | null>;
   /** Persist a newly created/found cardholder id for the user. */
   saveCardholderId(userId: string, cardholderId: string): Promise<void>;
 }
@@ -137,7 +139,7 @@ export class DakotaCardProvider implements IssuerProvider {
   constructor(private deps: DakotaCardDeps = defaultDakotaDeps) {}
 
   async issueCard(req: IssueCardRequest): Promise<IssuedCard> {
-    const ids = await this.deps.resolveIds(req.userId);
+    const ids = await this.deps.resolveIds(req.userId, req.accountId);
     if (!ids) {
       throw new CardIssuerNotReadyError(
         "not_onboarded",
@@ -247,21 +249,33 @@ export class DakotaCardProvider implements IssuerProvider {
 }
 
 const defaultDakotaDeps: DakotaCardDeps = {
-  async resolveIds(userId) {
+  async resolveIds(userId, accountId) {
     // TEMPORARY systemDb: these lookups are per user and predate orgs. Move
     // them to withOrg(orgId) with the card follow-ups (LAUNCH-READINESS-PLAN 5.3).
     const { systemDb: db } = await import("@/lib/db");
-    const { dakotaCustomers, wallets } = await import("@/lib/db/schema");
+    const { accounts, dakotaCustomers, wallets } = await import("@/lib/db/schema");
     const [customer] = await db
       .select()
       .from(dakotaCustomers)
       .where(eq(dakotaCustomers.userId, userId))
       .limit(1);
     if (!customer || customer.kycStatus !== "active") return null;
+    // The card's account decides the wallet: its own (side account) or the
+    // org's main wallet. Same org as the customer, or nothing.
+    const [account] = await db
+      .select({ orgId: accounts.orgId, walletId: accounts.walletId })
+      .from(accounts)
+      .where(and(eq(accounts.id, accountId), eq(accounts.orgId, customer.orgId)))
+      .limit(1);
+    if (!account) return null;
     const [wallet] = await db
       .select()
       .from(wallets)
-      .where(eq(wallets.userId, userId))
+      .where(
+        account.walletId
+          ? and(eq(wallets.id, account.walletId), eq(wallets.orgId, account.orgId))
+          : and(eq(wallets.orgId, account.orgId), eq(wallets.purpose, "main"))
+      )
       .limit(1);
     if (!wallet) return null;
     return {
