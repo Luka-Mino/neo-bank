@@ -32,7 +32,11 @@ export function decryptField(blob: string, purpose: string): string {
   const [ivB64, ctB64, tagB64] = blob.slice(dollar + 1).split(".");
   if (!ivB64 || !ctB64 || !tagB64) throw new Error("Malformed encrypted field");
   const material = keyById("FIELD_ENCRYPTION_KEYS", keyId).material;
-  const decipher = createDecipheriv("aes-256-gcm", keyFor(material, purpose), Buffer.from(ivB64, "base64"));
+  // authTagLength pins the full 16-byte tag; without it Node accepts a tag
+  // truncated to 4 bytes, which makes a forged blob far easier to land.
+  const decipher = createDecipheriv("aes-256-gcm", keyFor(material, purpose), Buffer.from(ivB64, "base64"), {
+    authTagLength: 16,
+  });
   decipher.setAuthTag(Buffer.from(tagB64, "base64"));
   return Buffer.concat([
     decipher.update(Buffer.from(ctB64, "base64")),

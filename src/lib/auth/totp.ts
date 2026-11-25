@@ -46,7 +46,10 @@ export function decryptSecret(blob: string): string {
   const decipher = createDecipheriv(
     "aes-256-gcm",
     encryptionKey(keyById("FIELD_ENCRYPTION_KEYS", keyId).material),
-    Buffer.from(ivB64, "base64")
+    Buffer.from(ivB64, "base64"),
+    // Pin the full 16-byte tag: without it Node accepts a truncated tag (down
+    // to 4 bytes), and a forged blob only has to match those few bytes.
+    { authTagLength: 16 }
   );
   decipher.setAuthTag(Buffer.from(tagB64, "base64"));
   return Buffer.concat([

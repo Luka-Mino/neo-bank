@@ -45,6 +45,8 @@ Ideas and deferred work, not commitments. Current work is in `PRE-DAKOTA-PLAN.md
 - [ ] Security indicators throughout UI
 - [ ] Biometric auth (WebAuthn/passkeys)
 - [ ] Session management (active sessions view)
+- [ ] Sentry 11 upgrade: v11 removes `sendDefaultPii` and by default collects request/response bodies, headers, cookies, query params, DB query data and stack-frame variables. When upgrading, replace `sendDefaultPii: false` with a `dataCollection` block that turns each of these off, in both `src/instrumentation.ts` and `src/instrumentation-client.ts`, and update the compliance docs (F2, F5, F8) that cite `sendDefaultPii`. Upgrading also clears the `glob`/`minimatch` advisories in Sentry's build plugin (not loaded today: we don't use `withSentryConfig`). Security scan, 2026-11-25.
+- [ ] Dependency advisories left open after the 2026-11-25 scan, none reachable today: `shadcn` 4.23.1 fixes the `ts-morph`/`minimatch` one but was published that day, so take it once it's a week old (Dependabot will open it); `drizzle-kit` still pulls the old `@esbuild-kit` loader with esbuild 0.18 (the advisory is esbuild's dev server, which drizzle-kit doesn't run), fixed only in the 1.0 release candidates.
 
 ## Real-time & Notifications
 - [ ] SSE real-time updates (Redis pub/sub → browser)

@@ -29,6 +29,13 @@ describe("totp secret encryption", () => {
     ).toThrow();
   });
 
+  it("rejects a truncated auth tag", async () => {
+    const { encryptSecret, decryptSecret } = await import("./totp");
+    const [iv, ct, tag] = encryptSecret("JBSWY3DPEHPK3PXP").split(".");
+    const short = Buffer.from(tag, "base64").subarray(0, 4).toString("base64");
+    expect(() => decryptSecret([iv, ct, short].join("."))).toThrow();
+  });
+
   it("rejects malformed blobs", async () => {
     const { decryptSecret } = await import("./totp");
     expect(() => decryptSecret("not-a-blob")).toThrow();

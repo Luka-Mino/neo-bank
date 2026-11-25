@@ -69,7 +69,7 @@ function stripComments(src) {
  * Handles db.select(…).from(T), db.insert/update/delete(T) and db.query.T.
  */
 function globalDbQueries(src, local) {
-  const id = local.replace(/[$]/g, "\\$&");
+  const id = local.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const hits = new Set();
   const lead = `(?<![.\\w$])${id}\\s*\\.\\s*`;
   for (const m of src.matchAll(new RegExp(`${lead}(?:insert|update|delete)\\s*\\(\\s*(\\w+)`, "g"))) hits.add(m[1]);

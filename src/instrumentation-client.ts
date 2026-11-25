@@ -7,6 +7,8 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
     environment: process.env.NODE_ENV,
     tracesSampleRate: 0.1,
+    // Sentry 11 drops this option and collects bodies, headers and cookies by
+    // default: on upgrade, switch those off in `dataCollection` (BACKLOG.md).
     sendDefaultPii: false,
     // Money UI: strip tokens (magic-link, reset, invite, the Cards.js
     // session), emails, credentials and card/account numbers before anything

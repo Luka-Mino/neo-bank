@@ -18,6 +18,8 @@ export async function register() {
     tracesSampleRate: 0.1,
     // Never attach request bodies — they can contain money amounts,
     // account numbers, and 2FA codes.
+    // Sentry 11 drops this option and collects bodies, headers and cookies by
+    // default: on upgrade, switch those off in `dataCollection` (BACKLOG.md).
     sendDefaultPii: false,
     // Strip tokens, emails, credentials and card/account numbers before
     // anything leaves the server (src/lib/sentry-scrub.ts).

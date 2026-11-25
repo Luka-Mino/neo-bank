@@ -17,6 +17,12 @@ describe("field encryption", () => {
     expect(() => decryptField(blob, "bank")).toThrow();
   });
 
+  it("rejects a truncated auth tag", () => {
+    const [iv, ct, tag] = encryptField("secret-value", "phone").split(".");
+    const short = Buffer.from(tag, "base64").subarray(0, 4).toString("base64");
+    expect(() => decryptField([iv, ct, short].join("."), "phone")).toThrow();
+  });
+
   it("fresh IV each call", () => {
     expect(encryptField("x", "phone")).not.toBe(encryptField("x", "phone"));
   });
